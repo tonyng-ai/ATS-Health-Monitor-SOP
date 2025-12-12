@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>ServerAdministrationSOP</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 { border-bottom: 2px solid #3498db; padding-bottom: 0.3em; }
+        h2 { border-bottom: 1px solid #ecf0f1; padding-bottom: 0.2em; }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1em;
+            overflow-x: auto;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 1em 0;
+            padding-left: 1em;
+            color: #666;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 2em 0;
+            padding: 1em;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .pdf-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 8px 16px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .pdf-link:hover {
+            background-color: #c0392b;
+        }
+    </style>
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <p><a href="ServerAdministrationSOP.pdf" class="pdf-link">📄 Download PDF Version</a></p>
+    <h1 id="server-administration-standard-operating-procedure">Server Administration Standard Operating Procedure</h1>
+<h2 id="metadata">Metadata</h2>
+<p><strong>Category:</strong> Server Administration
+<strong>Last Updated:</strong> 2025-4-15
+<strong>Author:</strong> Server Administration Team
+<strong>Version:</strong> 1.0
+<strong>Review Date:</strong> 2026-04-15
+<strong>Status:</strong> Active</p>
+<hr />
+<h2 id="purpose">Purpose</h2>
+<p>This procedure provides an overview and index of all Server Administration Standard Operating Procedures for PowerShell server administration, including firewall management, network configuration, system hardening, and maintenance procedures.</p>
+<p><strong>When to Use:</strong>
+- Finding the appropriate server administration procedure
+- Understanding available server administration tools and scripts
+- Locating documentation for specific server administration tasks
+- Reviewing server administration best practices</p>
+<h3 id="procedure-overview">Procedure Overview</h3>
+<pre class="codehilite"><code class="language-mermaid">flowchart TD
+    Start([Server Administration Task]) --&gt; Identify{Identify Task Type}
+    Identify --&gt;|Firewall| Firewall[Production Firewall Best Practices]
+    Identify --&gt;|VPN| VPN[WireGuard Profile Fix Guide]
+    Identify --&gt;|Telemetry| Telemetry[Disable Windows Telemetry]
+    Identify --&gt;|Search| Search[SOP Search and Filtering]
+    Identify --&gt;|Other| Future[Future Procedures]
+    Firewall --&gt; Execute[Execute Procedure]
+    VPN --&gt; Execute
+    Telemetry --&gt; Execute
+    Search --&gt; Execute
+    Future --&gt; Execute
+    Execute --&gt; Verify[Verify Success]
+    Verify --&gt; Complete([Complete])
+
+    style Start fill:#90EE90
+    style Complete fill:#90EE90
+</code></pre>
+
+<hr />
+<h2 id="prerequisites">Prerequisites</h2>
+<h3 id="required-access">Required Access</h3>
+<ul>
+<li>[ ] Administrator privileges (for most procedures)</li>
+<li>[ ] Network access to target systems</li>
+<li>[ ] Access to server administration scripts</li>
+</ul>
+<h3 id="required-tools">Required Tools</h3>
+<ul>
+<li>[ ] PowerShell (Windows PowerShell 5.1 or PowerShell 7+)</li>
+<li>[ ] Text editor for configuration files</li>
+<li>[ ] Network connectivity to target systems</li>
+</ul>
+<h3 id="required-information">Required Information</h3>
+<ul>
+<li>[ ] Understanding of Windows Server administration</li>
+<li>[ ] Network configuration knowledge</li>
+<li>[ ] Firewall rule management experience</li>
+</ul>
+<h3 id="pre-conditions">Pre-Conditions</h3>
+<ul>
+<li>[ ] Server is accessible</li>
+<li>[ ] Appropriate permissions are available</li>
+<li>[ ] Backup procedures are understood before making changes</li>
+</ul>
+<hr />
+<h2 id="available-procedures">Available Procedures</h2>
+<h3 id="configuration-management">Configuration Management</h3>
+<h4 id="production-firewall-best-practices">Production Firewall Best Practices</h4>
+<ul>
+<li><strong>File:</strong> <a href="Production-Firewall-Best-Practices.md">Production-Firewall-Best-Practices.md</a></li>
+<li><strong>Description:</strong> Production firewall configuration and hardening</li>
+<li><strong>Use When:</strong> Configuring production firewall rules, implementing deny-by-default policies, managing WireGuard VPN access</li>
+</ul>
+<h4 id="wireguard-profile-fix-guide">WireGuard Profile Fix Guide</h4>
+<ul>
+<li><strong>File:</strong> <a href="WireGuard-Profile-Fix-Guide.md">WireGuard-Profile-Fix-Guide.md</a></li>
+<li><strong>Description:</strong> VPN profile setup and troubleshooting</li>
+<li><strong>Use When:</strong> WireGuard VPN profile issues, network adapter profile problems, VPN connectivity troubleshooting</li>
+</ul>
+<h4 id="disable-windows-telemetry">Disable Windows Telemetry</h4>
+<ul>
+<li><strong>File:</strong> <a href="Disable-Windows-Telemetry.md">Disable-Windows-Telemetry.md</a></li>
+<li><strong>Description:</strong> Disable Windows telemetry and data collection</li>
+<li><strong>Use When:</strong> Reducing Windows telemetry, improving privacy, reducing network usage from telemetry</li>
+</ul>
+<h3 id="search-and-documentation">Search and Documentation</h3>
+<h4 id="sop-search-and-filtering">SOP Search and Filtering</h4>
+<ul>
+<li><strong>File:</strong> <a href="SOP-Search-and-Filtering.md">SOP-Search-and-Filtering.md</a></li>
+<li><strong>Description:</strong> How to search and filter SOPs effectively</li>
+<li><strong>Use When:</strong> Finding specific procedures, searching documentation, filtering SOPs by category</li>
+</ul>
+<h3 id="future-procedures">Future Procedures</h3>
+<p>The following procedures are planned but not yet documented:
+- Daily Operations: Daily checks and performance monitoring
+- Maintenance: Backup procedures and system updates
+- Emergency: Emergency procedures and disaster recovery</p>
+<hr />
+<h2 id="quick-reference">Quick Reference</h2>
+<h3 id="common-powershell-commands">Common PowerShell Commands</h3>
+<pre class="codehilite"><code class="language-powershell"># Check firewall status
+Get-NetFirewallProfile
+
+# Check WireGuard profile
+Get-NetAdapter | Where-Object { $_.Name -like &quot;*NYVPNServer*&quot; }
+
+# Check firewall rules
+Get-NetFirewallRule | Where-Object { $_.Enabled -eq $true }
+
+# Check network adapters
+Get-NetAdapter | Select-Object Name, InterfaceDescription, Status
+</code></pre>
+
+<hr />
+<h2 id="related-scripts">Related Scripts</h2>
+<h3 id="production-firewall-configuration">Production Firewall Configuration</h3>
+<ul>
+<li><strong>Script:</strong> <a href="../../Scripts/01-Server-Administration/Configure-Production-Firewall.ps1">Configure-Production-Firewall.ps1</a></li>
+<li><strong>Description:</strong> Production firewall configuration script</li>
+<li><strong>Use With:</strong> <a href="Production-Firewall-Best-Practices.md">Production-Firewall-Best-Practices.md</a></li>
+</ul>
+<h3 id="wireguard-network-profile-fix">WireGuard Network Profile Fix</h3>
+<ul>
+<li><strong>Script:</strong> <a href="../../Scripts/01-Server-Administration/Fix-WireGuard-NetworkProfile.ps1">Fix-WireGuard-NetworkProfile.ps1</a></li>
+<li><strong>Description:</strong> WireGuard network profile fix script</li>
+<li><strong>Use With:</strong> <a href="WireGuard-Profile-Fix-Guide.md">WireGuard-Profile-Fix-Guide.md</a></li>
+</ul>
+<h3 id="windows-telemetry-disable">Windows Telemetry Disable</h3>
+<ul>
+<li><strong>Script:</strong> <a href="../../Scripts/01-Server-Administration/Disable-Windows-Telemetry.ps1">Disable-Windows-Telemetry.ps1</a></li>
+<li><strong>Description:</strong> Disable Windows telemetry script</li>
+<li><strong>Use With:</strong> <a href="Disable-Windows-Telemetry.md">Disable-Windows-Telemetry.md</a></li>
+</ul>
+<h3 id="wireguard-profile-monitor-installation">WireGuard Profile Monitor Installation</h3>
+<ul>
+<li><strong>Script:</strong> <a href="../../Scripts/01-Server-Administration/Install-WireGuard-Profile-Monitor.ps1">Install-WireGuard-Profile-Monitor.ps1</a></li>
+<li><strong>Description:</strong> WireGuard profile monitor installation script</li>
+<li><strong>Use With:</strong> <a href="WireGuard-Profile-Fix-Guide.md">WireGuard-Profile-Fix-Guide.md</a></li>
+</ul>
+<hr />
+<h2 id="related-procedures">Related Procedures</h2>
+<ul>
+<li><a href="Production-Firewall-Best-Practices.md">Production Firewall Best Practices</a> - Firewall configuration</li>
+<li><a href="WireGuard-Profile-Fix-Guide.md">WireGuard Profile Fix Guide</a> - VPN troubleshooting</li>
+<li><a href="Disable-Windows-Telemetry.md">Disable Windows Telemetry</a> - System hardening</li>
+<li><a href="SOP-Search-and-Filtering.md">SOP Search and Filtering</a> - Documentation search</li>
+</ul>
+<hr />
+<h2 id="references">References</h2>
+<ul>
+<li>PowerShell Documentation: <a href="https://docs.microsoft.com/powershell/">Microsoft PowerShell Docs</a></li>
+<li>Windows Firewall: <a href="https://docs.microsoft.com/windows/security/threat-protection/windows-firewall/windows-firewall-with-advanced-security">Windows Firewall Documentation</a></li>
+<li>WireGuard: <a href="https://www.wireguard.com/">WireGuard Documentation</a></li>
+</ul>
+<hr />
+<h2 id="change-log">Change Log</h2>
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Version</th>
+<th>Author</th>
+<th>Changes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2025-4-15</td>
+<td>1.0</td>
+<td>Server Administration Team</td>
+<td>Initial SOP creation, restructured from README.md format to comply with SOP standard</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="notes">Notes</h2>
+<p><strong>📝 NOTE:</strong> This is an index/master SOP document. For detailed procedures, refer to the individual SOP files listed in the "Available Procedures" section.</p>
+<p><strong>⚠️ WARNING:</strong> Always review individual procedure SOPs before executing server administration tasks. Some procedures require specific prerequisites and may have irreversible effects.</p>
+<p><strong>💡 TIP:</strong> Use the <a href="SOP-Search-and-Filtering.md">SOP Search and Filtering</a> procedure to quickly locate specific server administration procedures.</p>
+</body>
+</html>

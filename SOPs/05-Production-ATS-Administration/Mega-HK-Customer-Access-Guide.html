@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Mega HK Customer Access Guide</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 { border-bottom: 2px solid #3498db; padding-bottom: 0.3em; }
+        h2 { border-bottom: 1px solid #ecf0f1; padding-bottom: 0.2em; }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1em;
+            overflow-x: auto;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 1em 0;
+            padding-left: 1em;
+            color: #666;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 2em 0;
+            padding: 1em;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .pdf-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 8px 16px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .pdf-link:hover {
+            background-color: #c0392b;
+        }
+    </style>
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <p><a href="Mega-HK-Customer-Access-Guide.pdf" class="pdf-link">📄 Download PDF Version</a></p>
+    <h1 id="mega-hong-kong-ats-health-monitor-access-guide">Mega Hong Kong - ATS Health Monitor Access Guide</h1>
+<blockquote>
+<p><strong>Version</strong>: 1.0.0
+<strong>Last Updated</strong>: December 10, 2025
+<strong>Classification</strong>: Customer Documentation
+<strong>Audience</strong>: Mega Hong Kong Team (External Customer)</p>
+</blockquote>
+<hr />
+<h2 id="overview">Overview</h2>
+<p>This guide explains how Mega Hong Kong team members can securely access the ATS Health Monitor dashboard hosted in our NY datacenter.</p>
+<p><strong>What You'll Access</strong>:
+- <strong>ATS Health Monitor Dashboard</strong>: Real-time trading health monitoring
+- <strong>Position Tracking</strong>: Current and historical positions
+- <strong>Order History</strong>: FIX message audit trail
+- <strong>Email Notifications</strong>: Trade alerts and system notifications</p>
+<hr />
+<h2 id="access-options-comparison">Access Options Comparison</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Security</th>
+<th>Complexity</th>
+<th>Best For</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>WireGuard VPN</strong></td>
+<td>Highest</td>
+<td>Low</td>
+<td>Daily operations, multiple users</td>
+</tr>
+<tr>
+<td><strong>Cloudflare Tunnel</strong></td>
+<td>High</td>
+<td>Very Low</td>
+<td>Browser-only access, no software install</td>
+</tr>
+<tr>
+<td><strong>Dedicated HK Instance</strong></td>
+<td>Highest</td>
+<td>High</td>
+<td>Full autonomy, offline capability</td>
+</tr>
+</tbody>
+</table>
+<h3 id="recommended-wireguard-vpn">Recommended: WireGuard VPN</h3>
+<p>For Mega HK, we recommend <strong>WireGuard VPN</strong> because:
+- End-to-end encryption
+- Fast connection (modern protocol)
+- Works from any network (office, home, mobile hotspot)
+- Simple one-time setup
+- No additional infrastructure in HK</p>
+<hr />
+<h2 id="part-1-wireguard-vpn-setup-recommended">Part 1: WireGuard VPN Setup (Recommended)</h2>
+<h3 id="step-1-install-wireguard-one-time">Step 1: Install WireGuard (One-Time)</h3>
+<p><strong>Windows 10/11:</strong>
+1. Download from: https://www.wireguard.com/install/
+2. Run the <code>.msi</code> installer
+3. Click <strong>Next</strong> through all prompts
+4. Restart if prompted</p>
+<p><strong>macOS:</strong>
+1. Open App Store
+2. Search for "WireGuard"
+3. Install the app</p>
+<p><strong>Mobile (iOS/Android):</strong>
+1. Search "WireGuard" in App Store / Play Store
+2. Install the app</p>
+<h3 id="step-2-import-your-configuration">Step 2: Import Your Configuration</h3>
+<p>You will receive a configuration file from VCL IT team:
+- Filename: <code>hk-mega.conf</code> or similar
+- <strong>KEEP THIS FILE SECURE</strong> - it contains your private key</p>
+<p><strong>To import:</strong></p>
+<ol>
+<li>Open WireGuard application</li>
+<li>Click <strong>"Import tunnel(s) from file"</strong></li>
+<li>Select the <code>.conf</code> file provided</li>
+<li>Click <strong>Open</strong></li>
+</ol>
+<h3 id="step-3-connect">Step 3: Connect</h3>
+<ol>
+<li>Select <strong>"hk-mega"</strong> (or your tunnel name)</li>
+<li>Click <strong>"Activate"</strong></li>
+<li>Status should show: <strong>Active</strong> with green indicator</li>
+</ol>
+<p><strong>You're connected!</strong></p>
+<h3 id="step-4-access-the-dashboard">Step 4: Access the Dashboard</h3>
+<p>Open your browser and go to:</p>
+<table>
+<thead>
+<tr>
+<th>Service</th>
+<th>URL</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>ATS Health Monitor</strong></td>
+<td>http://192.168.168.100:8080</td>
+</tr>
+<tr>
+<td>SMTP4Dev (Email Viewer)</td>
+<td>http://192.168.168.100:8025</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Login with your RBAC credentials</strong> provided by VCL IT.</p>
+<hr />
+<h2 id="part-2-what-you-can-access">Part 2: What You Can Access</h2>
+<h3 id="dashboard-tabs">Dashboard Tabs</h3>
+<table>
+<thead>
+<tr>
+<th>Tab</th>
+<th>Access Level</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Overview</td>
+<td>View</td>
+<td>System health summary</td>
+</tr>
+<tr>
+<td>Positions</td>
+<td>View</td>
+<td>Current and historical positions</td>
+</tr>
+<tr>
+<td>Round Trips</td>
+<td>View</td>
+<td>Entry/exit trade pairs</td>
+</tr>
+<tr>
+<td>Order History</td>
+<td>View</td>
+<td>FIX message audit trail</td>
+</tr>
+<tr>
+<td>Email</td>
+<td>View</td>
+<td>Captured email notifications</td>
+</tr>
+<tr>
+<td>ATS Log</td>
+<td>View</td>
+<td>Error detection and alerts</td>
+</tr>
+<tr>
+<td><strong>Setup</strong></td>
+<td>Admin Only</td>
+<td>Configuration (restricted)</td>
+</tr>
+<tr>
+<td><strong>Debug</strong></td>
+<td>Admin Only</td>
+<td>System diagnostics (restricted)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="rbac-roles">RBAC Roles</h3>
+<p>Your account has been configured with appropriate permissions:</p>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Permissions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>viewer</strong></td>
+<td>View all monitoring tabs, export data</td>
+</tr>
+<tr>
+<td><strong>analyst</strong></td>
+<td>Viewer + trigger manual syncs</td>
+</tr>
+<tr>
+<td><strong>admin</strong></td>
+<td>Full access (VCL staff only)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="part-3-best-practices">Part 3: Best Practices</h2>
+<h3 id="security">Security</h3>
+<ol>
+<li><strong>Never share your WireGuard config file</strong></li>
+<li>Each user gets a unique configuration</li>
+<li>
+<p>If compromised, we can revoke just that key</p>
+</li>
+<li>
+<p><strong>Disconnect when not in use</strong></p>
+</li>
+<li>Click "Deactivate" in WireGuard when done</li>
+<li>
+<p>Especially important on public WiFi</p>
+</li>
+<li>
+<p><strong>Report lost/stolen devices immediately</strong></p>
+</li>
+<li>Contact VCL IT to revoke the key</li>
+<li>New key will be issued</li>
+</ol>
+<h3 id="performance">Performance</h3>
+<ol>
+<li><strong>For best performance, use wired connection</strong></li>
+<li>
+<p>WiFi adds latency to the VPN</p>
+</li>
+<li>
+<p><strong>If slow, try reconnecting</strong></p>
+</li>
+<li>
+<p>WireGuard reconnects quickly</p>
+</li>
+<li>
+<p><strong>Check "Latest Handshake" in WireGuard</strong></p>
+</li>
+<li>Should be &lt; 2 minutes ago when active</li>
+<li>If older, reconnect</li>
+</ol>
+<hr />
+<h2 id="part-4-troubleshooting">Part 4: Troubleshooting</h2>
+<h3 id="cannot-connect-to-vpn">Cannot Connect to VPN</h3>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Solution</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"Handshake: None"</td>
+<td>Network blocking UDP</td>
+<td>Check firewall allows UDP 51820</td>
+</tr>
+<tr>
+<td>Handshake fails</td>
+<td>Server unreachable</td>
+<td>Check internet, try different network</td>
+</tr>
+<tr>
+<td>Connected but no access</td>
+<td>Routing issue</td>
+<td>Disconnect and reconnect</td>
+</tr>
+</tbody>
+</table>
+<h3 id="cannot-access-dashboard">Cannot Access Dashboard</h3>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Solution</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Page doesn't load</td>
+<td>VPN not connected</td>
+<td>Check WireGuard shows "Active"</td>
+</tr>
+<tr>
+<td>"Connection refused"</td>
+<td>Service down</td>
+<td>Contact VCL IT</td>
+</tr>
+<tr>
+<td>"401 Unauthorized"</td>
+<td>Bad credentials</td>
+<td>Check username/password</td>
+</tr>
+<tr>
+<td>"403 Forbidden"</td>
+<td>No permission</td>
+<td>Contact VCL IT for role upgrade</td>
+</tr>
+</tbody>
+</table>
+<h3 id="slow-performance">Slow Performance</h3>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Solution</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Dashboard loads slowly</td>
+<td>High latency</td>
+<td>Use wired connection</td>
+</tr>
+<tr>
+<td>Data not updating</td>
+<td>Connection dropped</td>
+<td>Reconnect WireGuard</td>
+</tr>
+<tr>
+<td>Timeout errors</td>
+<td>Network congestion</td>
+<td>Try during off-peak hours</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="part-5-operating-hours">Part 5: Operating Hours</h2>
+<p>The ATS Health Monitor shows <strong>live data from NY trading hours</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Timezone</th>
+<th>Market Hours</th>
+<th>System Available</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>EST (New York)</td>
+<td>9:30 AM - 4:00 PM</td>
+<td>24/7</td>
+</tr>
+<tr>
+<td>HKT (Hong Kong)</td>
+<td>10:30 PM - 5:00 AM</td>
+<td>24/7</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Note</strong>: Historical data is available 24/7. Live monitoring is most useful during NY market hours.</p>
+<hr />
+<h2 id="part-6-contact-information">Part 6: Contact Information</h2>
+<table>
+<thead>
+<tr>
+<th>Issue</th>
+<th>Contact</th>
+<th>Method</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>VPN Config Request</td>
+<td>VCL IT Operations</td>
+<td>Email</td>
+</tr>
+<tr>
+<td>Access/Permission Issues</td>
+<td>VCL IT Operations</td>
+<td>Email</td>
+</tr>
+<tr>
+<td>Dashboard Questions</td>
+<td>VCL Support Team</td>
+<td>Telegram</td>
+</tr>
+<tr>
+<td>Urgent Issues</td>
+<td>On-Call Support</td>
+<td>Phone</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="appendix-a-wireguard-configuration-reference">Appendix A: WireGuard Configuration Reference</h2>
+<p>Your config file looks like this (example):</p>
+<pre class="codehilite"><code class="language-ini">[Interface]
+PrivateKey = &lt;your-unique-private-key&gt;
+Address = 10.101.0.40/32
+DNS = 1.1.1.1
+
+[Peer]
+PublicKey = &lt;VCL-server-public-key&gt;
+AllowedIPs = 10.101.0.0/24, 192.168.168.0/24
+Endpoint = 209.127.118.182:51820
+PersistentKeepalive = 25
+</code></pre>
+
+<p><strong>Key fields:</strong>
+- <code>Address</code>: Your unique VPN IP (10.101.0.40-49 for HK team)
+- <code>AllowedIPs</code>: Networks you can access (already configured correctly)
+- <code>Endpoint</code>: VCL VPN server (NY datacenter)</p>
+<hr />
+<h2 id="appendix-b-network-diagram">Appendix B: Network Diagram</h2>
+<pre class="codehilite"><code>                     HONG KONG                           NEW YORK
+                     =========                           ========
+
+    ┌────────────────────────┐                 ┌────────────────────────┐
+    │   Mega HK Office       │                 │   VCL Datacenter       │
+    │                        │                 │                        │
+    │  ┌──────────────────┐  │                 │  ┌──────────────────┐  │
+    │  │ Your PC          │  │                 │  │ VPN1 Server      │  │
+    │  │ WireGuard Client │  │   Internet      │  │ 209.127.118.182  │  │
+    │  │ 10.101.0.40      │──┼────────────────►│  │ WireGuard Server │  │
+    │  └──────────────────┘  │   Encrypted     │  │ 10.101.0.1       │  │
+    │                        │   UDP 51820     │  └────────┬─────────┘  │
+    └────────────────────────┘                 │           │            │
+                                               │           │ Private    │
+                                               │           │ Network    │
+                                               │           ▼            │
+                                               │  ┌──────────────────┐  │
+                                               │  │ Ubuntu VM        │  │
+                                               │  │ 192.168.168.100  │  │
+                                               │  │                  │  │
+                                               │  │ ┌──────────────┐ │  │
+                                               │  │ │ Dashboard    │ │  │
+                                               │  │ │ :8080        │ │  │
+                                               │  │ └──────────────┘ │  │
+                                               │  │ ┌──────────────┐ │  │
+                                               │  │ │ TimescaleDB  │ │  │
+                                               │  │ │ :5432        │ │  │
+                                               │  │ └──────────────┘ │  │
+                                               │  └──────────────────┘  │
+                                               │                        │
+                                               │  ┌──────────────────┐  │
+                                               │  │ NY2 (MSSQL)      │  │
+                                               │  │ 192.168.168.2    │  │
+                                               │  │ Live Trading     │  │
+                                               │  └──────────────────┘  │
+                                               └────────────────────────┘
+</code></pre>
+
+<hr />
+<h2 id="appendix-c-alternative-cloudflare-tunnel-browser-only">Appendix C: Alternative - Cloudflare Tunnel (Browser Only)</h2>
+<p>If WireGuard cannot be installed (company policy restrictions), we can set up <strong>Cloudflare Tunnel</strong> as an alternative:</p>
+<h3 id="pros">Pros:</h3>
+<ul>
+<li>No software installation required</li>
+<li>Works in any browser</li>
+<li>HTTPS with valid certificate</li>
+</ul>
+<h3 id="cons">Cons:</h3>
+<ul>
+<li>Slightly higher latency</li>
+<li>Third-party involved (Cloudflare)</li>
+<li>Additional cost</li>
+</ul>
+<p><strong>To request Cloudflare Tunnel access</strong>, contact VCL IT.</p>
+<hr />
+<h2 id="appendix-d-future-dedicated-hk-instance">Appendix D: Future - Dedicated HK Instance</h2>
+<p>For ultimate performance and autonomy, a <strong>dedicated HK instance</strong> can be deployed:</p>
+<h3 id="architecture">Architecture:</h3>
+<pre class="codehilite"><code>NY (Primary)                    HK (Secondary)
+============                    ==============
+ATS-Health-Monitor    ────►     ATS-Health-Monitor
+TimescaleDB           sync      TimescaleDB (Replica)
+                      daily
+</code></pre>
+
+<h3 id="benefits">Benefits:</h3>
+<ul>
+<li>Local access (no VPN needed)</li>
+<li>Works even if NY-HK link is down</li>
+<li>Full audit trail in HK jurisdiction</li>
+</ul>
+<h3 id="implementation">Implementation:</h3>
+<p>Contact VCL for a proposal and timeline.</p>
+<hr />
+<h2 id="revision-history">Revision History</h2>
+<table>
+<thead>
+<tr>
+<th>Version</th>
+<th>Date</th>
+<th>Changes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1.0.0</td>
+<td>2025-12-10</td>
+<td>Initial customer documentation</td>
+</tr>
+</tbody>
+</table>
+</body>
+</html>

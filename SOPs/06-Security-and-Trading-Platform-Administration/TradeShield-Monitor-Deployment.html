@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>TradeShield Monitor Deployment</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 { border-bottom: 2px solid #3498db; padding-bottom: 0.3em; }
+        h2 { border-bottom: 1px solid #ecf0f1; padding-bottom: 0.2em; }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1em;
+            overflow-x: auto;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 1em 0;
+            padding-left: 1em;
+            color: #666;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 2em 0;
+            padding: 1em;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .pdf-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 8px 16px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .pdf-link:hover {
+            background-color: #c0392b;
+        }
+    </style>
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <p><a href="TradeShield-Monitor-Deployment.pdf" class="pdf-link">📄 Download PDF Version</a></p>
+    <h1 id="tradeshield-monitor-deployment-guide">TradeShield Monitor - Deployment Guide</h1>
+<h2 id="metadata">Metadata</h2>
+<p><strong>Category:</strong> Security and Trading Platform Administration
+<strong>Last Updated:</strong> 2024-11-29
+<strong>Author:</strong> System Administrator
+<strong>Version:</strong> 1.0
+<strong>Review Date:</strong> 2025-02-28
+<strong>Status:</strong> Active</p>
+<hr />
+<h2 id="purpose">Purpose</h2>
+<p>This procedure covers the deployment and operation of TradeShield Monitor, a lightweight monitoring dashboard for TradeShield Remote infrastructure. The system provides real-time monitoring, metrics visualization, and health status tracking.</p>
+<p><strong>When to Use:</strong>
+- Deploying monitoring dashboard for TradeShield Remote
+- Setting up real-time infrastructure monitoring
+- Replacing or supplementing Grafana/Prometheus
+- Creating custom monitoring solution</p>
+<hr />
+<h2 id="prerequisites">Prerequisites</h2>
+<h3 id="required-access">Required Access</h3>
+<ul>
+<li>[x] Administrative access to monitoring server</li>
+<li>[x] Network access to monitored components</li>
+<li>[x] PowerShell execution permissions</li>
+</ul>
+<h3 id="required-tools">Required Tools</h3>
+<ul>
+<li>[x] Go 1.21 or higher</li>
+<li>[x] Node.js 18+ and npm</li>
+<li>[x] PowerShell 5.1+</li>
+<li>[x] Internet access (for package downloads)</li>
+<li>[x] CGO enabled (required for DuckDB driver)</li>
+</ul>
+<h3 id="required-information">Required Information</h3>
+<ul>
+<li>[x] Component IP addresses</li>
+<li>[x] Port numbers for services</li>
+<li>[x] Health check script location</li>
+</ul>
+<p><strong>Note:</strong> The DuckDB driver requires CGO to be enabled. Ensure your Go environment has CGO support.</p>
+<hr />
+<h2 id="procedure-steps">Procedure Steps</h2>
+<h3 id="step-1-install-prerequisites">Step 1: Install Prerequisites</h3>
+<p><strong>Action:</strong>
+Install Go and Node.js if not already installed:</p>
+<p><strong>Go Installation:</strong>
+1. Download from: https://go.dev/dl/
+2. Install Go 1.21 or higher
+3. Verify installation:
+   <code>powershell
+   go version</code></p>
+<p><strong>Node.js Installation:</strong>
+1. Download from: https://nodejs.org/
+2. Install Node.js 18 LTS or higher
+3. Verify installation:
+   <code>powershell
+   node --version
+   npm --version</code></p>
+<p><strong>Expected Result:</strong>
+- Go version 1.21+ installed
+- Node.js version 18+ installed
+- Both accessible from command line</p>
+<hr />
+<h3 id="step-2-install-dependencies">Step 2: Install Dependencies</h3>
+<p><strong>Action:</strong>
+Run the installation script:</p>
+<pre class="codehilite"><code class="language-powershell">cd Scripts\06-Security-and-Trading-Platform-Administration\TradeShield-Monitor
+.\install.ps1
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- Go dependencies downloaded
+- Node.js dependencies installed
+- Database directory created
+- Installation complete message</p>
+<p><strong>Verification:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Check Go modules
+go list -m all
+
+# Check Node modules
+Test-Path frontend\node_modules
+</code></pre>
+
+<hr />
+<h3 id="step-3-configure-components-optional">Step 3: Configure Components (Optional)</h3>
+<p><strong>Action:</strong>
+Edit <code>collector.go</code> to update component IPs if different from defaults:</p>
+<pre class="codehilite"><code class="language-go">// Default IPs (modify if needed):
+chrIPs := []string{&quot;192.168.100.1&quot;, &quot;192.168.100.2&quot;}
+rustDeskVIP := &quot;192.168.100.20&quot;
+databaseIPs := []string{&quot;192.168.100.30&quot;, &quot;192.168.100.31&quot;}
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- Component IPs match your environment
+- All monitored components accessible</p>
+<hr />
+<h3 id="step-4-run-in-development-mode">Step 4: Run in Development Mode</h3>
+<p><strong>Action:</strong>
+Start the monitor in development mode:</p>
+<pre class="codehilite"><code class="language-powershell">.\run.ps1 -Mode dev
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- Backend starts on http://localhost:8080
+- Frontend starts on http://localhost:3000
+- Database initialized automatically
+- Metrics collection begins</p>
+<p><strong>Verification:</strong>
+1. Open browser to http://localhost:3000
+2. Dashboard should display
+3. Check backend logs for collection activity</p>
+<hr />
+<h3 id="step-5-build-for-production">Step 5: Build for Production</h3>
+<p><strong>Action:</strong>
+Build both backend and frontend:</p>
+<pre class="codehilite"><code class="language-powershell">.\build.ps1
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- <code>tradeshield-monitor.exe</code> created
+- Frontend built to <code>frontend/build/</code>
+- Build successful message</p>
+<p><strong>Verification:</strong></p>
+<pre class="codehilite"><code class="language-powershell">Test-Path tradeshield-monitor.exe
+Test-Path frontend\build\index.html
+</code></pre>
+
+<hr />
+<h3 id="step-6-run-in-production-mode">Step 6: Run in Production Mode</h3>
+<p><strong>Action:</strong>
+Start the monitor in production mode:</p>
+<pre class="codehilite"><code class="language-powershell">$env:ENV=&quot;production&quot;
+.\run.ps1 -Mode prod
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- Server starts on http://localhost:8080
+- Frontend served from backend
+- Single process running</p>
+<p><strong>Verification:</strong>
+1. Open browser to http://localhost:8080
+2. Dashboard should display
+3. All features working</p>
+<hr />
+<h3 id="step-7-set-up-as-windows-service-optional">Step 7: Set Up as Windows Service (Optional)</h3>
+<p><strong>Action:</strong>
+Create a scheduled task or Windows service:</p>
+<pre class="codehilite"><code class="language-powershell">$action = New-ScheduledTaskAction -Execute &quot;.\tradeshield-monitor.exe&quot; -WorkingDirectory $PWD
+$trigger = New-ScheduledTaskTrigger -AtStartup
+$settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
+Register-ScheduledTask -TaskName &quot;TradeShield-Monitor&quot; -Action $action -Trigger $trigger -Settings $settings
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- Monitor starts automatically on system boot
+- Runs in background
+- Accessible via web interface</p>
+<hr />
+<h2 id="verification">Verification</h2>
+<h3 id="how-to-verify-success">How to Verify Success</h3>
+<ol>
+<li><strong>Dashboard Access:</strong></li>
+<li>Open http://localhost:3000 (dev) or http://localhost:8080 (prod)</li>
+<li>Dashboard loads without errors</li>
+<li>
+<p>Components displayed</p>
+</li>
+<li>
+<p><strong>Metrics Collection:</strong></p>
+</li>
+<li>Check database file exists: <code>C:\TradeShield\monitor\tradeshield-monitor.db</code></li>
+<li>Review backend logs for collection activity</li>
+<li>
+<p>Metrics appear in dashboard</p>
+</li>
+<li>
+<p><strong>Health Checks:</strong></p>
+</li>
+<li>Components show status (healthy/degraded/unhealthy)</li>
+<li>Uptime percentages displayed</li>
+<li>
+<p>Last check times updating</p>
+</li>
+<li>
+<p><strong>API Endpoints:</strong></p>
+</li>
+<li>Test API: <code>curl http://localhost:8080/api/v1/dashboard/summary</code></li>
+<li>Returns JSON data</li>
+<li>No errors in response</li>
+</ol>
+<h3 id="success-criteria">Success Criteria</h3>
+<ul>
+<li>[x] Dashboard accessible via web browser</li>
+<li>[x] Metrics being collected every 30 seconds</li>
+<li>[x] Health checks running every 5 minutes</li>
+<li>[x] Database file created and growing</li>
+<li>[x] All components visible in dashboard</li>
+<li>[x] Charts displaying data</li>
+</ul>
+<hr />
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="issue-1-go-build-fails">Issue 1: Go Build Fails</h3>
+<p><strong>Symptoms:</strong>
+- <code>go build</code> command fails
+- Module errors
+- CGO errors</p>
+<p><strong>Solution:</strong>
+1. Verify Go version: <code>go version</code>
+2. Ensure CGO is enabled: <code>$env:CGO_ENABLED="1"</code>
+3. Update Go modules: <code>go mod tidy</code>
+4. Clear module cache: <code>go clean -modcache</code>
+5. Re-download: <code>go mod download</code>
+6. If DuckDB driver fails, verify C compiler is available (GCC or MinGW on Windows)</p>
+<hr />
+<h3 id="issue-2-frontend-build-fails">Issue 2: Frontend Build Fails</h3>
+<p><strong>Symptoms:</strong>
+- <code>npm run build</code> fails
+- Dependency errors</p>
+<p><strong>Solution:</strong>
+1. Clear node_modules: <code>Remove-Item -Recurse frontend\node_modules</code>
+2. Clear npm cache: <code>npm cache clean --force</code>
+3. Reinstall: <code>cd frontend &amp;&amp; npm install</code>
+4. Try build again: <code>npm run build</code></p>
+<hr />
+<h3 id="issue-3-database-errors">Issue 3: Database Errors</h3>
+<p><strong>Symptoms:</strong>
+- Database file not created
+- Permission errors
+- SQL syntax errors</p>
+<p><strong>Solution:</strong>
+1. Check directory exists: <code>Test-Path C:\TradeShield\monitor</code>
+2. Verify write permissions
+3. Create directory manually if needed
+4. Run as administrator if permission issues persist
+5. Check DuckDB driver compatibility - ensure <code>go-duckdb</code> package is properly installed
+6. Verify database file extension is <code>.duckdb</code></p>
+<hr />
+<h3 id="issue-4-no-metrics-collected">Issue 4: No Metrics Collected</h3>
+<p><strong>Symptoms:</strong>
+- Dashboard shows no data
+- Metrics not appearing
+- Collection errors in logs</p>
+<p><strong>Solution:</strong>
+1. Check backend logs for errors
+2. Verify component IPs are correct in <code>collector.go</code>
+3. Test network connectivity: <code>Test-Connection -ComputerName 192.168.100.1</code>
+4. Verify health check script is running: <code>.\Health-Check-TradeShield.ps1</code>
+5. Check database file is being written: <code>Test-Path C:\TradeShield\monitor\tradeshield-monitor.duckdb</code>
+6. Verify collection functions are not panicking (check error handling)
+7. Test individual collection functions manually</p>
+<hr />
+<h3 id="issue-5-cors-errors-in-browser">Issue 5: CORS Errors in Browser</h3>
+<p><strong>Symptoms:</strong>
+- Frontend cannot connect to API
+- CORS errors in browser console</p>
+<p><strong>Solution:</strong>
+1. Verify CORS configuration in <code>main.go</code>
+2. Check API URL in <code>frontend/src/services/api.js</code>
+3. Ensure backend is running
+4. Check firewall settings</p>
+<hr />
+<h2 id="api-usage-examples">API Usage Examples</h2>
+<h3 id="get-dashboard-summary">Get Dashboard Summary</h3>
+<pre class="codehilite"><code class="language-powershell">Invoke-RestMethod -Uri &quot;http://localhost:8080/api/v1/dashboard/summary&quot; | ConvertTo-Json
+</code></pre>
+
+<h3 id="get-component-health">Get Component Health</h3>
+<pre class="codehilite"><code class="language-powershell">Invoke-RestMethod -Uri &quot;http://localhost:8080/api/v1/health/component/CHR-192.168.100.1&quot; | ConvertTo-Json
+</code></pre>
+
+<h3 id="get-metrics-by-time-range">Get Metrics by Time Range</h3>
+<pre class="codehilite"><code class="language-powershell">$start = (Get-Date).AddHours(-1).ToString(&quot;o&quot;)
+$end = (Get-Date).ToString(&quot;o&quot;)
+Invoke-RestMethod -Uri &quot;http://localhost:8080/api/v1/metrics/range?start_time=$start&amp;end_time=$end&quot; | ConvertTo-Json
+</code></pre>
+
+<hr />
+<h2 id="related-procedures">Related Procedures</h2>
+<ul>
+<li><a href="TradeShield-Remote-Deployment.md">TradeShield Remote - Deployment Guide</a></li>
+<li><a href="TradeShield-Remote-Common-Tasks.md">TradeShield Remote - Common Tasks</a></li>
+</ul>
+<h2 id="related-scripts">Related Scripts</h2>
+<ul>
+<li><a href="../../Scripts/06-Security-and-Trading-Platform-Administration/Health-Check-TradeShield.ps1">Health-Check-TradeShield.ps1</a> - Health check script (integrated)</li>
+</ul>
+<h2 id="references">References</h2>
+<ul>
+<li><a href="https://go.dev/doc/">Go Documentation</a></li>
+<li><a href="https://gin-gonic.com/">Gin Framework</a></li>
+<li><a href="https://react.dev/">React Documentation</a></li>
+<li><a href="https://recharts.org/">Recharts Documentation</a></li>
+<li><a href="https://www.sqlite.org/docs.html">SQLite Documentation</a></li>
+</ul>
+<h2 id="change-log">Change Log</h2>
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Version</th>
+<th>Author</th>
+<th>Changes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2024-11-29</td>
+<td>1.0</td>
+<td>System Administrator</td>
+<td>Initial version</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="notes">Notes</h2>
+<p><strong>NOTE:</strong> The monitor uses SQLite-compatible database format. For DuckDB-specific features, use DuckDB CLI to access the database file.</p>
+<p><strong>TIP:</strong> Run health check script periodically to ensure accurate health status: <code>.\Health-Check-TradeShield.ps1</code></p>
+<p><strong>WARNING:</strong> Ensure firewall allows connections on ports 8080 (backend) and 3000 (frontend dev mode).</p>
+</body>
+</html>

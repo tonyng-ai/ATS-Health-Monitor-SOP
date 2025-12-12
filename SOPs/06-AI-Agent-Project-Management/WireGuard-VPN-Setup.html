@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>WireGuard VPN Setup</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 { border-bottom: 2px solid #3498db; padding-bottom: 0.3em; }
+        h2 { border-bottom: 1px solid #ecf0f1; padding-bottom: 0.2em; }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1em;
+            overflow-x: auto;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 1em 0;
+            padding-left: 1em;
+            color: #666;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 2em 0;
+            padding: 1em;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .pdf-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 8px 16px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .pdf-link:hover {
+            background-color: #c0392b;
+        }
+    </style>
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <p><a href="WireGuard-VPN-Setup.pdf" class="pdf-link">📄 Download PDF Version</a></p>
+    <h1 id="wireguard-vpn-setup-guide">WireGuard VPN Setup Guide</h1>
+<blockquote>
+<p><strong>Version</strong>: 1.0.0<br />
+<strong>Last Updated</strong>: December 7, 2025<br />
+<strong>Purpose</strong>: Secure inter-office connectivity</p>
+</blockquote>
+<hr />
+<h2 id="overview">🎯 Overview</h2>
+<p>WireGuard provides secure, high-performance VPN connectivity between all PrecisionX offices and the NY datacenter where Plane and other critical services are hosted.</p>
+<hr />
+<h2 id="network-topology">🌐 Network Topology</h2>
+<pre class="codehilite"><code>┌─────────────────────────────────────────────────────────────────────────────┐
+│                           WIREGUARD VPN MESH                                 │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│                        ┌───────────────────────┐                            │
+│                        │   🏢 NY DATACENTER    │                            │
+│                        │   (VPN Hub Server)    │                            │
+│                        │   10.100.0.1/24       │                            │
+│                        │   Public: x.x.x.x     │                            │
+│                        └───────────┬───────────┘                            │
+│                                    │                                         │
+│              ┌─────────────────────┼─────────────────────┐                  │
+│              │                     │                     │                  │
+│              ▼                     ▼                     ▼                  │
+│   ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐         │
+│   │  🏢 VANCOUVER    │  │  🏢 CHICAGO      │  │  🏢 HONG KONG    │         │
+│   │  10.100.0.10     │  │  10.100.0.20     │  │  10.100.0.30     │         │
+│   └──────────────────┘  └──────────────────┘  └──────────────────┘         │
+│              │                     │                     │                  │
+│              ▼                     ▼                     ▼                  │
+│   ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐         │
+│   │  🏢 LOS ANGELES  │  │  👤 Remote       │  │  👤 Remote       │         │
+│   │  10.100.0.11     │  │  10.100.0.100+   │  │  10.100.0.200+   │         │
+│   └──────────────────┘  └──────────────────┘  └──────────────────┘         │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+</code></pre>
+
+<hr />
+<h2 id="ip-address-allocation">📋 IP Address Allocation</h2>
+<table>
+<thead>
+<tr>
+<th>Location</th>
+<th>IP Range</th>
+<th>Gateway</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>NY Datacenter (Hub)</td>
+<td>10.100.0.1</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Vancouver Office</td>
+<td>10.100.0.10-19</td>
+<td>10.100.0.1</td>
+</tr>
+<tr>
+<td>Los Angeles Office</td>
+<td>10.100.0.20-29</td>
+<td>10.100.0.1</td>
+</tr>
+<tr>
+<td>Chicago Office</td>
+<td>10.100.0.30-39</td>
+<td>10.100.0.1</td>
+</tr>
+<tr>
+<td>Hong Kong Office</td>
+<td>10.100.0.40-49</td>
+<td>10.100.0.1</td>
+</tr>
+<tr>
+<td>Remote Workers (NA)</td>
+<td>10.100.0.100-149</td>
+<td>10.100.0.1</td>
+</tr>
+<tr>
+<td>Remote Workers (APAC)</td>
+<td>10.100.0.200-249</td>
+<td>10.100.0.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="server-setup-ny-datacenter">🖥️ Server Setup (NY Datacenter)</h2>
+<h3 id="install-wireguard">Install WireGuard</h3>
+<pre class="codehilite"><code class="language-bash"># Ubuntu 22.04
+sudo apt update
+sudo apt install wireguard wireguard-tools
+
+# Generate server keys
+wg genkey | tee /etc/wireguard/server_private.key | wg pubkey &gt; /etc/wireguard/server_public.key
+chmod 600 /etc/wireguard/server_private.key
+</code></pre>
+
+<h3 id="server-configuration">Server Configuration</h3>
+<pre class="codehilite"><code class="language-ini"># /etc/wireguard/wg0.conf
+[Interface]
+Address = 10.100.0.1/24
+ListenPort = 51820
+PrivateKey = &lt;server-private-key&gt;
+PostUp = iptables -A FORWARD -i wg0 -j ACCEPT; iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+PostDown = iptables -D FORWARD -i wg0 -j ACCEPT; iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE
+
+# ═══════════════════════════════════════════════════════
+# VANCOUVER OFFICE
+# ═══════════════════════════════════════════════════════
+[Peer]
+# Vancouver - Main Router
+PublicKey = &lt;vancouver-public-key&gt;
+AllowedIPs = 10.100.0.10/32
+PersistentKeepalive = 25
+
+# ═══════════════════════════════════════════════════════
+# LOS ANGELES OFFICE
+# ═══════════════════════════════════════════════════════
+[Peer]
+# LA - Main Router
+PublicKey = &lt;la-public-key&gt;
+AllowedIPs = 10.100.0.20/32
+PersistentKeepalive = 25
+
+# ═══════════════════════════════════════════════════════
+# CHICAGO OFFICE
+# ═══════════════════════════════════════════════════════
+[Peer]
+# Chicago - Main Router
+PublicKey = &lt;chicago-public-key&gt;
+AllowedIPs = 10.100.0.30/32
+PersistentKeepalive = 25
+
+# ═══════════════════════════════════════════════════════
+# HONG KONG OFFICE (MEGA)
+# ═══════════════════════════════════════════════════════
+[Peer]
+# Hong Kong - Main Router
+PublicKey = &lt;hongkong-public-key&gt;
+AllowedIPs = 10.100.0.40/32
+PersistentKeepalive = 25
+</code></pre>
+
+<h3 id="enable-and-start">Enable and Start</h3>
+<pre class="codehilite"><code class="language-bash"># Enable IP forwarding
+echo &quot;net.ipv4.ip_forward=1&quot; | sudo tee -a /etc/sysctl.conf
+sudo sysctl -p
+
+# Start WireGuard
+sudo systemctl enable wg-quick@wg0
+sudo systemctl start wg-quick@wg0
+
+# Check status
+sudo wg show
+</code></pre>
+
+<hr />
+<h2 id="client-setup">💻 Client Setup</h2>
+<h3 id="windows-office-routerpc">Windows (Office Router/PC)</h3>
+<ol>
+<li>Download WireGuard from https://www.wireguard.com/install/</li>
+<li>Create new tunnel with this config:</li>
+</ol>
+<pre class="codehilite"><code class="language-ini"># Vancouver Office Example
+[Interface]
+PrivateKey = &lt;client-private-key&gt;
+Address = 10.100.0.10/32
+DNS = 1.1.1.1
+
+[Peer]
+PublicKey = &lt;server-public-key&gt;
+Endpoint = ny-datacenter.company.com:51820
+AllowedIPs = 10.100.0.0/24
+PersistentKeepalive = 25
+</code></pre>
+
+<h3 id="linuxmac">Linux/Mac</h3>
+<pre class="codehilite"><code class="language-bash"># Install
+# Mac: brew install wireguard-tools
+# Linux: sudo apt install wireguard
+
+# Create config
+sudo nano /etc/wireguard/wg0.conf
+# (paste config above)
+
+# Connect
+sudo wg-quick up wg0
+
+# Disconnect
+sudo wg-quick down wg0
+</code></pre>
+
+<hr />
+<h2 id="security-best-practices">🔒 Security Best Practices</h2>
+<h3 id="firewall-rules-server">Firewall Rules (Server)</h3>
+<pre class="codehilite"><code class="language-bash"># Allow WireGuard port
+sudo ufw allow 51820/udp
+
+# Allow forwarded traffic from VPN
+sudo ufw allow in on wg0
+
+# Enable firewall
+sudo ufw enable
+</code></pre>
+
+<h3 id="key-rotation-schedule">Key Rotation Schedule</h3>
+<table>
+<thead>
+<tr>
+<th>Action</th>
+<th>Frequency</th>
+<th>Responsibility</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Server key rotation</td>
+<td>Annually</td>
+<td>DevOps</td>
+</tr>
+<tr>
+<td>Client key rotation</td>
+<td>Quarterly</td>
+<td>IT Admin</td>
+</tr>
+<tr>
+<td>Compromised key revocation</td>
+<td>Immediately</td>
+<td>Security Team</td>
+</tr>
+</tbody>
+</table>
+<h3 id="monitoring">Monitoring</h3>
+<pre class="codehilite"><code class="language-bash"># Check connected peers
+sudo wg show wg0
+
+# Output example:
+# interface: wg0
+#   public key: xxxxx
+#   listening port: 51820
+#
+# peer: &lt;vancouver-key&gt;
+#   endpoint: 1.2.3.4:54321
+#   allowed ips: 10.100.0.10/32
+#   latest handshake: 5 seconds ago
+#   transfer: 1.23 GiB received, 456.78 MiB sent
+</code></pre>
+
+<hr />
+<h2 id="testing-connectivity">🧪 Testing Connectivity</h2>
+<h3 id="basic-tests">Basic Tests</h3>
+<pre class="codehilite"><code class="language-bash"># From any client, ping the server
+ping 10.100.0.1
+
+# Ping another office
+ping 10.100.0.40  # Hong Kong
+
+# Test Plane access
+curl http://10.100.0.1:3000/health
+</code></pre>
+
+<h3 id="latency-test">Latency Test</h3>
+<pre class="codehilite"><code class="language-bash"># Test latency to all offices
+for ip in 10.100.0.1 10.100.0.10 10.100.0.20 10.100.0.30 10.100.0.40; do
+    echo &quot;Testing $ip:&quot;
+    ping -c 3 $ip | tail -1
+done
+</code></pre>
+
+<hr />
+<h2 id="troubleshooting">🚨 Troubleshooting</h2>
+<table>
+<thead>
+<tr>
+<th>Issue</th>
+<th>Cause</th>
+<th>Solution</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Connection timeout</td>
+<td>Firewall blocking UDP 51820</td>
+<td>Check UFW/iptables</td>
+</tr>
+<tr>
+<td>No handshake</td>
+<td>Wrong public key</td>
+<td>Regenerate and exchange keys</td>
+</tr>
+<tr>
+<td>Can't reach LAN</td>
+<td>IP forwarding disabled</td>
+<td>Enable sysctl forwarding</td>
+</tr>
+<tr>
+<td>Slow transfer</td>
+<td>MTU issues</td>
+<td>Set <code>MTU = 1420</code> in config</td>
+</tr>
+</tbody>
+</table>
+<h3 id="debug-commands">Debug Commands</h3>
+<pre class="codehilite"><code class="language-bash"># View WireGuard logs
+sudo journalctl -u wg-quick@wg0 -f
+
+# Check interface
+ip addr show wg0
+
+# Test routing
+ip route get 10.100.0.40
+</code></pre>
+
+<hr />
+<h2 id="related-documents">📚 Related Documents</h2>
+<ul>
+<li><a href="Master-Plan-Global-Collaboration.md">Master Plan</a></li>
+<li><a href="Plane-Deployment-Guide.md">Plane Deployment</a></li>
+<li><a href="../../Scripts/06-AI-Agent-Project-Management/wireguard/">Scripts</a></li>
+</ul>
+</body>
+</html>

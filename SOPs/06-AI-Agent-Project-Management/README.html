@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>README</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 { border-bottom: 2px solid #3498db; padding-bottom: 0.3em; }
+        h2 { border-bottom: 1px solid #ecf0f1; padding-bottom: 0.2em; }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1em;
+            overflow-x: auto;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 1em 0;
+            padding-left: 1em;
+            color: #666;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 2em 0;
+            padding: 1em;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .pdf-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 8px 16px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .pdf-link:hover {
+            background-color: #c0392b;
+        }
+    </style>
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <p><a href="README.pdf" class="pdf-link">📄 Download PDF Version</a></p>
+    <h1 id="06-ai-agent-project-management">06 - AI Agent Project Management</h1>
+<blockquote>
+<p><strong>Purpose</strong>: Documentation for AI-driven project management, team collaboration, and infrastructure<br />
+<strong>Related Scripts</strong>: <code>Scripts/06-AI-Agent-Project-Management/</code><br />
+<strong>Related Context</strong>: <code>AI-Agent-Context/</code></p>
+</blockquote>
+<hr />
+<h2 id="documentation-index">📚 Documentation Index</h2>
+<table>
+<thead>
+<tr>
+<th>Document</th>
+<th>Description</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="Master-Plan-Global-Collaboration.md">Master Plan</a></td>
+<td>Global team collaboration strategy</td>
+<td>✅ Active</td>
+</tr>
+<tr>
+<td><a href="Plane-Deployment-Guide.md">Plane Deployment Guide</a></td>
+<td>Self-hosted Plane setup</td>
+<td>✅ Active</td>
+</tr>
+<tr>
+<td><a href="WireGuard-VPN-Setup.md">WireGuard VPN Setup</a></td>
+<td>Secure VPN for team access</td>
+<td>✅ Active</td>
+</tr>
+<tr>
+<td><a href="AI-PM-Automation.md">AI PM Automation</a></td>
+<td>AI Project Manager scripts</td>
+<td>🔄 Phase 4</td>
+</tr>
+<tr>
+<td><a href="Team-Onboarding.md">Team Onboarding</a></td>
+<td>How to onboard new team members</td>
+<td>📋 Planned</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="architecture-overview">🏗️ Architecture Overview</h2>
+<pre class="codehilite"><code>┌─────────────────────────────────────────────────────────────────┐
+│                    COLLABORATION SYSTEM                          │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐             │
+│  │   GitHub    │  │    Plane    │  │  Telegram   │             │
+│  │   (Code)    │  │  (Issues)   │  │  (Alerts)   │             │
+│  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘             │
+│         └────────────────┼────────────────┘                     │
+│                          │                                       │
+│                          ▼                                       │
+│              ┌───────────────────────┐                          │
+│              │   🤖 AI PM Service    │                          │
+│              │   (Always-On)         │                          │
+│              └───────────────────────┘                          │
+│                          │                                       │
+│         ┌────────────────┼────────────────┐                     │
+│         ▼                ▼                ▼                     │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐             │
+│  │  Vancouver  │  │   Chicago   │  │  Hong Kong  │             │
+│  │     LA      │  │             │  │    Mega     │             │
+│  │ PrecisionX  │  │ PrecisionX  │  │   Office    │             │
+│  └─────────────┘  └─────────────┘  └─────────────┘             │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+</code></pre>
+
+<hr />
+<h2 id="implementation-phases">📋 Implementation Phases</h2>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Name</th>
+<th>Status</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Foundation</td>
+<td>🔄 In Progress</td>
+<td>Setup Plane, basic integrations</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Integration</td>
+<td>⏳ Pending</td>
+<td>Test workflows, AI agent testing</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Cloud Migration</td>
+<td>⏳ Pending</td>
+<td>Move to Plane Cloud</td>
+</tr>
+<tr>
+<td>4</td>
+<td>AI PM Activation</td>
+<td>⏳ Pending</td>
+<td>Deploy AI monitoring scripts</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="related-resources">🔗 Related Resources</h2>
+<ul>
+<li><strong>Scripts</strong>: <a href="../../Scripts/06-AI-Agent-Project-Management/">Scripts/06-AI-Agent-Project-Management/</a></li>
+<li><strong>AI Context</strong>: <a href="../../AI-Agent-Context/">AI-Agent-Context/</a></li>
+<li><strong>ATS Monitor</strong>: <a href="../05-Production-ATS-Administration/">SOPs/05-Production-ATS-Administration/</a></li>
+</ul>
+</body>
+</html>

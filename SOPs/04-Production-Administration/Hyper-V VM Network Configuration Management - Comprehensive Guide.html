@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Hyper V VM Network Configuration Management   Comprehensive Guide</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 { border-bottom: 2px solid #3498db; padding-bottom: 0.3em; }
+        h2 { border-bottom: 1px solid #ecf0f1; padding-bottom: 0.2em; }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1em;
+            overflow-x: auto;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 1em 0;
+            padding-left: 1em;
+            color: #666;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 2em 0;
+            padding: 1em;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .pdf-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 8px 16px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .pdf-link:hover {
+            background-color: #c0392b;
+        }
+    </style>
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <p><a href="Hyper-V VM Network Configuration Management - Comprehensive Guide.pdf" class="pdf-link">📄 Download PDF Version</a></p>
+    <h1 id="hyper-v-vm-network-configuration-management-comprehensive-guide">Hyper-V VM Network Configuration Management - Comprehensive Guide</h1>
+<h2 id="metadata">Metadata</h2>
+<p><strong>Category:</strong> Production Administration
+<strong>Last Updated:</strong> 2025-12-26
+<strong>Author:</strong> Network Operations Team
+<strong>Version:</strong> 3.0
+<strong>Review Date:</strong> 2026-03-26
+<strong>Status:</strong> Active</p>
+<hr />
+<h2 id="purpose">Purpose</h2>
+<p>This comprehensive procedure provides standardized procedures for deploying, configuring, troubleshooting, and maintaining network routing configurations across multiple Hyper-V VMs. It consolidates best practices, deployment procedures, troubleshooting guides, and operational maintenance into a single reference document.</p>
+<p><strong>When to Use:</strong></p>
+<ul>
+<li>Deploying network configuration to new Hyper-V VMs</li>
+<li>Troubleshooting slow internet/external network connectivity</li>
+<li>Windows Server 2019/2022 Hyper-V VMs with multiple network adapters</li>
+<li>VMs with External, Internal, and WireGuard/VPN adapters</li>
+<li>Environments requiring consistent network configuration across multiple machines</li>
+<li>Scenarios where Windows NLA (Network Location Awareness) service interferes with static routing</li>
+<li>Network routing conflicts causing connectivity issues</li>
+<li>Need for automated network configuration persistence after reboots</li>
+<li>Implementing network configuration best practices</li>
+<li>Recovering from network configuration failures</li>
+<li>Performing network health checks and monitoring</li>
+</ul>
+<h3 id="procedure-overview">Procedure Overview</h3>
+<pre class="codehilite"><code class="language-mermaid">flowchart TD
+    Start([Network Configuration Task]) --&gt; Assess{Assess Current State}
+    Assess --&gt;|New Machine| QuickStart[Quick Start: Health Check]
+    Assess --&gt;|Existing Issue| Diagnose[Diagnostic Framework]
+    Assess --&gt;|Deploy Configuration| Deploy[Deploy Script &amp; Config]
+
+    QuickStart --&gt; CheckRedFlags{Red Flags Found?}
+    CheckRedFlags --&gt;|Yes| EmergencyFix[Emergency Fix Commands]
+    CheckRedFlags --&gt;|No| Deploy
+
+    Diagnose --&gt; Troubleshoot[Troubleshooting Framework]
+    Troubleshoot --&gt; Deploy
+
+    Deploy --&gt; Customize[Customize Configuration File]
+    Customize --&gt; Execute[Execute Script]
+    Execute --&gt; Verify{Verify Configuration}
+    Verify --&gt;|Success| CreateTask[Create Scheduled Task]
+    Verify --&gt;|Failed| Troubleshoot
+    CreateTask --&gt; Test[Test After Reboot]
+    Test --&gt;|Success| Monitor[Monitor &amp; Maintain]
+    Test --&gt;|Failed| Troubleshoot
+
+    EmergencyFix --&gt; Verify
+    Monitor --&gt; End([Configuration Active &amp; Stable])
+
+    style Start fill:#90EE90
+    style End fill:#90EE90
+    style EmergencyFix fill:#FFB6C1
+    style Troubleshoot fill:#FFD700
+    style Verify fill:#87CEEB
+</code></pre>
+
+<hr />
+<h2 id="prerequisites">Prerequisites</h2>
+<h3 id="required-access">Required Access</h3>
+<ul>
+<li>[ ] Administrator privileges on target Hyper-V VMs</li>
+<li>[ ] Access to VM network configuration</li>
+<li>[ ] Access to Hyper-V Manager (if host-level changes needed)</li>
+<li>[ ] Read/write access to <code>C:\Scripts</code> directory</li>
+<li>[ ] PowerShell execution policy allowing script execution</li>
+<li>[ ] Network configuration permissions</li>
+</ul>
+<h3 id="required-tools">Required Tools</h3>
+<ul>
+<li>[ ] PowerShell 5.0 or later (Administrative)</li>
+<li>[ ] Windows Server 2019/2022 or Windows 10/11</li>
+<li>[ ] Network configuration script: <code>C:\Scripts\HV-Network-Fix.ps1</code></li>
+<li>[ ] Hyper-V Manager (for host-level checks)</li>
+<li>[ ] Text editor for INI file configuration (Notepad, VS Code, etc.)</li>
+</ul>
+<h3 id="required-information">Required Information</h3>
+<ul>
+<li>[ ] External network adapter name/description</li>
+<li>[ ] Internal network adapter name/description</li>
+<li>[ ] External gateway IP address (e.g., <code>38.154.238.153</code>)</li>
+<li>[ ] External interface IP address (e.g., <code>38.154.238.155</code>)</li>
+<li>[ ] Internal network subnets and subnet masks</li>
+<li>[ ] WireGuard VPN routes (if applicable)</li>
+<li>[ ] Problematic routes to remove (competing gateways)</li>
+<li>[ ] VM name (for host-level operations)</li>
+</ul>
+<h3 id="pre-conditions">Pre-Conditions</h3>
+<ul>
+<li>[ ] Target VM has multiple network adapters configured</li>
+<li>[ ] Basic network connectivity exists (even if problematic)</li>
+<li>[ ] Administrative PowerShell session is available</li>
+<li>[ ] Script file is accessible on the target VM</li>
+<li>[ ] Network topology is documented</li>
+<li>[ ] Symptoms indicate routing/metric issues rather than physical network problems</li>
+</ul>
+<h3 id="file-structure">File Structure</h3>
+<pre class="codehilite"><code class="language-text">C:\Scripts\
+├── HV-Network-Fix.ps1              # Main PowerShell script
+├── HV-Network-Config.ini           # Default configuration template
+├── HV-Network-Config-Machine1.ini  # Machine-specific configuration (optional)
+├── HV-Network-Config-Machine2.ini  # Machine-specific configuration (optional)
+├── HV-Network-Fix.log              # Execution logs
+└── HV-Network-Fix.json             # Configuration backup
+</code></pre>
+
+<hr />
+<h2 id="network-architecture-principles">Network Architecture Principles</h2>
+<h3 id="1-single-responsibility-per-adapter">1. Single Responsibility per Adapter</h3>
+<p><strong>CORRECT Configuration:</strong></p>
+<pre class="codehilite"><code class="language-text">- External Adapter: Internet traffic ONLY (with gateway)
+- Internal Adapter: Local network ONLY (no gateway)
+- VPN Adapter: Specific routes ONLY (no default gateway)
+</code></pre>
+
+<p><strong>AVOID:</strong></p>
+<ul>
+<li>Multiple adapters with default gateways</li>
+<li>Internal adapters configured with gateways</li>
+<li>VPN adapters handling general internet</li>
+</ul>
+<h3 id="2-clear-traffic-separation">2. Clear Traffic Separation</h3>
+<pre class="codehilite"><code class="language-powershell"># Internet-bound traffic
+# Source: External IP → Gateway: External Gateway
+
+# Local network traffic
+# Source: Internal IP → Destination: Local subnet (direct)
+
+# VPN-specific traffic
+# Source: VPN IP → Gateway: VPN Gateway (specific routes only)
+</code></pre>
+
+<h3 id="3-persistent-configuration">3. Persistent Configuration</h3>
+<pre class="codehilite"><code class="language-powershell"># Always use -p flag for persistent routes
+route -p add [network] mask [mask] [gateway] metric [value]
+
+# Verify persistence
+route print | findstr &quot;Persistent Routes&quot;
+</code></pre>
+
+<hr />
+<h2 id="quick-start-essential-health-check">Quick Start: Essential Health Check</h2>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Run these commands on any new Windows Server
+route print | findstr &quot;0.0.0.0&quot;
+Get-NetIPConfiguration | Where-Object {$_.InterfaceDescription -like &quot;*Hyper-V*&quot;}
+Test-NetConnection 8.8.8.8 -InformationLevel Detailed
+</code></pre>
+
+<p><strong>Expected Result:</strong></p>
+<ul>
+<li>Single default route (0.0.0.0) via correct gateway</li>
+<li>Internal adapters show no default gateway</li>
+<li>Internet connectivity test succeeds</li>
+</ul>
+<h3 id="step-1-identify-red-flags">Step 1: Identify Red Flags</h3>
+<p><strong>Red Flags - Immediate Fix Required:</strong></p>
+<ul>
+<li>Multiple 0.0.0.0 routes in routing table</li>
+<li>Internal adapters showing default gateways</li>
+<li>Intermittent internet/API connectivity</li>
+<li>Applications randomly losing connection</li>
+<li>Slow file transfers to/from internet while internal network is normal</li>
+</ul>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Check for multiple default routes
+$defaultRoutes = route print | Select-String &quot;0.0.0.0&quot;
+if (($defaultRoutes | Measure-Object).Count -gt 1) {
+    Write-Host &quot;[WARNING] Multiple default routes detected!&quot; -ForegroundColor Yellow
+}
+
+# Check for gateways on internal adapters
+Get-NetIPConfiguration | Where-Object {
+    $_.InterfaceDescription -like &quot;*Hyper-V*&quot; -and
+    $_.IPv4DefaultGateway -ne $null
+} | ForEach-Object {
+    Write-Host &quot;[WARNING] Internal adapter has gateway: $($_.InterfaceAlias)&quot; -ForegroundColor Yellow
+}
+</code></pre>
+
+<p><strong>Expected Result:</strong></p>
+<ul>
+<li>Red flags identified and documented</li>
+<li>Action plan created for remediation</li>
+</ul>
+<hr />
+<h2 id="emergency-fix-procedures">Emergency Fix Procedures</h2>
+<h3 id="emergency-fix-commands-quick-resolution">Emergency Fix Commands (Quick Resolution)</h3>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Remove competing default routes (replace gateway IP as needed)
+route delete 0.0.0.0 mask 0.0.0.0 192.168.10.1
+route -p delete 0.0.0.0 mask 0.0.0.0 192.168.10.1
+
+# Set correct persistent route (replace gateway IP as needed)
+route -p add 0.0.0.0 mask 0.0.0.0 209.127.116.85 metric 10
+
+# Verify single default route
+route print | findstr &quot;0.0.0.0&quot;
+</code></pre>
+
+<p><strong>Expected Result:</strong></p>
+<ul>
+<li>Competing routes removed</li>
+<li>Correct persistent route configured</li>
+<li>Internet connectivity restored</li>
+</ul>
+<h3 id="manual-gateway-removal-gui-method">Manual Gateway Removal (GUI Method)</h3>
+<p><strong>Action:</strong></p>
+<ol>
+<li>Open <strong>Network Connections</strong></li>
+<li>Right-click <strong>Internal Adapter</strong> → <strong>Properties</strong></li>
+<li>Select <strong>Internet Protocol Version 4 (TCP/IPv4)</strong> → <strong>Properties</strong></li>
+<li>Click <strong>Advanced</strong></li>
+<li>In <strong>Default gateways</strong> section, ensure it is <strong>EMPTY</strong></li>
+<li>Click <strong>OK</strong> to save</li>
+<li>Only IP address and Subnet Mask should be configured on Internal adapter</li>
+</ol>
+<p><strong>Expected Result:</strong></p>
+<ul>
+<li>Internal adapter has no gateway configured</li>
+<li>Only External adapter has gateway</li>
+</ul>
+<hr />
+<h2 id="standard-deployment-procedures">Standard Deployment Procedures</h2>
+<h3 id="step-1-prepare-target-machine">Step 1: Prepare Target Machine</h3>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Create scripts directory
+New-Item -ItemType Directory -Path &quot;C:\Scripts&quot; -Force
+
+# Set execution policy (one-time, if needed)
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope LocalMachine
+</code></pre>
+
+<p><strong>Expected Result:</strong></p>
+<ul>
+<li><code>C:\Scripts</code> directory exists</li>
+<li>PowerShell execution policy allows script execution</li>
+</ul>
+<hr />
+<h3 id="step-2-deploy-script-files">Step 2: Deploy Script Files</h3>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Copy main script to target machine
+Copy-Item &quot;HV-Network-Fix.ps1&quot; &quot;C:\Scripts\&quot;
+</code></pre>
+
+<p><strong>Expected Result:</strong></p>
+<ul>
+<li>Script file exists at <code>C:\Scripts\HV-Network-Fix.ps1</code></li>
+<li>Script is accessible and executable</li>
+</ul>
+<hr />
+<h3 id="step-3-create-or-customize-configuration-file">Step 3: Create or Customize Configuration File</h3>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Option 1: Run script to auto-create default INI file
+C:\Scripts\HV-Network-Fix.ps1
+
+# Option 2: Manually create/edit configuration file
+notepad C:\Scripts\HV-Network-Config.ini
+</code></pre>
+
+<p><strong>INI File Structure:</strong></p>
+<pre class="codehilite"><code class="language-ini">; Hyper-V Network Configuration File
+; Comments start with ; or #
+
+[General]
+; External network configuration
+ExternalGateway=38.154.238.153
+ExternalInterfaceIP=38.154.238.155
+ScriptBackupPath=C:\Scripts\HV-Network-Fix.json
+ScriptLogPath=C:\Scripts\HV-Network-Fix.log
+
+[InternalNetworks]
+; Format: Network=SubnetMask
+; Internal networks that should not use default gateway
+; Remove 192.168.10.0 if there's no device at 192.168.10.1
+10.108.0.0=255.255.255.0
+
+[WireGuardRoutes]
+; Networks that should route through WireGuard VPN
+; Format: Network=SubnetMask
+;10.8.0.0=255.255.255.0
+
+[ProblematicRoutes]
+; Routes to remove (usually competing default gateways)
+; Format: Network=SubnetMask
+; Note: Gateway must be specified in script defaults for default routes
+0.0.0.0=0.0.0.0
+</code></pre>
+
+<p><strong>Configuration Sections Explained:</strong></p>
+<p><strong>General Section:</strong></p>
+<ul>
+<li><code>ExternalGateway</code>: Default gateway for internet traffic</li>
+<li><code>ExternalInterfaceIP</code>: IP address of the external network adapter</li>
+<li><code>ScriptBackupPath</code>: Location for configuration backups</li>
+<li><code>ScriptLogPath</code>: Location for execution logs</li>
+</ul>
+<p><strong>InternalNetworks Section:</strong></p>
+<ul>
+<li>Networks that should NOT use default gateway</li>
+<li>Format: <code>Network=SubnetMask</code></li>
+<li>These adapters will be configured without gateways</li>
+</ul>
+<p><strong>WireGuardRoutes Section:</strong></p>
+<ul>
+<li>Networks that should route through VPN (split tunneling)</li>
+<li>Format: <code>Network=SubnetMask</code></li>
+<li>Optional section</li>
+</ul>
+<p><strong>ProblematicRoutes Section:</strong></p>
+<ul>
+<li>Routes to automatically remove</li>
+<li>Typically competing default gateways</li>
+<li><strong>Note:</strong> For default routes (0.0.0.0/0), gateway information must be specified in the script's default configuration, as the INI format does not support gateway specification for problematic routes.</li>
+</ul>
+<p><strong>Expected Result:</strong></p>
+<ul>
+<li>Configuration file exists at <code>C:\Scripts\HV-Network-Config.ini</code></li>
+<li>All required values are configured correctly</li>
+<li>File syntax is valid</li>
+</ul>
+<hr />
+<h3 id="step-4-execute-initial-configuration">Step 4: Execute Initial Configuration</h3>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Run with default configuration file
+C:\Scripts\HV-Network-Fix.ps1
+
+# Or specify custom config file
+C:\Scripts\HV-Network-Fix.ps1 -ConfigFile &quot;C:\Scripts\HV-Network-Config-MachineA.ini&quot;
+</code></pre>
+
+<p><strong>Expected Result:</strong></p>
+<ul>
+<li>Script executes without errors</li>
+<li>Prerequisites are checked and validated</li>
+<li>Current configuration is backed up</li>
+<li>Problematic routes are removed</li>
+<li>Network adapters are configured correctly</li>
+<li>Default route is configured via external gateway</li>
+<li>WireGuard optimization is applied (if applicable)</li>
+<li>Connectivity tests pass</li>
+<li>Scheduled task is created for persistence</li>
+</ul>
+<hr />
+<h3 id="step-5-verify-configuration">Step 5: Verify Configuration</h3>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Check routing table
+route print | findstr &quot;0.0.0.0&quot;
+
+# Verify network adapter configuration
+Get-NetIPConfiguration
+
+# Test internet connectivity
+Test-NetConnection 8.8.8.8 -InformationLevel Detailed
+
+# Verify scheduled task
+Get-ScheduledTask -TaskName &quot;Hyper-V Network Configuration Fix&quot; | Format-List
+</code></pre>
+
+<p><strong>Expected Result:</strong></p>
+<ul>
+<li>Single default route via correct external gateway</li>
+<li>Internal adapters have no default gateway</li>
+<li>Internet connectivity is working</li>
+<li>Internal networks are accessible</li>
+<li>Scheduled task exists and is enabled</li>
+</ul>
+<hr />
+<h3 id="step-6-test-after-reboot">Step 6: Test After Reboot</h3>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Reboot the VM
+Restart-Computer -Force
+
+# After reboot, verify configuration persists
+route print | findstr &quot;0.0.0.0&quot;
+Get-NetIPConfiguration
+Test-NetConnection 8.8.8.8 -InformationLevel Quiet
+</code></pre>
+
+<p><strong>Expected Result:</strong></p>
+<ul>
+<li>Network configuration persists after reboot</li>
+<li>Routing table matches expected configuration</li>
+<li>Connectivity is maintained</li>
+<li>Scheduled task executed successfully (check Event Viewer)</li>
+</ul>
+<hr />
+<h2 id="routing-table-analysis-optimal-configuration">Routing Table Analysis - Optimal Configuration</h2>
+<h3 id="whats-correct">✅ What's Correct</h3>
+<p><strong>✅ Single Active Default Route:</strong></p>
+<pre class="codehilite"><code class="language-text">0.0.0.0 via 38.154.238.153 (metric 20)
+</code></pre>
+
+<ul>
+<li>Using External NIC: <code>38.154.238.155</code></li>
+<li>This is the route currently being used for internet traffic</li>
+</ul>
+<p><strong>✅ Persistent Route Configured:</strong></p>
+<pre class="codehilite"><code class="language-text">0.0.0.0 via 38.154.238.153 (metric 10)
+</code></pre>
+
+<ul>
+<li>This ensures route survives reboots</li>
+<li>Lower metric (10) ensures it becomes active after reboot</li>
+</ul>
+<p><strong>✅ No Competing Gateways:</strong></p>
+<ul>
+<li>Only one gateway for internet traffic</li>
+<li>Internal adapters have no default gateway configured</li>
+<li>WireGuard adapter has high metric (50) to prevent general internet routing</li>
+</ul>
+<h3 id="understanding-the-two-routes">🔍 Understanding the Two Routes</h3>
+<p><strong>Normal Windows Behavior:</strong></p>
+<pre class="codehilite"><code class="language-text">Active:   0.0.0.0 via 38.154.238.153 metric 20  (currently used)
+Persistent: 0.0.0.0 via 38.154.238.153 metric 10 (backup for reboots)
+</code></pre>
+
+<p><strong>This is NORMAL and CORRECT behavior:</strong> Windows shows both the active route and the persistent route definition. The active route (metric 20) is what's currently being used. The persistent route (metric 10) is stored in the routing table and will become active after reboot.</p>
+<p><strong>Why Two Routes?</strong></p>
+<ul>
+<li><strong>Active Route (metric 20):</strong> The route currently in use by Windows</li>
+<li><strong>Persistent Route (metric 10):</strong> The route stored in the routing table that will be active after reboot</li>
+<li>Both pointing to the same gateway (<code>38.154.238.153</code>) is correct</li>
+<li>The script may show a warning about this, but it's a false positive (see Issue 7 in Troubleshooting)</li>
+</ul>
+<h3 id="validation-commands-all-green">🚀 Validation Commands - All Green</h3>
+<p><strong>1. Test Internet Connectivity:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Test internet connectivity
+Test-NetConnection 8.8.8.8 -InformationLevel Detailed
+</code></pre>
+
+<p><strong>Expected Result:</strong></p>
+<ul>
+<li>Ping succeeds</li>
+<li>Source address should be your external interface IP (<code>38.154.238.155</code>)</li>
+<li>Interface alias should be your external adapter</li>
+</ul>
+<p><strong>2. Test Traffic Routing Path:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Test that traffic uses correct interface
+tracert 8.8.8.8 | Select-Object -First 3
+</code></pre>
+
+<p><strong>Expected Result:</strong></p>
+<ul>
+<li>First hop should be your external gateway (<code>38.154.238.153</code>)</li>
+<li>Traffic should not route through internal adapters</li>
+</ul>
+<p><strong>3. Verify Internal Adapters Have No Gateway:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Verify no gateways on internal adapters
+Get-NetIPConfiguration | Where-Object {$_.InterfaceDescription -like &quot;*Hyper-V*&quot;} |
+    Select-Object InterfaceDescription, IPv4Address, IPv4DefaultGateway
+</code></pre>
+
+<p><strong>Expected Result:</strong></p>
+<ul>
+<li>External adapter: Should show gateway <code>38.154.238.153</code></li>
+<li>Internal adapters: <code>IPv4DefaultGateway</code> should be empty/null</li>
+<li>WireGuard adapter: <code>IPv4DefaultGateway</code> should be empty/null</li>
+</ul>
+<p><strong>4. Check WireGuard Metric (Should Be High):</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Check WireGuard metric (should be high)
+Get-NetIPInterface | Where-Object {$_.InterfaceAlias -like &quot;*WireGuard*&quot;} |
+    Select-Object InterfaceAlias, InterfaceMetric
+</code></pre>
+
+<p><strong>Expected Result:</strong></p>
+<ul>
+<li>WireGuard adapter should have <code>InterfaceMetric</code> of 50</li>
+<li>This prevents WireGuard from being used for general internet traffic</li>
+<li>Only specific WireGuard routes (if configured) will use this adapter</li>
+</ul>
+<p><strong>5. Verify Routing Table:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Check routing table for default routes
+route print | findstr &quot;0.0.0.0&quot;
+</code></pre>
+
+<p><strong>Expected Result:</strong></p>
+<ul>
+<li>Should show both active and persistent routes pointing to <code>38.154.238.153</code></li>
+<li>No other default routes via different gateways</li>
+<li>Both routes should have the same gateway (this is correct)</li>
+</ul>
+<hr />
+<h2 id="verification">Verification</h2>
+<h3 id="how-to-verify-success">How to Verify Success</h3>
+<ol>
+<li><strong>Routing Table Verification:</strong></li>
+</ol>
+<p><code>powershell
+   route print | findstr "0.0.0.0"</code></p>
+<ul>
+<li>Should show exactly ONE default route</li>
+<li>
+<p>Route should point to External adapter gateway</p>
+</li>
+<li>
+<p><strong>Interface Metrics Verification:</strong></p>
+</li>
+</ul>
+<p><code>powershell
+   Get-NetIPInterface | Where-Object {$_.InterfaceAlias -like "*Hyper-V*"} |
+       Select-Object InterfaceAlias, InterfaceMetric</code></p>
+<ul>
+<li>External adapter metric ≤ 20</li>
+<li>
+<p>Internal adapter metric ≥ 50</p>
+</li>
+<li>
+<p><strong>Performance Testing:</strong></p>
+</li>
+</ul>
+<p><code>powershell
+   Test-NetConnection 8.8.8.8 -InformationLevel Detailed</code></p>
+<ul>
+<li>Latency &lt; 50ms</li>
+<li>No packet loss</li>
+<li>
+<p>Successful connection</p>
+</li>
+<li>
+<p><strong>Scheduled Task Verification:</strong></p>
+</li>
+</ul>
+<p><code>powershell
+   Get-ScheduledTask -TaskName "Hyper-V Network Configuration Fix" | Select-Object TaskName, State, LastRunTime</code></p>
+<ul>
+<li>Task should be in "Ready" state</li>
+<li>
+<p>Last run time should be recent (after reboot)</p>
+</li>
+<li>
+<p><strong>Log File Verification:</strong></p>
+</li>
+</ul>
+<p><code>powershell
+   Get-Content "C:\Scripts\HV-Network-Fix.log" -Tail 20</code></p>
+<ul>
+<li>Should show successful execution</li>
+<li>No error messages</li>
+</ul>
+<h3 id="success-criteria">Success Criteria</h3>
+<ul>
+<li>[ ] Single default route via External NIC gateway</li>
+<li>[ ] External adapter metric ≤ 20</li>
+<li>[ ] Internal adapter has no gateway configured</li>
+<li>[ ] Ping tests show &lt; 50ms latency to internet</li>
+<li>[ ] DNS resolution completes in &lt; 100ms</li>
+<li>[ ] No packet loss in sustained ping tests</li>
+<li>[ ] HTTP/HTTPS connections work normally</li>
+<li>[ ] File transfers to internet perform at expected speeds</li>
+<li>[ ] Scheduled task created and enabled</li>
+<li>[ ] Configuration backup created successfully</li>
+<li>[ ] No errors in execution log</li>
+<li>[ ] Configuration persists after reboot</li>
+<li>[ ] WireGuard split tunneling working (if configured)</li>
+</ul>
+<hr />
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="common-issues">Common Issues</h3>
+<h4 id="issue-1-multiple-default-routes-persist">Issue 1: Multiple Default Routes Persist</h4>
+<p><strong>Symptoms:</strong></p>
+<ul>
+<li><code>route print</code> still shows multiple 0.0.0.0 routes after removal</li>
+<li>Routes reappear after reboot</li>
+</ul>
+<p><strong>Solution:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Remove all default routes
+Get-NetRoute -DestinationPrefix &quot;0.0.0.0/0&quot; | Remove-NetRoute -Confirm:$false
+
+# Add correct route
+$externalAdapter = Get-NetAdapter | Where-Object {
+    $_.InterfaceDescription -like &quot;*Hyper-V Network Adapter&quot; -and $_.Status -eq &quot;Up&quot;
+}
+$externalGateway = (Get-NetIPConfiguration -InterfaceIndex $externalAdapter.ifIndex).IPv4DefaultGateway.NextHop
+route -p add 0.0.0.0 mask 0.0.0.0 $externalGateway metric 10 if $externalAdapter.ifIndex
+</code></pre>
+
+<p><strong>Prevention:</strong></p>
+<ul>
+<li>Configure Internal adapter without gateway during VM provisioning</li>
+<li>Document network configuration standards</li>
+</ul>
+<hr />
+<h4 id="issue-2-metrics-reset-after-reboot">Issue 2: Metrics Reset After Reboot</h4>
+<p><strong>Symptoms:</strong></p>
+<ul>
+<li>Interface metrics revert to default values after restart</li>
+<li>Routing priority changes</li>
+</ul>
+<p><strong>Solution:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Set metrics persistently via registry
+$externalAdapter = Get-NetAdapter | Where-Object {
+    $_.InterfaceDescription -like &quot;*Hyper-V Network Adapter&quot; -and $_.Status -eq &quot;Up&quot;
+}
+$regPath = &quot;HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\$($externalAdapter.InterfaceGuid)&quot;
+Set-ItemProperty -Path $regPath -Name &quot;TcpIpInterfaceMetric&quot; -Value 10 -Type DWord
+
+$internalAdapter = Get-NetAdapter | Where-Object {
+    $_.InterfaceDescription -like &quot;*Hyper-V Network Adapter #2&quot;
+}
+$regPath = &quot;HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\$($internalAdapter.InterfaceGuid)&quot;
+Set-ItemProperty -Path $regPath -Name &quot;TcpIpInterfaceMetric&quot; -Value 50 -Type DWord
+</code></pre>
+
+<p><strong>Prevention:</strong></p>
+<ul>
+<li>Set metrics during VM build process</li>
+<li>Include in VM provisioning automation</li>
+</ul>
+<hr />
+<h4 id="issue-3-vpn-interfering-with-routing">Issue 3: VPN Interfering with Routing</h4>
+<p><strong>Symptoms:</strong></p>
+<ul>
+<li>Internet traffic routes through VPN</li>
+<li>Slow performance when VPN is active</li>
+<li>Split tunneling not working</li>
+</ul>
+<p><strong>Solution:</strong></p>
+<ol>
+<li>Review WireGuard configuration file</li>
+<li>
+<p>Ensure <code>AllowedIPs</code> includes only private IP ranges:</p>
+</li>
+<li>
+<p><code>10.0.0.0/8</code></p>
+</li>
+<li><code>192.168.0.0/16</code></li>
+<li>
+<p><code>172.16.0.0/12</code></p>
+</li>
+<li>
+<p>Restart WireGuard service:</p>
+</li>
+</ol>
+<p><code>powershell
+   Restart-Service -Name "WireGuard*"</code></p>
+<ol>
+<li>Verify routing:</li>
+</ol>
+<p><code>powershell
+   Get-NetRoute | Where-Object {$_.DestinationPrefix -eq "0.0.0.0/0"}</code></p>
+<p><strong>Prevention:</strong></p>
+<ul>
+<li>Configure VPN with proper split tunneling from initial setup</li>
+<li>Document VPN routing requirements</li>
+</ul>
+<hr />
+<h4 id="issue-4-connectivity-loss-after-script-run">Issue 4: Connectivity Loss After Script Run</h4>
+<p><strong>Symptoms:</strong></p>
+<ul>
+<li>No internet connectivity after script execution</li>
+<li>Internal networks not accessible</li>
+</ul>
+<p><strong>Solution:</strong></p>
+<ol>
+<li>Check backup file: <code>Get-Content "C:\Scripts\HV-Network-Fix.json" | ConvertFrom-Json</code></li>
+<li>Review backup to identify previous configuration</li>
+<li>Restore manually if needed:</li>
+</ol>
+<p><code>powershell
+   # Restore default route
+   route -p add 0.0.0.0 mask 0.0.0.0 38.154.238.153 metric 10</code></p>
+<ol>
+<li>Verify external gateway IP is correct in INI file</li>
+<li>Check adapter IP addresses match configuration</li>
+</ol>
+<p><strong>Prevention:</strong></p>
+<ul>
+<li>Always verify configuration values before execution</li>
+<li>Test in non-production environment first</li>
+<li>Keep backup files for recovery</li>
+</ul>
+<hr />
+<h4 id="issue-5-ini-file-not-found">Issue 5: INI File Not Found</h4>
+<p><strong>Symptoms:</strong></p>
+<ul>
+<li>Script uses default configuration</li>
+<li>Warning message: "Configuration file not found"</li>
+</ul>
+<p><strong>Solution:</strong></p>
+<ol>
+<li>Verify file path: <code>Test-Path "C:\Scripts\HV-Network-Config.ini"</code></li>
+<li>Create default INI file by running script once (it auto-creates)</li>
+<li>Or manually create the file using the template in Step 3</li>
+</ol>
+<p><strong>Prevention:</strong></p>
+<ul>
+<li>Always create configuration file before first execution</li>
+<li>Use script's auto-create feature for initial setup</li>
+</ul>
+<hr />
+<h4 id="issue-6-permission-denied">Issue 6: Permission Denied</h4>
+<p><strong>Symptoms:</strong></p>
+<ul>
+<li>Script fails on route commands</li>
+<li>Error: "Access is denied"</li>
+</ul>
+<p><strong>Solution:</strong></p>
+<ol>
+<li>Ensure PowerShell session is running as Administrator</li>
+<li>Right-click PowerShell → "Run as Administrator"</li>
+<li>Verify admin privileges: <code>([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")</code></li>
+</ol>
+<p><strong>Prevention:</strong></p>
+<ul>
+<li>Always run script from elevated PowerShell session</li>
+<li>Use scheduled task with "Run with highest privileges"</li>
+</ul>
+<hr />
+<h4 id="issue-7-default-route-warning-false-positive">Issue 7: Default Route Warning (False Positive)</h4>
+<p><strong>Symptoms:</strong></p>
+<ul>
+<li>Warning message: <code>[WARNING] Default route configuration issue</code></li>
+<li>Script reports routing problem but connectivity works fine</li>
+</ul>
+<p><strong>Root Cause:</strong></p>
+<ul>
+<li>The verification logic is too strict - it's looking for exact gateway match but found both active (metric 20) and persistent (metric 10) routes</li>
+<li>This is actually correct behavior: Windows shows both active and persistent routes</li>
+</ul>
+<p><strong>Solution:</strong></p>
+<ol>
+<li><strong>Status: BENIGN</strong> - This is actually correct behavior and can be safely ignored</li>
+<li>Verify routing is actually correct:</li>
+</ol>
+<p>```powershell
+   # Check if routing is actually correct
+   route print | findstr "0.0.0.0"</p>
+<p># Should show:
+   # Active: 0.0.0.0 via 38.154.238.153 (metric 20)
+   # Persistent: 0.0.0.0 via 38.154.238.153 (metric 10)
+   ```</p>
+<ol>
+<li>If both routes point to the same gateway, the warning is a false positive</li>
+<li>Test connectivity to confirm everything works:</li>
+</ol>
+<p><code>powershell
+   Test-NetConnection 8.8.8.8 -InformationLevel Detailed</code></p>
+<p><strong>Prevention:</strong></p>
+<ul>
+<li>This is a known cosmetic issue in the verification logic</li>
+<li>The script functionality is correct despite the warning</li>
+<li>Future script updates may improve the verification logic</li>
+</ul>
+<hr />
+<h4 id="issue-8-internal-network-connectivity-test-failure">Issue 8: Internal Network Connectivity Test Failure</h4>
+<p><strong>Symptoms:</strong></p>
+<ul>
+<li>Error message: <code>[ERROR] Internal network 192.168.10.0/24 not accessible</code></li>
+<li>Script reports internal network connectivity failure</li>
+<li>But actual internal network communication works fine</li>
+</ul>
+<p><strong>Root Cause:</strong></p>
+<ul>
+<li>The script tests connectivity to hardcoded IP addresses (e.g., <code>192.168.10.1</code>, <code>10.108.0.1</code>)</li>
+<li>There might not be a device responding at those specific IP addresses</li>
+<li>The network itself may be functional, but the test target is unavailable</li>
+</ul>
+<p><strong>Solution:</strong></p>
+<ol>
+<li><strong>Test Actual Internal Connectivity:</strong></li>
+</ol>
+<p>```powershell
+   # Test what's actually available on your internal networks
+   Test-NetConnection 192.168.10.1 -InformationLevel Detailed
+   Test-NetConnection 192.168.10.254 -InformationLevel Detailed
+   Test-NetConnection 10.108.0.2 -InformationLevel Detailed</p>
+<p># Check ARP table for active devices
+   arp -a | findstr "192.168.10 10.108.0"
+   ```</p>
+<ol>
+<li><strong>Update INI File:</strong></li>
+<li>Only include networks in <code>[InternalNetworks]</code> section that have actual gateways/devices</li>
+<li>Remove networks from the list if there's no device at the expected gateway IP</li>
+<li>
+<p>Example:</p>
+<p><code>ini
+ [InternalNetworks]
+ ; Only include networks that have actual gateways/devices
+ ; Remove 192.168.10.0 if there's no device at 192.168.10.1
+ 10.108.0.0=255.255.255.0</code></p>
+</li>
+<li>
+<p><strong>Verify Actual Network Functionality:</strong></p>
+</li>
+<li>Test connectivity to actual devices on the internal networks</li>
+<li>If internal network communication works, the error is cosmetic</li>
+<li>The script's network configuration is still correct</li>
+</ol>
+<p><strong>Prevention:</strong></p>
+<ul>
+<li>Document actual gateway IPs for each internal network</li>
+<li>Only include networks in INI file that have active gateways</li>
+<li>Test connectivity to actual devices, not just gateway IPs</li>
+</ul>
+<hr />
+<h4 id="issue-9-wireguard-adapter-count-display-issue">Issue 9: WireGuard Adapter Count Display Issue</h4>
+<p><strong>Symptoms:</strong></p>
+<ul>
+<li>Output shows: <code>[OK] Found  WireGuard adapter(s)</code></li>
+<li>Missing count number in output (cosmetic issue)</li>
+</ul>
+<p><strong>Root Cause:</strong></p>
+<ul>
+<li>Minor formatting issue in script output</li>
+<li>The count variable is not being properly displayed</li>
+</ul>
+<p><strong>Solution:</strong></p>
+<ol>
+<li><strong>Status: COSMETIC</strong> - This is a display issue only, functionality is not affected</li>
+<li>The script correctly detects WireGuard adapters</li>
+<li>WireGuard optimization still functions correctly</li>
+<li>This can be safely ignored</li>
+</ol>
+<p><strong>Prevention:</strong></p>
+<ul>
+<li>This is a known cosmetic issue</li>
+<li>Future script updates will fix the display formatting</li>
+<li>Functionality is not impacted</li>
+</ul>
+<hr />
+<h3 id="advanced-troubleshooting">Advanced Troubleshooting</h3>
+<h4 id="host-level-checks">Host-Level Checks</h4>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># On Hyper-V Host (run in Administrative PowerShell)
+Get-VMNetworkAdapter -VMName [VM-NAME]
+Get-VMSwitch | Select-Object Name, SwitchType, AllowManagementOS
+</code></pre>
+
+<p><strong>Check:</strong></p>
+<ul>
+<li>VM network adapters are connected to correct virtual switches</li>
+<li>External switch is configured as External type</li>
+<li>Internal switch is configured as Internal type</li>
+<li>No misconfiguration at host level</li>
+</ul>
+<hr />
+<h4 id="network-stack-reset-nuclear-option">Network Stack Reset (Nuclear Option)</h4>
+<p><strong>⚠️ WARNING:</strong> This requires VM restart and will temporarily disconnect network.</p>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Run in Administrative PowerShell
+netsh winsock reset
+netsh int ip reset
+ipconfig /flushdns
+
+# Restart VM after these commands
+Restart-Computer -Force
+</code></pre>
+
+<p><strong>When to Use:</strong></p>
+<ul>
+<li>All other troubleshooting steps have failed</li>
+<li>Suspected network stack corruption</li>
+<li>After major network configuration changes</li>
+</ul>
+<hr />
+<h4 id="disable-vmq-virtual-machine-queue">Disable VMQ (Virtual Machine Queue)</h4>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># On Hyper-V Host for specific VM
+Get-VMNetworkAdapter -VMName [VM-NAME] | Set-VMNetworkAdapter -VmqWeight 0
+</code></pre>
+
+<p><strong>When to Use:</strong></p>
+<ul>
+<li>Performance issues persist after routing fixes</li>
+<li>High CPU usage on host</li>
+<li>Suspected VMQ-related problems</li>
+</ul>
+<hr />
+<h4 id="diagnostic-commands">Diagnostic Commands</h4>
+<pre class="codehilite"><code class="language-powershell"># Check current routing configuration
+route print
+Get-NetIPConfiguration
+
+# Verify script components
+Test-Path &quot;C:\Scripts\HV-Network-Fix.ps1&quot;
+Test-Path &quot;C:\Scripts\HV-Network-Config.ini&quot;
+
+# Check scheduled task status
+Get-ScheduledTask -TaskName &quot;Hyper-V Network Configuration Fix&quot; | Format-List
+
+# Review execution logs
+Get-Content &quot;C:\Scripts\HV-Network-Fix.log&quot; -Tail 50
+
+# Check network adapter status
+Get-NetAdapter | Format-Table Name, InterfaceDescription, Status, LinkSpeed
+
+# Test connectivity to specific destinations
+Test-NetConnection 8.8.8.8 -InformationLevel Detailed
+Test-NetConnection &lt;internal-ip&gt; -InformationLevel Detailed
+</code></pre>
+
+<hr />
+<h2 id="maintenance-procedures">Maintenance Procedures</h2>
+<h3 id="daily-checks">Daily Checks</h3>
+<ul>
+<li>[ ] Monitor network performance metrics</li>
+<li>[ ] Verify default route configuration</li>
+<li>[ ] Check for routing table changes</li>
+<li>[ ] Monitor script execution logs for errors</li>
+<li>[ ] Verify network connectivity is stable</li>
+<li>[ ] Check scheduled task execution status</li>
+</ul>
+<p><strong>Script:</strong></p>
+<pre class="codehilite"><code class="language-powershell">$networkHealth = @{
+    DefaultRoutes = (route print | findstr &quot;0.0.0.0&quot;).Count
+    InternetTest = Test-NetConnection 8.8.8.8 -InformationLevel Quiet
+    DNSTest = (Resolve-DnsName google.com -ErrorAction SilentlyContinue) -ne $null
+    ScheduledTask = (Get-ScheduledTask &quot;Hyper-V Network Configuration Fix&quot;).State
+}
+$networkHealth
+</code></pre>
+
+<h3 id="weekly-maintenance">Weekly Maintenance</h3>
+<ul>
+<li>[ ] Review routing table for all VMs</li>
+<li>[ ] Verify interface metrics are correct</li>
+<li>[ ] Check for unauthorized network configuration changes</li>
+<li>[ ] Review VPN configurations</li>
+<li>[ ] Review script execution logs</li>
+<li>[ ] Verify scheduled task status</li>
+<li>[ ] Test connectivity to critical destinations</li>
+</ul>
+<h3 id="monthly-review">Monthly Review</h3>
+<ul>
+<li>[ ] Audit network adapter configurations</li>
+<li>[ ] Review and update network documentation</li>
+<li>[ ] Verify build standards are being followed</li>
+<li>[ ] Check for network performance trends</li>
+<li>[ ] Validate configuration files against current environment</li>
+<li>[ ] Review and archive old log files (keep last 30 days)</li>
+<li>[ ] Update documentation for any changes</li>
+<li>[ ] Verify backup file integrity</li>
+</ul>
+<h3 id="quarterly">Quarterly</h3>
+<ul>
+<li>[ ] Test disaster recovery procedures</li>
+<li>[ ] Validate backup file integrity</li>
+<li>[ ] Review SOP for updates</li>
+<li>[ ] Audit network configuration across all VMs</li>
+</ul>
+<h3 id="configuration-management">Configuration Management</h3>
+<p><strong>Version Control:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Create dated backups of configuration files
+$date = Get-Date -Format &quot;yyyyMMdd&quot;
+Copy-Item &quot;C:\Scripts\HV-Network-Config.ini&quot; &quot;C:\Scripts\Backups\HV-Network-Config-$date.ini&quot;
+
+# Maintain last 30 days of configurations
+Get-ChildItem &quot;C:\Scripts\Backups\HV-Network-Config-*.ini&quot; |
+    Sort-Object LastWriteTime -Descending |
+    Select-Object -Skip 30 |
+    Remove-Item
+</code></pre>
+
+<p><strong>Change Management:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Document configuration changes
+$changeLog = @&quot;
+$(Get-Date): Updated ExternalGateway to 38.154.238.153
+Reason: Network infrastructure upgrade
+&quot;@
+$changeLog | Out-File &quot;C:\Scripts\Configuration-Changes.log&quot; -Append
+</code></pre>
+
+<hr />
+<h2 id="prevention-measures">Prevention Measures</h2>
+<h3 id="build-standards">Build Standards</h3>
+<ul>
+<li>[ ] Configure Internal adapters <strong>WITHOUT</strong> default gateways during provisioning</li>
+<li>[ ] Set External adapter metric to 10 during initial setup</li>
+<li>[ ] Document network configuration for each VM</li>
+<li>[ ] Include network health checks in VM build automation</li>
+<li>[ ] Always use external configuration files for multi-machine deployments</li>
+<li>[ ] Standardize INI file format across all environments</li>
+<li>[ ] Document all network configuration values before deployment</li>
+</ul>
+<h3 id="monitoring">Monitoring</h3>
+<p><strong>Add to regular health checks:</strong></p>
+<pre class="codehilite"><code class="language-powershell">$networkHealth = @{
+    DefaultRoutes = (route print | findstr &quot;0.0.0.0&quot;).Count
+    InternetTest = Test-NetConnection 8.8.8.8 -InformationLevel Quiet
+    DNSTest = (Resolve-DnsName google.com -ErrorAction SilentlyContinue) -ne $null
+    ExternalMetric = (Get-NetIPInterface | Where-Object {
+        $_.InterfaceAlias -like &quot;*Hyper-V Network Adapter&quot; -and $_.Status -eq &quot;Up&quot;
+    }).InterfaceMetric
+}
+</code></pre>
+
+<p><strong>Alerting Thresholds:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Conditions requiring immediate attention
+if ((route print | Select-String &quot;0.0.0.0&quot; | Measure-Object).Count -gt 1) {
+    Write-EventLog -LogName Application -Source &quot;NetworkMonitor&quot; -EventId 1001 -Message &quot;Multiple default routes detected&quot;
+}
+</code></pre>
+
+<h3 id="documentation">Documentation</h3>
+<ul>
+<li>[ ] Maintain network diagram showing VM network configurations</li>
+<li>[ ] Document purpose of each network adapter</li>
+<li>[ ] Keep records of gateway IPs and subnet configurations</li>
+<li>[ ] Update documentation when network changes are made</li>
+<li>[ ] Maintain network topology diagrams</li>
+<li>[ ] Document IP address allocations</li>
+<li>[ ] Keep change management records</li>
+</ul>
+<hr />
+<h2 id="multi-environment-management">Multi-Environment Management</h2>
+<h3 id="environment-specific-configurations">Environment-Specific Configurations</h3>
+<p><strong>Development Environment:</strong></p>
+<pre class="codehilite"><code class="language-ini">[General]
+ExternalGateway=192.168.10.1
+ExternalInterfaceIP=192.168.10.100
+</code></pre>
+
+<p><strong>Staging Environment:</strong></p>
+<pre class="codehilite"><code class="language-ini">[General]
+ExternalGateway=192.168.20.1
+ExternalInterfaceIP=192.168.20.100
+</code></pre>
+
+<p><strong>Production Environment:</strong></p>
+<pre class="codehilite"><code class="language-ini">[General]
+ExternalGateway=38.154.238.153
+ExternalInterfaceIP=38.154.238.155
+</code></pre>
+
+<h3 id="bulk-operations">Bulk Operations</h3>
+<p><strong>Deploy to Multiple Machines:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Deploy to multiple machines
+$machines = @(&quot;VM-DB01&quot;, &quot;VM-APP01&quot;, &quot;VM-WEB01&quot;)
+foreach ($machine in $machines) {
+    Write-Host &quot;Deploying to: $machine&quot;
+    Copy-Item &quot;HV-Network-Fix.ps1&quot; &quot;\\$machine\C$\Scripts\&quot;
+    Copy-Item &quot;HV-Network-Config-$machine.ini&quot; &quot;\\$machine\C$\Scripts\HV-Network-Config.ini&quot;
+
+    # Execute remotely via PowerShell Remoting
+    Invoke-Command -ComputerName $machine -ScriptBlock {
+        C:\Scripts\HV-Network-Fix.ps1 -ConfigFile &quot;C:\Scripts\HV-Network-Config.ini&quot;
+    }
+}
+</code></pre>
+
+<hr />
+<h2 id="related-procedures">Related Procedures</h2>
+<ul>
+<li><a href="../05-Production-ATS-Administration/ATS%20Hyper-V%20VM%20Network%20Configuration%20%26%20Troubleshooting.md">ATS Hyper-V VM Network Configuration &amp; Troubleshooting</a> - ATS-specific network configuration</li>
+</ul>
+<hr />
+<h2 id="related-scripts">Related Scripts</h2>
+<ul>
+<li><a href="../../Scripts/04-Production-Administration/HV-Network-Fix.ps1">HV-Network-Fix.ps1</a> - Main PowerShell script for network configuration</li>
+<li><a href="../../Scripts/05-Production-ATS-Administration/ATS-Network-Fix.ps1">ATS-Network-Fix.ps1</a> - ATS-specific network fix script</li>
+</ul>
+<hr />
+<h2 id="references">References</h2>
+<h3 id="required-documentation">Required Documentation</h3>
+<ul>
+<li>Network topology diagrams</li>
+<li>IP address allocation sheets</li>
+<li>Change management records</li>
+<li>Incident response procedures</li>
+</ul>
+<h3 id="external-references">External References</h3>
+<ul>
+<li><a href="https://docs.microsoft.com/en-us/windows-server/virtualization/hyper-v/get-started/create-a-virtual-switch-for-hyper-v-virtual-machines">Microsoft Docs: Hyper-V Virtual Network Overview</a></li>
+<li><a href="https://docs.microsoft.com/en-us/windows-server/networking/">Windows Server Networking Guidelines</a></li>
+<li><a href="https://docs.microsoft.com/en-us/windows-server/remote/remote-access/">Windows Routing and Remote Access</a></li>
+<li><a href="https://docs.microsoft.com/en-us/powershell/module/nettcpip/">PowerShell Network Cmdlets</a></li>
+<li><a href="https://docs.microsoft.com/en-us/virtualization/hyper-v-on-windows/about/">Hyper-V Networking</a></li>
+</ul>
+<hr />
+<h2 id="change-log">Change Log</h2>
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Version</th>
+<th>Author</th>
+<th>Changes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2025-12-26</td>
+<td>3.0</td>
+<td>Network Operations Team</td>
+<td>Merged all three VM network SOPs (HyperV VM Network SlowDown Fix, Multicharts Hyper-V VM Network Configuration Management, Network Configuration Best Practices &amp; Essential Guide) into comprehensive guide</td>
+</tr>
+<tr>
+<td>2025-12-26</td>
+<td>2.1</td>
+<td>Network Operations Team</td>
+<td>Added comprehensive troubleshooting, maintenance procedures, and multi-environment management (Multicharts SOP)</td>
+</tr>
+<tr>
+<td>2025-12-26</td>
+<td>1.0</td>
+<td>Network Operations Team</td>
+<td>Initial SOP creation (various individual SOPs)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="notes">Notes</h2>
+<p><strong>⚠️ WARNING:</strong></p>
+<ul>
+<li>Always verify network configuration before making changes</li>
+<li>Network stack reset requires VM restart - plan accordingly</li>
+<li>Document all network changes for audit purposes</li>
+<li>Always create backups before making network configuration changes</li>
+<li>Test emergency fix commands in a non-production environment first</li>
+<li>Multiple default routes can cause severe connectivity issues</li>
+<li>Database credentials are stored in plain text in <code>config.toml</code> - secure this file appropriately</li>
+</ul>
+<p><strong>💡 TIP:</strong></p>
+<ul>
+<li>Use <code>route print</code> regularly to monitor routing table</li>
+<li>Set up automated monitoring for default route count</li>
+<li>Include network health checks in VM provisioning automation</li>
+<li>Use the health check script daily to catch issues early</li>
+<li>Maintain separate configuration files for each environment</li>
+<li>Document all network changes in the change log</li>
+<li>Use machine-specific INI files for different environments: <code>HV-Network-Config-Machine1.ini</code></li>
+<li>Keep a template INI file for quick deployment to new machines</li>
+<li>Version control configuration files to track changes</li>
+</ul>
+<p><strong>📝 NOTE:</strong></p>
+<ul>
+<li>Interface metrics: Lower number = higher priority</li>
+<li>Default route should always point to External adapter</li>
+<li>Internal adapters should never have default gateways configured</li>
+<li>VPN split tunneling must be configured correctly to avoid routing conflicts</li>
+<li>The script automatically creates a scheduled task named "Hyper-V Network Configuration Fix"</li>
+<li>Task runs at system startup to prevent NLA from resetting configurations</li>
+<li>Verify task creation and execution after script runs</li>
+<li><strong>Important - ProblematicRoutes Limitation:</strong> The INI file format for <code>[ProblematicRoutes]</code> section does not support gateway specification (format: <code>Network=SubnetMask</code> only). For default routes (0.0.0.0/0), gateway information must be specified in the script's default <code>ProblematicRoutes</code> array.</li>
+<li>The script handles common competing gateways (<code>192.168.10.1</code>, <code>10.108.0.1</code>) in hardcoded defaults</li>
+<li><strong>Known Minor Issues (Safe to Ignore):</strong></li>
+<li><strong>Default Route Warning (False Positive):</strong> Script may show warning about default route configuration even when routing is correct. This occurs because Windows shows both active and persistent routes. If both routes point to the same gateway, the warning is benign and can be ignored.</li>
+<li><strong>Internal Network Connectivity Test:</strong> Script tests connectivity to hardcoded gateway IPs (e.g., <code>192.168.10.1</code>). If no device responds at that IP, the test fails even though the network configuration is correct. Only include networks in INI file that have active gateways.</li>
+<li><strong>WireGuard Adapter Count Display:</strong> Minor cosmetic issue where adapter count may not display correctly in output. Functionality is not affected.</li>
+</ul>
+<p><strong>🔒 SECURITY:</strong></p>
+<ul>
+<li>Script requires Administrator privileges for route commands</li>
+<li>Configuration files may contain network topology information - restrict access</li>
+<li>Log files should be regularly reviewed and archived</li>
+<li>Access to script directory should be restricted</li>
+<li>Restrict script directory access using <code>icacls</code></li>
+<li>Secure scheduled task with appropriate privileges</li>
+</ul>
+<hr />
+<p><strong>Document Status:</strong> Approved
+<strong>Next Review Date:</strong> 2026-03-26
+<strong>SOP Owner:</strong> Network Operations Team</p>
+</body>
+</html>

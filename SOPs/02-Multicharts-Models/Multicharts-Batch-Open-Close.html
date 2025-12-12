@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Multicharts Batch Open Close</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 { border-bottom: 2px solid #3498db; padding-bottom: 0.3em; }
+        h2 { border-bottom: 1px solid #ecf0f1; padding-bottom: 0.2em; }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1em;
+            overflow-x: auto;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 1em 0;
+            padding-left: 1em;
+            color: #666;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 2em 0;
+            padding: 1em;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .pdf-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 8px 16px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .pdf-link:hover {
+            background-color: #c0392b;
+        }
+    </style>
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <p><a href="Multicharts-Batch-Open-Close.pdf" class="pdf-link">📄 Download PDF Version</a></p>
+    <h1 id="multicharts-batch-open-and-close-standard-operating-procedure">Multicharts Batch Open and Close Standard Operating Procedure</h1>
+<h2 id="metadata">Metadata</h2>
+<p><strong>Category:</strong> Multicharts Models
+<strong>Last Updated:</strong> 2025-01-15
+<strong>Author:</strong> Multicharts Administration Team
+<strong>Version:</strong> 1.0
+<strong>Review Date:</strong> 2025-04-15
+<strong>Status:</strong> Active</p>
+<hr />
+<h2 id="purpose">Purpose</h2>
+<p>This procedure covers the batch opening and closing of Multicharts Desktop workspaces using automated PowerShell scripts. The scripts automatically discover production workspace shortcuts, launch them sequentially with proper delays, and provide graceful shutdown capabilities.</p>
+<p><strong>When to Use:</strong>
+- Starting multiple Multicharts workspaces at system startup
+- Closing all Multicharts workspaces before system maintenance
+- Automating daily Multicharts workspace management
+- Managing production Multicharts instances in batch operations
+- Scheduled task automation for workspace lifecycle management</p>
+<h3 id="procedure-overview">Procedure Overview</h3>
+<pre class="codehilite"><code class="language-mermaid">flowchart TD
+    Start([Start Batch Operation]) --&gt; CheckConfig{Check Configuration}
+    CheckConfig --&gt;|Missing| SetupConfig[Setup config.json]
+    CheckConfig --&gt;|Valid| ChooseOp{Operation Type}
+    SetupConfig --&gt; ChooseOp
+    ChooseOp --&gt;|Open| Load[Run Loader Script]
+    ChooseOp --&gt;|Close| Close[Run Closer Script]
+    Load --&gt; Scan[Scan for Production Shortcuts]
+    Scan --&gt; Validate{Valid Shortcuts?}
+    Validate --&gt;|No| NoShortcuts[No Shortcuts Found]
+    Validate --&gt;|Yes| CheckRunning{Already Running?}
+    CheckRunning --&gt;|Yes| Skip[Skip Already Running]
+    CheckRunning --&gt;|No| Launch[Launch Workspace]
+    Launch --&gt; Wait[Wait for Window]
+    Wait --&gt; Delay[Delay Between Launches]
+    Delay --&gt; More{More Shortcuts?}
+    More --&gt;|Yes| CheckRunning
+    More --&gt;|No| CompleteLoad[All Launched]
+    Close --&gt; GetProcesses[Get Running Processes]
+    GetProcesses --&gt; Graceful[Graceful Close]
+    Graceful --&gt; Success{Closed?}
+    Success --&gt;|Yes| MarkClosed[Mark as Closed]
+    Success --&gt;|No| Force[Force Close]
+    Force --&gt; MarkForced[Mark as Forced]
+    MarkClosed --&gt; MoreProcesses{More Processes?}
+    MarkForced --&gt; MoreProcesses
+    MoreProcesses --&gt;|Yes| Graceful
+    MoreProcesses --&gt;|No| CompleteClose[All Closed]
+    CompleteLoad --&gt; End([Complete])
+    CompleteClose --&gt; End
+    NoShortcuts --&gt; End
+
+    style Start fill:#90EE90
+    style End fill:#90EE90
+    style NoShortcuts fill:#FFB6C1
+    style Force fill:#FFD700
+</code></pre>
+
+<hr />
+<h2 id="prerequisites">Prerequisites</h2>
+<h3 id="required-access">Required Access</h3>
+<ul>
+<li>[ ] Administrator privileges (recommended for process management)</li>
+<li>[ ] Read access to shortcut folder</li>
+<li>[ ] Write access to script directory (for logs and signals)</li>
+<li>[ ] Access to Multicharts installation directory</li>
+</ul>
+<h3 id="required-tools">Required Tools</h3>
+<ul>
+<li>[ ] PowerShell 5.1 or later</li>
+<li>[ ] Multicharts Desktop installed and configured</li>
+<li>[ ] Production workspace shortcuts created (naming pattern: <code>*production.mcd - Shortcut.lnk</code>)</li>
+<li>[ ] Script: <code>MultichartsDesktop_loader.ps1</code></li>
+<li>[ ] Script: <code>MultichartsDesktop_closer.ps1</code></li>
+<li>[ ] Configuration file: <code>config.json</code></li>
+</ul>
+<h3 id="required-information">Required Information</h3>
+<ul>
+<li>[ ] Shortcut folder path (default: <code>C:\Users\Production\Desktop\MCDesktop_Shortcuts\</code>)</li>
+<li>[ ] Multicharts executable path (if not in default location)</li>
+<li>[ ] Desired launch delay between workspaces (default: 5 seconds)</li>
+<li>[ ] Workspace window timeout (default: 45 seconds)</li>
+</ul>
+<h3 id="pre-conditions">Pre-Conditions</h3>
+<ul>
+<li>[ ] Multicharts Desktop is installed and functional</li>
+<li>[ ] Production workspace shortcuts exist in the configured folder</li>
+<li>[ ] Shortcuts point to valid <code>.mcd</code> workspace files</li>
+<li>[ ] <code>config.json</code> is configured with correct paths</li>
+<li>[ ] Script directory has write permissions for logs</li>
+</ul>
+<hr />
+<h2 id="procedure-steps">Procedure Steps</h2>
+<h3 id="step-1-configure-script-settings">Step 1: Configure Script Settings</h3>
+<p><strong>Action:</strong></p>
+<ol>
+<li>Navigate to the script directory:</li>
+</ol>
+<pre class="codehilite"><code class="language-powershell">cd I:\SOP-Management\Scripts\02-Multicharts-Models
+</code></pre>
+
+<ol>
+<li>Verify <code>config.json</code> exists and contains correct settings:</li>
+</ol>
+<pre class="codehilite"><code class="language-powershell">Get-Content config.json | ConvertFrom-Json
+</code></pre>
+
+<ol>
+<li>Edit <code>config.json</code> if needed:</li>
+</ol>
+<pre class="codehilite"><code class="language-json">{
+    &quot;ShortcutFolder&quot;: &quot;C:\\Users\\Production\\Desktop\\MCDesktop_Shortcuts\\&quot;,
+    &quot;LaunchDelay&quot;: 5,
+    &quot;MaxConcurrentLaunches&quot;: 2,
+    &quot;WaitWindowTimeout&quot;: 45,
+    &quot;WaitWindowPoll&quot;: 1,
+    &quot;RetainDays&quot;: 14,
+    &quot;AutoStartMultiCharts&quot;: true,
+    &quot;ProcessPriority&quot;: &quot;Normal&quot;,
+    &quot;EnableSignalFiles&quot;: true,
+    &quot;EnablePerformanceTracking&quot;: true,
+    &quot;MultiChartsExeCandidates&quot;: [
+        &quot;F:\\mc64\\MultiCharts64.exe&quot;
+    ]
+}
+</code></pre>
+
+<p><strong>Configuration Parameters:</strong>
+- <code>ShortcutFolder</code>: Path to folder containing production workspace shortcuts
+- <code>LaunchDelay</code>: Seconds to wait between launching each workspace (recommended: 5-10)
+- <code>WaitWindowTimeout</code>: Maximum seconds to wait for workspace window to appear (recommended: 45-60)
+- <code>EnableSignalFiles</code>: Create status signal files in <code>_signals</code> folder (useful for monitoring)
+- <code>RetainDays</code>: Number of days to retain log files (default: 14)</p>
+<p><strong>Expected Result:</strong>
+- <code>config.json</code> exists and is valid JSON
+- All paths are correct and accessible
+- Configuration matches your environment</p>
+<hr />
+<h3 id="step-2-verify-shortcut-setup">Step 2: Verify Shortcut Setup</h3>
+<p><strong>Action:</strong></p>
+<ol>
+<li>Verify shortcut folder exists:</li>
+</ol>
+<pre class="codehilite"><code class="language-powershell">$config = Get-Content config.json | ConvertFrom-Json
+Test-Path $config.ShortcutFolder
+</code></pre>
+
+<ol>
+<li>Check for production shortcuts:</li>
+</ol>
+<pre class="codehilite"><code class="language-powershell">Get-ChildItem $config.ShortcutFolder -Filter &quot;*production.mcd - Shortcut.lnk&quot; -Recurse
+</code></pre>
+
+<ol>
+<li>Verify shortcuts point to valid <code>.mcd</code> files:</li>
+</ol>
+<pre class="codehilite"><code class="language-powershell">$shortcuts = Get-ChildItem $config.ShortcutFolder -Filter &quot;*.lnk&quot; -Recurse
+foreach ($sc in $shortcuts) {
+    $shell = New-Object -ComObject WScript.Shell
+    $target = $shell.CreateShortcut($sc.FullName).TargetPath
+    if (Test-Path $target) {
+        Write-Host &quot;✓ $($sc.Name) -&gt; $target&quot;
+    } else {
+        Write-Host &quot;✗ $($sc.Name) -&gt; $target (NOT FOUND)&quot; -ForegroundColor Red
+    }
+}
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- Shortcut folder exists
+- At least one shortcut matching pattern <code>*production.mcd - Shortcut.lnk</code> is found
+- All shortcuts point to valid <code>.mcd</code> workspace files
+- No broken shortcuts detected</p>
+<hr />
+<h3 id="step-3-batch-open-multicharts-workspaces">Step 3: Batch Open Multicharts Workspaces</h3>
+<p><strong>Action:</strong></p>
+<ol>
+<li>Navigate to script directory:</li>
+</ol>
+<pre class="codehilite"><code class="language-powershell">cd I:\SOP-Management\Scripts\02-Multicharts-Models
+</code></pre>
+
+<ol>
+<li>Run the loader script:</li>
+</ol>
+<pre class="codehilite"><code class="language-powershell">.\MultichartsDesktop_loader.ps1
+</code></pre>
+
+<p><strong>What the Script Does:</strong>
+- Scans shortcut folder for <code>*production.mcd - Shortcut.lnk</code> files
+- Checks if workspaces are already running (avoids duplicates)
+- Launches each workspace sequentially with configured delay
+- Waits for workspace window to appear before launching next
+- Creates signal files in <code>_signals</code> folder (if enabled)
+- Logs all operations to <code>logs\mcd_loader_YYYY-MM-DD.log</code></p>
+<p><strong>Expected Result:</strong>
+- Script starts and displays progress
+- Each workspace launches successfully
+- Workspace windows appear within timeout period
+- Log file created with launch details
+- Signal files created (if enabled)</p>
+<p><strong>Example Output:</strong></p>
+<pre class="codehilite"><code>=== MultiCharts Loader Started ===
+[2025-01-15 09:00:00] [INFO] Scanning shortcut folder: C:\Users\Production\Desktop\MCDesktop_Shortcuts\
+[2025-01-15 09:00:01] [INFO] Found 3 valid production workspace shortcuts
+[2025-01-15 09:00:01] [INFO] ✓ Valid production workspace shortcut: production.mcd - Shortcut.lnk -&gt; production
+[2025-01-15 09:00:02] [INFO] Launching production workspace: production
+[2025-01-15 09:00:47] [INFO] Successfully launched: production
+</code></pre>
+
+<hr />
+<h3 id="step-4-verify-workspaces-are-running">Step 4: Verify Workspaces Are Running</h3>
+<p><strong>Action:</strong></p>
+<ol>
+<li>Check running Multicharts processes:</li>
+</ol>
+<pre class="codehilite"><code class="language-powershell">Get-Process -Name &quot;MultiCharts64&quot;,&quot;MultiCharts&quot; -ErrorAction SilentlyContinue |
+    Select-Object Id, ProcessName, MainWindowTitle
+</code></pre>
+
+<ol>
+<li>Check signal files (if enabled):</li>
+</ol>
+<pre class="codehilite"><code class="language-powershell">$config = Get-Content config.json | ConvertFrom-Json
+$signalDir = Join-Path $config.ShortcutFolder &quot;_signals&quot;
+Get-ChildItem $signalDir -Filter &quot;*.running&quot; | Select-Object Name
+</code></pre>
+
+<ol>
+<li>Verify workspace windows are visible:</li>
+</ol>
+<pre class="codehilite"><code class="language-powershell">Get-Process -Name &quot;MultiCharts64&quot; | Where-Object { $_.MainWindowTitle } |
+    ForEach-Object { Write-Host &quot;$($_.Id): $($_.MainWindowTitle)&quot; }
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- All expected Multicharts processes are running
+- Workspace windows are visible and accessible
+- Signal files indicate successful launches (if enabled)
+- No error messages in log files</p>
+<hr />
+<h3 id="step-5-batch-close-multicharts-workspaces">Step 5: Batch Close Multicharts Workspaces</h3>
+<p><strong>Action:</strong></p>
+<ol>
+<li>Navigate to script directory:</li>
+</ol>
+<pre class="codehilite"><code class="language-powershell">cd I:\SOP-Management\Scripts\02-Multicharts-Models
+</code></pre>
+
+<ol>
+<li>Run the closer script:</li>
+</ol>
+<pre class="codehilite"><code class="language-powershell">.\MultichartsDesktop_closer.ps1
+</code></pre>
+
+<p><strong>What the Script Does:</strong>
+- Detects all running Multicharts processes
+- Attempts graceful close (saves workspace state)
+- Waits up to 30 seconds for graceful shutdown
+- Force closes if graceful close fails
+- Updates signal files with closure status
+- Logs all operations to <code>logs\mcd_closer_YYYY-MM-DD.log</code></p>
+<p><strong>Expected Result:</strong>
+- Script starts and displays processes to close
+- Each workspace closes gracefully (saves state)
+- All processes terminate within timeout
+- Log file created with closure details
+- Signal files updated (if enabled)</p>
+<p><strong>Example Output:</strong></p>
+<pre class="codehilite"><code>=== MultiCharts Graceful Closer Started ===
+[2025-01-15 17:00:00] [INFO] Found 3 MultiCharts process(es) to close
+[2025-01-15 17:00:00] [INFO] === Processes to Close ===
+[2025-01-15 17:00:00] [INFO]   - MultiCharts64 (PID: 1234) - 'production'
+[2025-01-15 17:00:30] [INFO] Process closed gracefully: MultiCharts64 (PID: 1234)
+[2025-01-15 17:00:32] [INFO] SUCCESS: All MultiCharts processes have been closed
+[2025-01-15 17:00:32] [INFO] === Closure Summary ===
+[2025-01-15 17:00:32] [INFO] Gracefully closed: 3
+</code></pre>
+
+<hr />
+<h2 id="verification">Verification</h2>
+<h3 id="how-to-verify-success">How to Verify Success</h3>
+<h4 id="for-batch-open-operation">For Batch Open Operation:</h4>
+<ol>
+<li><strong>Check Process Count:</strong>
+   <code>powershell
+   (Get-Process -Name "MultiCharts64","MultiCharts" -ErrorAction SilentlyContinue).Count</code></li>
+<li>
+<p>Should match number of shortcuts found</p>
+</li>
+<li>
+<p><strong>Verify Window Titles:</strong>
+   <code>powershell
+   Get-Process -Name "MultiCharts64" | Where-Object { $_.MainWindowTitle } |
+       Select-Object MainWindowTitle</code></p>
+</li>
+<li>
+<p>Should show all workspace names</p>
+</li>
+<li>
+<p><strong>Check Log File:</strong>
+   <code>powershell
+   $logFile = Get-ChildItem "logs\mcd_loader_*.log" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+   Get-Content $logFile.FullName -Tail 20</code></p>
+</li>
+<li>
+<p>Should show "Successfully launched" for each workspace</p>
+</li>
+<li>
+<p><strong>Check Signal Files (if enabled):</strong>
+   <code>powershell
+   $config = Get-Content config.json | ConvertFrom-Json
+   $signalDir = Join-Path $config.ShortcutFolder "_signals"
+   Get-ChildItem $signalDir -Filter "*.running"</code></p>
+</li>
+<li>Should have one <code>.running</code> file per workspace</li>
+</ol>
+<h4 id="for-batch-close-operation">For Batch Close Operation:</h4>
+<ol>
+<li><strong>Verify No Processes Running:</strong>
+   <code>powershell
+   Get-Process -Name "MultiCharts64","MultiCharts" -ErrorAction SilentlyContinue</code></li>
+<li>
+<p>Should return no results</p>
+</li>
+<li>
+<p><strong>Check Log File:</strong>
+   <code>powershell
+   $logFile = Get-ChildItem "logs\mcd_closer_*.log" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+   Get-Content $logFile.FullName -Tail 20</code></p>
+</li>
+<li>
+<p>Should show "SUCCESS: All MultiCharts processes have been closed"</p>
+</li>
+<li>
+<p><strong>Review Closure Summary:</strong></p>
+</li>
+<li>Check log for graceful vs force closure counts</li>
+<li>All workspaces should be gracefully closed (saves state)</li>
+</ol>
+<h3 id="success-criteria">Success Criteria</h3>
+<p><strong>For Batch Open:</strong>
+- [ ] All production shortcuts found and processed
+- [ ] All workspaces launched successfully
+- [ ] Workspace windows appear within timeout
+- [ ] No duplicate launches (already running workspaces skipped)
+- [ ] Log file created with success messages</p>
+<p><strong>For Batch Close:</strong>
+- [ ] All Multicharts processes detected
+- [ ] All workspaces closed gracefully (saves state)
+- [ ] No processes remain running after closure
+- [ ] Log file shows successful closure summary
+- [ ] Signal files cleaned up (if enabled)</p>
+<hr />
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="common-issues">Common Issues</h3>
+<h4 id="issue-1-no-shortcuts-found">Issue 1: No Shortcuts Found</h4>
+<p><strong>Symptoms:</strong>
+- Script reports "No valid shortcuts found"
+- Log shows "No valid shortcuts containing 'production.mcd - Shortcut.lnk' found"</p>
+<p><strong>Solution:</strong>
+1. Verify shortcut folder path in <code>config.json</code>:
+   <code>powershell
+   $config = Get-Content config.json | ConvertFrom-Json
+   Test-Path $config.ShortcutFolder</code></p>
+<ol>
+<li>Check shortcut naming pattern:</li>
+<li>Shortcuts must contain <code>production.mcd - Shortcut.lnk</code> in filename</li>
+<li>
+<p>Example: <code>MyWorkspace - production.mcd - Shortcut.lnk</code></p>
+</li>
+<li>
+<p>Verify shortcuts exist:
+   <code>powershell
+   Get-ChildItem $config.ShortcutFolder -Filter "*.lnk" -Recurse | Select-Object Name</code></p>
+</li>
+</ol>
+<p><strong>Prevention:</strong>
+- Use consistent shortcut naming convention
+- Document shortcut folder location
+- Verify shortcuts before running script</p>
+<hr />
+<h4 id="issue-2-workspace-window-doesnt-appear">Issue 2: Workspace Window Doesn't Appear</h4>
+<p><strong>Symptoms:</strong>
+- Script launches workspace but window doesn't appear
+- Log shows "Window did not appear for: [workspace]"
+- Process starts but no window visible</p>
+<p><strong>Solution:</strong>
+1. Increase <code>WaitWindowTimeout</code> in <code>config.json</code>:
+   <code>json
+   "WaitWindowTimeout": 60</code></p>
+<ol>
+<li>
+<p>Check if Multicharts is starting but slow:
+   <code>powershell
+   Get-Process -Name "MultiCharts64" | Select-Object Id, StartTime, CPU</code></p>
+</li>
+<li>
+<p>Verify Multicharts executable path:
+   <code>json
+   "MultiChartsExeCandidates": ["F:\\mc64\\MultiCharts64.exe"]</code></p>
+</li>
+<li>
+<p>Check for Multicharts errors in Event Viewer:
+   <code>powershell
+   Get-EventLog -LogName Application -Source "*MultiCharts*" -Newest 10</code></p>
+</li>
+</ol>
+<p><strong>Prevention:</strong>
+- Increase timeout for slower systems
+- Verify Multicharts installation is healthy
+- Check system resources (CPU, memory)</p>
+<hr />
+<h4 id="issue-3-workspace-already-running-duplicate-detection">Issue 3: Workspace Already Running (Duplicate Detection)</h4>
+<p><strong>Symptoms:</strong>
+- Script skips workspace with "already running" message
+- But workspace is not actually running</p>
+<p><strong>Solution:</strong>
+1. Check actual running processes:
+   <code>powershell
+   Get-Process -Name "MultiCharts64" | Select-Object MainWindowTitle</code></p>
+<ol>
+<li>Verify workspace name matching:</li>
+<li>Script matches by workspace name from window title</li>
+<li>Format: <code>MultiCharts64 - WorkspaceName - OtherStuff</code></li>
+<li>
+<p>Ensure workspace names are unique</p>
+</li>
+<li>
+<p>Manually close and retry:
+   <code>powershell
+   Get-Process -Name "MultiCharts64" | Stop-Process -Force
+   .\MultichartsDesktop_loader.ps1</code></p>
+</li>
+</ol>
+<p><strong>Prevention:</strong>
+- Use unique workspace names
+- Close all workspaces before batch open
+- Review process list before launching</p>
+<hr />
+<h4 id="issue-4-graceful-close-fails">Issue 4: Graceful Close Fails</h4>
+<p><strong>Symptoms:</strong>
+- Closer script reports "Graceful close failed"
+- Processes force closed instead
+- Workspace state may not be saved</p>
+<p><strong>Solution:</strong>
+1. Check if workspace has unsaved changes:
+   - Manually save workspace before closing
+   - Check for modal dialogs blocking close</p>
+<ol>
+<li>Increase graceful close timeout:</li>
+<li>Script uses 30 seconds default</li>
+<li>
+<p>Large workspaces may need more time</p>
+</li>
+<li>
+<p>Check for blocking operations:
+   <code>powershell
+   Get-Process -Name "MultiCharts64" | Select-Object Responding</code></p>
+</li>
+<li>
+<p>Review closer log for specific errors:
+   <code>powershell
+   $logFile = Get-ChildItem "logs\mcd_closer_*.log" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+   Get-Content $logFile.FullName | Select-String "ERROR"</code></p>
+</li>
+</ol>
+<p><strong>Prevention:</strong>
+- Save all workspaces before batch close
+- Close modal dialogs before running closer
+- Ensure workspaces are not performing heavy operations</p>
+<hr />
+<h4 id="issue-5-script-permission-errors">Issue 5: Script Permission Errors</h4>
+<p><strong>Symptoms:</strong>
+- "Access Denied" errors when running scripts
+- Cannot create log files or signal files
+- Cannot read shortcut folder</p>
+<p><strong>Solution:</strong>
+1. Run PowerShell as Administrator:
+   <code>powershell
+   # Right-click PowerShell -&gt; Run as Administrator</code></p>
+<ol>
+<li>
+<p>Check folder permissions:
+   <code>powershell
+   $config = Get-Content config.json | ConvertFrom-Json
+   Get-Acl $config.ShortcutFolder | Format-List</code></p>
+</li>
+<li>
+<p>Verify script directory permissions:
+   <code>powershell
+   Get-Acl "I:\SOP-Management\Scripts\02-Multicharts-Models" | Format-List</code></p>
+</li>
+<li>
+<p>Unblock script files if downloaded:
+   <code>powershell
+   Unblock-File .\MultichartsDesktop_loader.ps1
+   Unblock-File .\MultichartsDesktop_closer.ps1</code></p>
+</li>
+</ol>
+<p><strong>Prevention:</strong>
+- Run scripts with appropriate permissions
+- Set up proper folder permissions
+- Unblock scripts after downloading</p>
+<hr />
+<h2 id="related-procedures">Related Procedures</h2>
+<ul>
+<li><a href="Multicharts-Backup-and-Restore.md">Multicharts Backup and Restore</a> - Backup workspace state before operations</li>
+<li><a href="Multicharts-Optimization.md">Multicharts Optimization</a> - System optimization for multiple instances</li>
+</ul>
+<h2 id="related-scripts">Related Scripts</h2>
+<ul>
+<li><a href="../../Scripts/02-Multicharts-Models/MultichartsDesktop_loader.ps1">MultichartsDesktop_loader.ps1</a> - Batch workspace loader script</li>
+<li><a href="../../Scripts/02-Multicharts-Models/MultichartsDesktop_closer.ps1">MultichartsDesktop_closer.ps1</a> - Batch workspace closer script</li>
+<li><a href="../../Scripts/02-Multicharts-Models/Backup-Multicharts-State.ps1">Backup-Multicharts-State.ps1</a> - Backup workspace state</li>
+<li><a href="../../Scripts/02-Multicharts-Models/Restore-Multicharts-State.ps1">Restore-Multicharts-State.ps1</a> - Restore workspace state</li>
+</ul>
+<h2 id="references">References</h2>
+<ul>
+<li>PowerShell Process Management: <a href="https://docs.microsoft.com/powershell/module/microsoft.powershell.management/">Microsoft Docs</a></li>
+<li>Multicharts Desktop Documentation: <a href="https://www.multicharts.com/support/">Multicharts Support</a></li>
+</ul>
+<h2 id="change-log">Change Log</h2>
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Version</th>
+<th>Author</th>
+<th>Changes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2025-01-15</td>
+<td>1.0</td>
+<td>Multicharts Administration Team</td>
+<td>Initial SOP creation for batch open/close operations</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="notes">Notes</h2>
+<p><strong>📝 NOTE:</strong> The scripts automatically detect and skip workspaces that are already running to prevent duplicate launches. This is useful for scheduled tasks that may run while workspaces are already open.</p>
+<p><strong>⚠️ WARNING:</strong> Force closing workspaces may result in unsaved changes being lost. Always ensure workspaces are saved before running the closer script, or use graceful close which attempts to save state.</p>
+<p><strong>💡 TIP:</strong> Use signal files (enabled in config) to monitor workspace status programmatically. Signal files are created in the <code>_signals</code> folder with status indicators (<code>.launching</code>, <code>.running</code>, <code>.closing</code>, <code>.closed</code>, <code>.failed</code>).</p>
+<p><strong>💡 TIP:</strong> For scheduled tasks, consider running the loader at system startup and the closer before system shutdown or maintenance windows.</p>
+<p><strong>📝 NOTE:</strong> The scripts support both main folder and subfolder scanning for shortcuts. Organize shortcuts in subfolders if needed for better management.</p>
+</body>
+</html>

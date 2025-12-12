@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>ATS Hyper V VM Network Configuration & Troubleshooting</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 { border-bottom: 2px solid #3498db; padding-bottom: 0.3em; }
+        h2 { border-bottom: 1px solid #ecf0f1; padding-bottom: 0.2em; }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1em;
+            overflow-x: auto;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 1em 0;
+            padding-left: 1em;
+            color: #666;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 2em 0;
+            padding: 1em;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .pdf-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 8px 16px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .pdf-link:hover {
+            background-color: #c0392b;
+        }
+    </style>
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <p><a href="ATS Hyper-V VM Network Configuration & Troubleshooting.pdf" class="pdf-link">📄 Download PDF Version</a></p>
+    <h1 id="ats-hyper-v-vm-network-configuration-troubleshooting">ATS Hyper-V VM Network Configuration &amp; Troubleshooting</h1>
+<h2 id="metadata">Metadata</h2>
+<p><strong>Category:</strong> Trading System Administration
+<strong>Last Updated:</strong> 2025-12-26
+<strong>Author:</strong> ATS Support Team
+<strong>Version:</strong> 2.1
+<strong>Review Date:</strong> 2026-03-26
+<strong>Status:</strong> Active</p>
+<hr />
+<h2 id="purpose">Purpose</h2>
+<p>This procedure provides standardized procedures for configuring and troubleshooting network connectivity in ATS Hyper-V VMs with multiple network adapters, specifically addressing JDBC connection drops to MSSQL databases, FIX VPN connectivity issues, and network routing conflicts.</p>
+<p><strong>When to Use:</strong>
+- JDBC connection drops to MSSQL databases
+- FIX VPN connectivity issues
+- Network routing conflicts between multiple adapters
+- Intermittent network timeouts in ATS VMs
+- Application instability due to network configuration changes</p>
+<h3 id="procedure-overview">Procedure Overview</h3>
+<pre class="codehilite"><code class="language-mermaid">flowchart TD
+    Start([Network Issue Detected]) --&gt; Assess{Quick Assessment}
+    Assess --&gt;|JDBC Drops| CheckJDBC[Check JDBC Connectivity]
+    Assess --&gt;|FIX VPN| CheckFIX[Check FIX VPN Routes]
+    Assess --&gt;|Routing| CheckRoutes[Check Routing Table]
+    CheckJDBC --&gt; RunScript[Run ATS-Network-Fix.ps1]
+    CheckFIX --&gt; RunScript
+    CheckRoutes --&gt; RunScript
+    RunScript --&gt; Verify{Verify Fix}
+    Verify --&gt;|Success| Monitor[Monitor Application]
+    Verify --&gt;|Failed| Manual[Manual Fix Procedure]
+    Manual --&gt; Verify
+    Monitor --&gt;|Stable| End([Issue Resolved])
+    Monitor --&gt;|Issues Persist| Escalate[Escalate to Support Team]
+    Escalate --&gt; End
+
+    style Start fill:#90EE90
+    style End fill:#90EE90
+    style Escalate fill:#FFD700
+    style Verify fill:#87CEEB
+</code></pre>
+
+<hr />
+<h2 id="prerequisites">Prerequisites</h2>
+<h3 id="required-access">Required Access</h3>
+<ul>
+<li>[ ] Administrator privileges on the ATS VM</li>
+<li>[ ] Access to ATS VM network configuration</li>
+<li>[ ] Knowledge of MSSQL server IP and FIX VPN networks</li>
+</ul>
+<h3 id="required-tools">Required Tools</h3>
+<ul>
+<li>[ ] PowerShell 5.0 or later (Administrative)</li>
+<li>[ ] Windows Server 2019/2022</li>
+<li>[ ] ATS Network Fix PowerShell script (<code>C:\Scripts\ATS-Network-Fix.ps1</code> or <code>C:\ATS\ATS900\run\ATS-Network-Fix.ps1</code>)</li>
+</ul>
+<h3 id="required-information">Required Information</h3>
+<ul>
+<li>[ ] MSSQL server IP address: <code>192.168.10.1</code></li>
+<li>[ ] Internal adapter IP: <code>192.168.10.100/24</code></li>
+<li>[ ] IBVPN adapter IP: <code>192.168.223.222/24</code></li>
+<li>[ ] FIX VPN gateway: <code>192.168.223.221</code></li>
+<li>[ ] FIX VPN routes: <code>64.190.192.128/28</code> and <code>64.190.192.140/32</code></li>
+</ul>
+<h3 id="pre-conditions">Pre-Conditions</h3>
+<ul>
+<li>[ ] ATS VM has multiple network adapters configured</li>
+<li>[ ] Basic network connectivity exists (even if problematic)</li>
+<li>[ ] Administrative PowerShell session is available</li>
+<li>[ ] ATS Network Fix script is accessible</li>
+</ul>
+<h3 id="network-architecture">Network Architecture</h3>
+<p><strong>Standard ATS VM Configuration:</strong></p>
+<pre class="codehilite"><code class="language-text">Adapter #6 (Internal):
+- IP: 192.168.10.100/24
+- Purpose: MSSQL Database connectivity
+- Gateway: NONE (same subnet)
+
+Adapter #7 (IBVPN):
+- IP: 192.168.223.222/24
+- Purpose: IB FIX VPN connectivity
+- Gateway: NONE (specific routes only)
+
+FIX VPN Routes:
+- 64.190.192.128/28 via 192.168.223.221
+- 64.190.192.140/32 via 192.168.223.221
+</code></pre>
+
+<hr />
+<h2 id="procedure-steps">Procedure Steps</h2>
+<h3 id="step-1-quick-diagnostic-assessment">Step 1: Quick Diagnostic Assessment</h3>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Check current routing table
+route print | findstr &quot;0.0.0.0|192.168.20|64.190.192&quot;
+
+# Verify adapter configurations
+Get-NetIPConfiguration | Where-Object {$_.InterfaceDescription -like &quot;*Hyper-V*&quot;} |
+    Select-Object InterfaceDescription, IPv4Address, IPv4DefaultGateway
+
+# Test MSSQL connectivity
+Test-NetConnection 192.168.10.1 -Port 1433 -InformationLevel Detailed
+
+# Check established connections
+Get-NetTCPConnection | Where-Object {
+    $_.RemotePort -eq 1433 -or $_.RemoteAddress -like &quot;64.190.192.*&quot;
+}
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- Routing table shows current routes
+- Adapter configurations are displayed
+- MSSQL connectivity test results are shown
+- Active connections are listed</p>
+<p><strong>Problem Indicators:</strong>
+- Multiple default routes (0.0.0.0)
+- Incorrect MSSQL routes (192.168.20.0/24)
+- Missing FIX VPN routes (64.190.192.x)
+- MSSQL connectivity failures</p>
+<hr />
+<h3 id="step-2-identify-problem-patterns">Step 2: Identify Problem Patterns</h3>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Check for competing default routes
+route print | Select-String &quot;0.0.0.0&quot; -Context 0,3
+
+# Verify no incorrect MSSQL routes exist
+route print | findstr &quot;192.168.20.0&quot;
+
+# Check FIX VPN route integrity
+route print | findstr &quot;64.190.192&quot;
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- No default routes should be present
+- No 192.168.20.0 routes should exist
+- FIX VPN routes (64.190.192.128/28 and 64.190.192.140/32) should be present</p>
+<p><strong>Common Symptoms &amp; Root Causes:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Root Cause</th>
+<th>Solution</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>JDBC connection drops</td>
+<td>Incorrect MSSQL route (192.168.20.0/24)</td>
+<td>Remove incorrect route</td>
+</tr>
+<tr>
+<td>FIX VPN disconnects</td>
+<td>Multiple default gateways</td>
+<td>Remove default routes</td>
+</tr>
+<tr>
+<td>Intermittent timeouts</td>
+<td>Routing metric conflicts</td>
+<td>Set optimal metrics</td>
+</tr>
+<tr>
+<td>Application instability</td>
+<td>NLA service reverting settings</td>
+<td>Use scheduled task</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3 id="step-3-automated-fix-procedure">Step 3: Automated Fix Procedure</h3>
+<h4 id="method-1-use-ats-network-fix-script-recommended">Method 1: Use ATS Network Fix Script (Recommended)</h4>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># 1. Navigate to script directory
+# The script can be run from any location, but the scheduled task uses C:\Scripts\ATS-Network-Fix.ps1
+cd C:\Scripts
+
+# If script is in different location, specify full path:
+# &amp; &quot;C:\ATS\ATS900\run\ATS-Network-Fix.ps1&quot;
+
+# 2. Set execution policy (if needed)
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process -Force
+
+# 3. Run the fix script
+.\ATS-Network-Fix.ps1
+</code></pre>
+
+<p><strong>Note:</strong> The script creates a scheduled task that runs from <code>C:\Scripts\ATS-Network-Fix.ps1</code>. The script will create this directory if it doesn't exist. For best results, copy the script to <code>C:\Scripts\</code> before running.</p>
+<p><strong>What the Script Automates:</strong>
+- [ ] <strong>Prerequisite Checking:</strong> Verifies administrator privileges, Hyper-V adapters, and configuration values
+- [ ] <strong>Configuration Backup:</strong> Creates backup of current network configuration to <code>C:\Scripts\ATS-Network-Backup.json</code> for recovery
+- [ ] <strong>Removes all default gateway routes (0.0.0.0)</strong> - both active and persistent
+- [ ] <strong>Removes default routes via specific gateways:</strong> 192.168.10.1, 192.168.223.221, 38.62.234.17
+- [ ] <strong>Eliminates incorrect MSSQL routes (192.168.20.0/24)</strong> - both active and persistent
+- [ ] <strong>Configures all Hyper-V adapters without gateways</strong> using <code>netsh interface ipv4 set address</code> (automatically converts prefix length to subnet mask)
+- [ ] <strong>Adds persistent FIX VPN routes:</strong>
+  - 64.190.192.128/28 (255.255.255.240) via 192.168.223.221 metric 5
+  - 64.190.192.140/32 (255.255.255.255) via 192.168.223.221 metric 5
+- [ ] <strong>Tests MSSQL connectivity (192.168.10.1:1433)</strong> with detailed output
+- [ ] <strong>Tests local network connectivity</strong> (ping to 192.168.10.1)
+- [ ] <strong>Tests route effectiveness</strong> (verifies MSSQL uses direct connection, FIX VPN routes are correct)
+- [ ] <strong>Verifies configuration</strong> (checks for remaining default routes and incorrect MSSQL routes)
+- [ ] <strong>Creates scheduled task for persistence</strong> (runs at startup, uses dynamic script path detection)
+- [ ] <strong>Logs all operations</strong> to <code>C:\Scripts\ATS-Network-Fix.log</code> (using <code>Start-Transcript</code>)</p>
+<p><strong>Script Configuration:</strong>
+The script includes a configuration section at the top that can be customized for different environments:
+- MSSQL Server IP and port
+- FIX VPN routes (network, mask, gateway, description)
+- Problematic routes to remove
+- Backup and log file paths</p>
+<p><strong>Expected Result:</strong>
+- Script executes successfully
+- Routing table is cleaned
+- MSSQL connectivity is verified
+- Scheduled task is created</p>
+<hr />
+<h4 id="method-2-manual-commands-if-script-fails">Method 2: Manual Commands (If Script Fails)</h4>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Remove problematic routes manually
+route delete 0.0.0.0
+route -p delete 0.0.0.0
+route delete 192.168.20.0 mask 255.255.255.0 192.168.10.1
+route -p delete 192.168.20.0 mask 255.255.255.0 192.168.10.1
+
+# Add correct FIX VPN routes
+route -p add 64.190.192.128 mask 255.255.255.240 192.168.223.221 metric 5
+route -p add 64.190.192.140 mask 255.255.255.255 192.168.223.221 metric 5
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- Problematic routes removed
+- Correct FIX VPN routes added
+- Routes persist after reboot (<code>-p</code> flag)</p>
+<hr />
+<h3 id="step-4-verification-testing">Step 4: Verification &amp; Testing</h3>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Run verification checks
+Write-Host &quot;=== POST-FIX VALIDATION ===&quot; -ForegroundColor Yellow
+
+# 1. Check routing table cleanliness
+$defaultRoutes = route print | Select-String &quot;0.0.0.0&quot;
+if (-not ($defaultRoutes -like &quot;*0.0.0.0*0.0.0.0*&quot;)) {
+    Write-Host &quot;[OK] No default routes&quot; -ForegroundColor Green
+} else {
+    Write-Host &quot;[ERROR] Default routes still present&quot; -ForegroundColor Red
+}
+
+# 2. Verify MSSQL connectivity
+$mssqlTest = Test-NetConnection 192.168.10.1 -Port 1433 -InformationLevel Quiet
+if ($mssqlTest) {
+    Write-Host &quot;[OK] MSSQL connectivity OK&quot; -ForegroundColor Green
+} else {
+    Write-Host &quot;[ERROR] MSSQL connectivity failed&quot; -ForegroundColor Red
+}
+
+# 3. Check FIX VPN routes
+$fixRoutes = route print | Select-String &quot;64.190.192&quot;
+if ($fixRoutes.Count -ge 2) {
+    Write-Host &quot;[OK] FIX VPN routes configured&quot; -ForegroundColor Green
+} else {
+    Write-Host &quot;[WARNING] FIX VPN routes missing&quot; -ForegroundColor Yellow
+}
+</code></pre>
+
+<p><strong>Application-Level Testing:</strong>
+1. Start ATS Application
+2. Monitor application logs for JDBC connection stability
+3. Verify FIX sessions establish and maintain connectivity
+4. Check for error patterns in event logs:</p>
+<pre class="codehilite"><code class="language-powershell">Get-EventLog -LogName Application -After (Get-Date).AddHours(-1) |
+    Where-Object {$_.EntryType -eq &quot;Error&quot;} |
+    Select-Object TimeGenerated, Source, Message
+</code></pre>
+
+<p><strong>Route Effectiveness Testing:</strong>
+The script automatically tests route effectiveness:
+- Verifies MSSQL traffic uses direct connection (same subnet, no routing)
+- Verifies FIX VPN routes are configured correctly using <code>Get-NetRoute</code>
+- Displays route verification results</p>
+<p><strong>Expected Result:</strong>
+- No default routes in routing table
+- MSSQL connectivity successful
+- FIX VPN routes present and verified
+- Route effectiveness tests pass
+- ATS application connects successfully
+- No connection errors in logs
+- Configuration backup created at <code>C:\Scripts\ATS-Network-Backup.json</code></p>
+<hr />
+<h2 id="verification">Verification</h2>
+<h3 id="how-to-verify-success">How to Verify Success</h3>
+<ol>
+<li><strong>Routing Table Verification:</strong>
+   <code>powershell
+   route print | findstr "0.0.0.0|192.168.20|64.190.192"</code></li>
+<li>Should show NO default routes (0.0.0.0)</li>
+<li>Should show NO incorrect MSSQL routes (192.168.20.0)</li>
+<li>
+<p>Should show FIX VPN routes (64.190.192.128/28 and 64.190.192.140/32)</p>
+</li>
+<li>
+<p><strong>Connectivity Verification:</strong>
+   <code>powershell
+   Test-NetConnection 192.168.10.1 -Port 1433 -InformationLevel Detailed</code></p>
+</li>
+<li>Should connect successfully</li>
+<li>
+<p>Latency should be &lt; 10ms (same subnet)</p>
+</li>
+<li>
+<p><strong>Application Verification:</strong></p>
+</li>
+<li>ATS application starts without connection errors</li>
+<li>JDBC connections remain stable</li>
+<li>FIX VPN sessions maintain connectivity</li>
+</ol>
+<h3 id="success-criteria">Success Criteria</h3>
+<ul>
+<li>[ ] No default routes in routing table</li>
+<li>[ ] MSSQL connectivity stable for 24+ hours</li>
+<li>[ ] FIX VPN sessions maintain connectivity</li>
+<li>[ ] ATS application logs show no connection resets</li>
+<li>[ ] Scheduled task running successfully</li>
+<li>[ ] No incorrect MSSQL routes (192.168.20.0/24)</li>
+<li>[ ] FIX VPN routes are persistent</li>
+</ul>
+<hr />
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="common-issues">Common Issues</h3>
+<h4 id="issue-1-jdbc-connection-drops-persist">Issue 1: JDBC Connection Drops Persist</h4>
+<p><strong>Symptoms:</strong>
+- JDBC connections drop intermittently
+- Application logs show connection errors
+- MSSQL connectivity test fails</p>
+<p><strong>Solution:</strong>
+1. Verify incorrect routes are removed:
+   <code>powershell
+   route print | findstr "192.168.20.0"</code>
+2. If routes exist, remove them:
+   <code>powershell
+   route -p delete 192.168.20.0 mask 255.255.255.0 192.168.10.1</code>
+3. Verify MSSQL connectivity:
+   <code>powershell
+   Test-NetConnection 192.168.10.1 -Port 1433</code>
+4. Check application logs for specific error patterns</p>
+<p><strong>Prevention:</strong>
+- Run ATS-Network-Fix.ps1 script regularly
+- Ensure scheduled task is enabled
+- Monitor network health logs</p>
+<hr />
+<h4 id="issue-2-fix-vpn-disconnects">Issue 2: FIX VPN Disconnects</h4>
+<p><strong>Symptoms:</strong>
+- FIX VPN sessions disconnect
+- FIX routes missing from routing table
+- Cannot reach FIX VPN endpoints</p>
+<p><strong>Solution:</strong>
+1. Check FIX VPN routes:
+   <code>powershell
+   route print | findstr "64.190.192"</code>
+2. If routes are missing, add them:
+   <code>powershell
+   route -p add 64.190.192.128 mask 255.255.255.240 192.168.223.221 metric 5
+   route -p add 64.190.192.140 mask 255.255.255.255 192.168.223.221 metric 5</code>
+3. Verify connectivity to FIX VPN endpoints
+4. Check IBVPN adapter status</p>
+<p><strong>Prevention:</strong>
+- Ensure FIX VPN routes are added by scheduled task
+- Monitor FIX VPN route persistence
+- Document FIX VPN route requirements</p>
+<hr />
+<h4 id="issue-3-default-routes-reappear">Issue 3: Default Routes Reappear</h4>
+<p><strong>Symptoms:</strong>
+- Default routes reappear after reboot
+- Network configuration reverts
+- NLA service changes settings</p>
+<p><strong>Solution:</strong>
+1. Verify scheduled task is enabled:
+   <code>powershell
+   Get-ScheduledTask -TaskName "ATS Network Configuration Fix"</code>
+2. Check scheduled task logs:
+   <code>powershell
+   Get-Content C:\Scripts\ATS-Network-Fix.log -Tail 50</code>
+3. Re-run fix script manually:
+   <code>powershell
+   cd C:\ATS\ATS900\run
+   .\ATS-Network-Fix.ps1</code>
+4. If NLA service is causing issues, disable it on Internal adapter:
+   <code>powershell
+   $internalAdapter = Get-NetAdapter | Where-Object {
+       $_.InterfaceDescription -like "*Hyper-V Network Adapter #6"
+   }
+   Set-NetAdapterBinding -Name $internalAdapter.Name -ComponentID "ms_netbios" -Enabled $false</code></p>
+<p><strong>Prevention:</strong>
+- Ensure scheduled task runs at startup
+- Disable NLA service on Internal adapter
+- Use persistent routes (<code>-p</code> flag)</p>
+<ol>
+<li>Screen output example:</li>
+</ol>
+<pre class="codehilite"><code>PS C:\ATS\ATS900\run&gt; # First, remove the existing scheduled task
+Unregister-ScheduledTask -TaskName &quot;ATS Network Configuration Fix&quot; -Confirm:$false
+
+# Then run the new script
+cd C:\ATS\ATS900\run
+.\ATS-Network-Fix.ps1
+Starting ATS VM Network Configuration Fix...
+Transcript started, output file is C:\Scripts\ATS-Network-Fix.log
+ATS VM Network Fix Script
+==========================
+Configuration Summary:
+- MSSQL Server: 192.168.10.1:1433
+- FIX VPN Routes: 2 configured
+- Problematic Routes: 4 to remove
+- Backup Location: C:\Scripts\ATS-Network-Backup.json
+
+=== CHECKING PREREQUISITES ===
+[OK] Running with administrator privileges
+[OK] Found 4 Hyper-V network adapter(s)
+[OK] All prerequisites satisfied
+
+=== BACKING UP CURRENT CONFIGURATION ===
+[OK] Current configuration backed up to: C:\Scripts\ATS-Network-Backup.json
+
+Initial routing state:
+
+=== CURRENT ROUTING TABLE ===
+
+&gt;    64.190.192.128  255.255.255.240  192.168.223.221  192.168.223.222     26
+&gt;    64.190.192.140  255.255.255.255  192.168.223.221  192.168.223.222     30
+          127.0.0.0        255.0.0.0         On-link         127.0.0.1    331
+          127.0.0.1  255.255.255.255         On-link         127.0.0.1    331
+&gt;      192.168.10.0    255.255.255.0         On-link    192.168.10.100    271
+     192.168.10.100  255.255.255.255         On-link    192.168.10.100    271
+     192.168.10.255  255.255.255.255         On-link    192.168.10.100    271
+&gt;         224.0.0.0        240.0.0.0         On-link         127.0.0.1    331
+&gt;         224.0.0.0        240.0.0.0         On-link   192.168.223.222    281
+&gt;         224.0.0.0        240.0.0.0         On-link    192.168.10.100    271
+    255.255.255.255  255.255.255.255         On-link         127.0.0.1    331
+    255.255.255.255  255.255.255.255         On-link   192.168.223.222    281
+&gt;    64.190.192.128  255.255.255.240      192.168.6.1       1
+&gt;    64.190.192.140  255.255.255.240  192.168.223.221       1
+&gt;    64.190.192.128  255.255.255.240  192.168.223.221       5
+&gt;    64.190.192.140  255.255.255.255  192.168.223.221       5
+  ===========================================================================
+
+
+=== REMOVING PROBLEMATIC ROUTES ===
+Removing configured problematic routes...
+  Removing route: 0.0.0.0/0.0.0.0 via 192.168.10.1
+  Removing route: 0.0.0.0/0.0.0.0 via 192.168.223.221
+  Removing route: 0.0.0.0/0.0.0.0 via 38.62.234.17
+  Removing route: 192.168.20.0/255.255.255.0 via 192.168.10.1
+[OK] Problematic route removal completed
+
+=== CONFIGURING NETWORK ADAPTERS ===
+Configuring adapter: PrivateSwitch
+Configuring adapter: Internal
+  IP Address: 192.168.10.100/24
+[OK] Removed default gateway
+Configuring adapter: Internet
+Configuring adapter: IBVPN
+  IP Address: 192.168.223.222/24
+[OK] Removed default gateway
+[OK] Network adapter configuration completed
+
+=== ADDING FIX VPN ROUTES ===
+Adding IB FIX VPN Routes:
+[OK] IB FIX VPN Network: 64.190.192.128/255.255.255.240 via 192.168.223.221
+[OK] IB FIX VPN Host: 64.190.192.140/255.255.255.255 via 192.168.223.221
+[OK] FIX VPN routes configuration completed
+
+Final routing state:
+
+=== VERIFYING CONFIGURATION ===
+[OK] No default routes found
+[OK] No incorrect MSSQL routes found
+
+FIX VPN Routes:
+&gt;    64.190.192.128  255.255.255.240  192.168.223.221  192.168.223.222     26
+&gt;    64.190.192.140  255.255.255.255  192.168.223.221  192.168.223.222     30
+          127.0.0.0        255.0.0.0         On-link         127.0.0.1    331
+          127.0.0.1  255.255.255.255         On-link         127.0.0.1    331
+&gt;    64.190.192.128  255.255.255.240      192.168.6.1       1
+&gt;    64.190.192.140  255.255.255.240  192.168.223.221       1
+&gt;    64.190.192.128  255.255.255.240  192.168.223.221       5
+&gt;    64.190.192.140  255.255.255.255  192.168.223.221       5
+  ===========================================================================
+
+
+Local Network Configuration:
+
+
+
+InterfaceDescription                 IPv4Address       IPv4DefaultGateway
+--------------------                 -----------       ------------------
+Microsoft Hyper-V Network Adapter #6 {192.168.10.100}
+Microsoft Hyper-V Network Adapter #7 {192.168.223.222}
+
+
+
+=== TESTING SERVICE CONNECTIVITY ===
+
+Testing MSSQL Database Connectivity:
+[OK] MSSQL Connection Successful
+    Source: MSFT_NetIPAddress (Name = &quot;;C?8;@B8;:8;::55;A55;55;&quot;, CreationClassName = &quot;&quot;, SystemCreationClassName = &quot;&quot;, SystemName = &quot;&quot;)
+    Destination: 192.168.10.1:1433
+    Interface: Internal
+
+Testing Local Network Connectivity:
+[OK] Local network connectivity OK
+
+FIX VPN Testing:
+  Please start your FIX application and check connections to 64.190.192.x
+
+=== TESTING ROUTE EFFECTIVENESS ===
+Testing MSSQL route effectiveness...
+Test-NetConnection : Parameter set cannot be resolved using the specified named parameters.
+At C:\ATS\ATS900\run\ATS-Network-Fix.ps1:264 char:18
++ ... mssqlTest = Test-NetConnection $Config.MSSQLServer -Port $Config.MSSQ ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (:) [Test-NetConnection], ParameterBindingException
+    + FullyQualifiedErrorId : AmbiguousParameterSet,Test-NetConnection
+
+[INFO] MSSQL traffic path:
+Testing FIX VPN route effectiveness...
+[OK] FIX VPN traffic routed via correct gateway: 192.168.223.221
+
+Creating scheduled task for persistence...
+
+=== CREATING SCHEDULED TASK FOR PERSISTENCE ===
+[OK] Scheduled task created: ATS Network Configuration Fix
+
+=== SCRIPT COMPLETED SUCCESSFULLY ===
+[OK] Default routes removed
+[OK] Incorrect MSSQL routes removed
+[OK] FIX VPN routes added
+[OK] MSSQL configured for direct same-subnet access
+[OK] Scheduled task created for persistence
+[OK] Configuration backed up for recovery
+
+Next Steps:
+1. Test your JDBC database connections
+2. Start your FIX application and verify VPN connectivity
+3. Monitor application logs for connection stability
+4. Backup available at: C:\Scripts\ATS-Network-Backup.json
+Transcript stopped, output file is C:\Scripts\ATS-Network-Fix.log
+</code></pre>
+
+<hr />
+<h4 id="issue-4-script-execution-fails">Issue 4: Script Execution Fails</h4>
+<p><strong>Symptoms:</strong>
+- ATS-Network-Fix.ps1 script fails to execute
+- PowerShell execution policy errors
+- Script not found errors
+- Scheduled task fails to run</p>
+<p><strong>Solution:</strong>
+1. Check script location:
+   ```powershell
+   # Check primary location (used by scheduled task)
+   Test-Path C:\Scripts\ATS-Network-Fix.ps1</p>
+<p># Check alternative location
+   Test-Path C:\ATS\ATS900\run\ATS-Network-Fix.ps1
+   <code>2. Set execution policy:</code>powershell
+   Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process -Force
+   <code>3. Run script with bypass:</code>powershell
+   # From primary location
+   powershell.exe -ExecutionPolicy Bypass -File C:\Scripts\ATS-Network-Fix.ps1</p>
+<p># Or from alternative location
+   powershell.exe -ExecutionPolicy Bypass -File C:\ATS\ATS900\run\ATS-Network-Fix.ps1
+   <code>4. Check script permissions and content
+5. Verify scheduled task path matches actual script location:</code>powershell
+   $task = Get-ScheduledTask -TaskName "ATS Network Configuration Fix"
+   $task.Actions[0].Execute
+   $task.Actions[0].Arguments
+   ```</p>
+<p><strong>Prevention:</strong>
+- Copy script to <code>C:\Scripts\</code> for scheduled task consistency
+- Document script location in SOP
+- Include execution policy in build process
+- Test script in non-production first
+- Verify scheduled task path after creation</p>
+<hr />
+<h3 id="advanced-troubleshooting">Advanced Troubleshooting</h3>
+<h4 id="network-capture-for-persistent-issues">Network Capture for Persistent Issues</h4>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Start network capture
+netsh trace start provider=Microsoft-Windows-TCPIP capture=yes tracefile=C:\Temp\ATS-Debug.etl
+
+# Reproduce the issue, then stop capture
+netsh trace stop
+
+# Analyze with Network Monitor/Wireshark
+</code></pre>
+
+<p><strong>When to Use:</strong>
+- Issues persist after all standard fixes
+- Need to analyze packet-level behavior
+- Escalating to network team</p>
+<hr />
+<h4 id="network-stack-reset-nuclear-option">Network Stack Reset (Nuclear Option)</h4>
+<p><strong>⚠️ WARNING:</strong> This requires VM restart and will temporarily disconnect network.</p>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Stop scheduled task
+Unregister-ScheduledTask -TaskName &quot;ATS Network Configuration Fix&quot; -Confirm:$false
+
+# Restore basic network connectivity
+netsh interface ipv4 reset
+netsh winsock reset
+
+# Restart VM after these commands
+Restart-Computer -Force
+</code></pre>
+
+<p><strong>When to Use:</strong>
+- All other troubleshooting steps have failed
+- Suspected network stack corruption
+- After major network configuration changes</p>
+<hr />
+<h4 id="restore-from-backup">Restore from Backup</h4>
+<p><strong>If script changes cause issues, restore from backup:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Check if backup exists
+$backupPath = &quot;C:\Scripts\ATS-Network-Backup.json&quot;
+if (Test-Path $backupPath) {
+    # Review backup contents
+    $backup = Get-Content $backupPath | ConvertFrom-Json
+    Write-Host &quot;Backup timestamp: $($backup.Timestamp)&quot; -ForegroundColor Cyan
+    Write-Host &quot;Backup contains:&quot; -ForegroundColor Cyan
+    Write-Host &quot;  - Routing table snapshot&quot; -ForegroundColor White
+    Write-Host &quot;  - Adapter configurations&quot; -ForegroundColor White
+    Write-Host &quot;  - Network adapter status&quot; -ForegroundColor White
+    Write-Host &quot;  - TCP connections&quot; -ForegroundColor White
+
+    # Manual restoration would require:
+    # 1. Review backup JSON structure
+    # 2. Restore routes manually using route commands
+    # 3. Restore adapter configurations using netsh
+    # 4. Verify connectivity
+} else {
+    Write-Host &quot;No backup found at: $backupPath&quot; -ForegroundColor Yellow
+}
+</code></pre>
+
+<p><strong>Note:</strong> The script creates a backup automatically before making changes. Use this backup to understand the previous configuration if rollback is needed.</p>
+<hr />
+<h2 id="maintenance-procedures">Maintenance Procedures</h2>
+<h3 id="daily-checks">Daily Checks</h3>
+<ul>
+<li>[ ] Monitor network health logs</li>
+<li>[ ] Verify scheduled task is running</li>
+<li>[ ] Check for JDBC connection stability</li>
+<li>[ ] Verify FIX VPN connectivity</li>
+</ul>
+<p><strong>Script:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Daily health check script (save as C:\Scripts\ATS-Network-Health.ps1)
+$healthCheck = @{
+    Timestamp = Get-Date
+    MSSQLConnectivity = Test-NetConnection 192.168.10.1 -Port 1433 -InformationLevel Quiet
+    DefaultRoutes = (route print | Select-String &quot;0.0.0.0&quot; | Measure-Object).Count
+    FIXRoutes = (route print | Select-String &quot;64.190.192&quot; | Measure-Object).Count
+    ScheduledTask = (Get-ScheduledTask -TaskName &quot;ATS Network Configuration Fix&quot;).State
+}
+
+$healthCheck | ConvertTo-Json | Out-File &quot;C:\Scripts\ATS-Network-Health.json&quot; -Append
+</code></pre>
+
+<h3 id="weekly-maintenance">Weekly Maintenance</h3>
+<ul>
+<li>[ ] Review network health logs</li>
+<li>[ ] Verify scheduled task is enabled</li>
+<li>[ ] Check for Windows updates that might affect networking</li>
+<li>[ ] Review MSSQL connectivity patterns</li>
+</ul>
+<h3 id="monthly-review">Monthly Review</h3>
+<ul>
+<li>[ ] Validate FIX VPN route requirements</li>
+<li>[ ] Review network configuration documentation</li>
+<li>[ ] Update SOP with any environment changes</li>
+<li>[ ] Audit scheduled task execution history</li>
+</ul>
+<hr />
+<h2 id="prevention-measures">Prevention Measures</h2>
+<h3 id="build-standards">Build Standards</h3>
+<ul>
+<li>[ ] Configure Internal adapters <strong>WITHOUT</strong> default gateways during provisioning</li>
+<li>[ ] Configure IBVPN adapters <strong>WITHOUT</strong> default gateways</li>
+<li>[ ] Add FIX VPN routes during initial setup</li>
+<li>[ ] Create scheduled task during VM build</li>
+<li>[ ] Document network configuration for each VM</li>
+</ul>
+<h3 id="monitoring">Monitoring</h3>
+<p><strong>Add to regular health checks:</strong></p>
+<pre class="codehilite"><code class="language-powershell">$networkHealth = @{
+    Timestamp = Get-Date
+    MSSQLConnectivity = Test-NetConnection 192.168.10.1 -Port 1433 -InformationLevel Quiet
+    DefaultRoutes = (route print | Select-String &quot;0.0.0.0&quot; | Measure-Object).Count
+    FIXRoutes = (route print | Select-String &quot;64.190.192&quot; | Measure-Object).Count
+    ScheduledTask = (Get-ScheduledTask -TaskName &quot;ATS Network Configuration Fix&quot; -ErrorAction SilentlyContinue).State
+    ScriptLogExists = Test-Path &quot;C:\Scripts\ATS-Network-Fix.log&quot;
+}
+</code></pre>
+
+<h3 id="documentation">Documentation</h3>
+<ul>
+<li>[ ] Maintain network diagram showing VM network configurations</li>
+<li>[ ] Document purpose of each network adapter</li>
+<li>[ ] Keep records of gateway IPs and subnet configurations</li>
+<li>[ ] Update documentation when network changes are made</li>
+</ul>
+<hr />
+<h2 id="related-procedures">Related Procedures</h2>
+<ul>
+<li><a href="./ATS_Administration_SOP.md">ATS Administration SOP</a></li>
+<li><a href="../04-Production-Administration/Hyper-V%20VM%20Network%20Configuration%20Management%20-%20Comprehensive%20Guide.md">Hyper-V VM Network Configuration Management - Comprehensive Guide</a></li>
+<li><a href="../01-Server-Administration/Production-Firewall-Best-Practices.md">Production Firewall Best Practices</a></li>
+</ul>
+<h2 id="related-scripts">Related Scripts</h2>
+<ul>
+<li><a href="../../Scripts/05-Production-ATS-Administration/ATS-Network-Fix.ps1">ATS-Network-Fix.ps1</a> - Automated network configuration fix script</li>
+<li><strong>Primary Location:</strong> <code>C:\Scripts\ATS-Network-Fix.ps1</code> (used by scheduled task)</li>
+<li><strong>Alternative Location:</strong> <code>C:\ATS\ATS900\run\ATS-Network-Fix.ps1</code></li>
+<li><strong>Log File:</strong> <code>C:\Scripts\ATS-Network-Fix.log</code> (appended on each run)</li>
+<li><strong>Backup File:</strong> <code>C:\Scripts\ATS-Network-Backup.json</code> (created before changes)</li>
+<li><strong>Scheduled Task:</strong> "ATS Network Configuration Fix" (runs at startup, uses dynamic script path)</li>
+<li><strong>Configuration:</strong> Editable configuration section at top of script for environment customization</li>
+<li><strong>Script Functions:</strong><ul>
+<li><code>Convert-PrefixLengthToSubnetMask</code> - Converts prefix length (e.g., 24) to subnet mask (e.g., 255.255.255.0)</li>
+<li><code>Convert-SubnetMaskToPrefixLength</code> - Converts subnet mask to CIDR prefix length for route verification</li>
+<li><code>Test-Prerequisites</code> - Verifies administrator privileges, adapters, and configuration</li>
+<li><code>Backup-CurrentConfiguration</code> - Creates backup of current network state</li>
+<li><code>Show-CurrentRoutes</code> - Displays current routing table</li>
+<li><code>Remove-ProblematicRoutes</code> - Removes default and incorrect routes</li>
+<li><code>Configure-Adapters</code> - Configures adapters without gateways (auto-converts prefix length)</li>
+<li><code>Add-FIXVPN-Routes</code> - Adds FIX VPN specific routes</li>
+<li><code>Test-ServiceConnectivity</code> - Tests MSSQL and local network connectivity</li>
+<li><code>Test-RouteEffectiveness</code> - Verifies route effectiveness and correctness</li>
+<li><code>Test-Configuration</code> - Verifies final configuration</li>
+<li><code>Create-ScheduledTask</code> - Creates persistence scheduled task (dynamic path detection)</li>
+</ul>
+</li>
+</ul>
+<h2 id="references">References</h2>
+<ul>
+<li>ATS Application Documentation</li>
+<li>IB FIX VPN Configuration Guide</li>
+<li>MSSQL Connectivity Standards</li>
+<li>Hyper-V Virtual Networking Best Practices</li>
+<li>Previous Incident Reports (for pattern analysis)</li>
+</ul>
+<h2 id="change-log">Change Log</h2>
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Version</th>
+<th>Author</th>
+<th>Changes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2025-12-26</td>
+<td>2.1</td>
+<td>ATS Support Team</td>
+<td>Updated to document new script features: configuration section, prerequisite checking, backup functionality, route effectiveness testing, dynamic script path detection, and subnet mask conversion functions</td>
+</tr>
+<tr>
+<td>2025-12-26</td>
+<td>2.0</td>
+<td>ATS Support Team</td>
+<td>Restructured to standard SOP format with Mermaid flowchart, organized troubleshooting, and maintenance procedures</td>
+</tr>
+<tr>
+<td>[Previous]</td>
+<td>1.0</td>
+<td>ATS Support Team</td>
+<td>Initial SOP creation</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="notes">Notes</h2>
+<p><strong>⚠️ WARNING:</strong></p>
+<ul>
+<li>Always verify network configuration before making changes</li>
+<li>Network stack reset requires VM restart - plan accordingly</li>
+<li>Document all network changes for audit purposes</li>
+<li>Test script changes in non-production environment first</li>
+</ul>
+<p><strong>💡 TIP:</strong></p>
+<ul>
+<li>Use <code>route print</code> regularly to monitor routing table</li>
+<li>Set up automated monitoring for default route count</li>
+<li>Include network health checks in VM provisioning automation</li>
+<li>Keep scheduled task enabled to prevent configuration drift</li>
+</ul>
+<p><strong>📝 NOTE:</strong></p>
+<ul>
+<li>Internal adapters should never have default gateways configured</li>
+<li>FIX VPN routes must be persistent (<code>-p</code> flag)</li>
+<li>Scheduled task runs at startup to maintain configuration</li>
+<li>NLA service may revert settings - disable on Internal adapter if needed</li>
+</ul>
+<hr />
+<p><strong>Document Status:</strong> Approved
+<strong>Next Review Date:</strong> 2026-03-26
+<strong>SOP Owner:</strong> ATS Support Team</p>
+</body>
+</html>

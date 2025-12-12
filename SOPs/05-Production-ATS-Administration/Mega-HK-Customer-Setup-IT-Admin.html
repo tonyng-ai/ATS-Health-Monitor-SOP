@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Mega HK Customer Setup IT Admin</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 { border-bottom: 2px solid #3498db; padding-bottom: 0.3em; }
+        h2 { border-bottom: 1px solid #ecf0f1; padding-bottom: 0.2em; }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1em;
+            overflow-x: auto;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 1em 0;
+            padding-left: 1em;
+            color: #666;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 2em 0;
+            padding: 1em;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .pdf-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 8px 16px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .pdf-link:hover {
+            background-color: #c0392b;
+        }
+    </style>
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <p><a href="Mega-HK-Customer-Setup-IT-Admin.pdf" class="pdf-link">📄 Download PDF Version</a></p>
+    <h1 id="mega-hk-customer-setup-it-admin-guide">Mega HK Customer Setup - IT Admin Guide</h1>
+<blockquote>
+<p><strong>Version</strong>: 1.0.0
+<strong>Last Updated</strong>: December 10, 2025
+<strong>Classification</strong>: Internal - IT Operations
+<strong>Purpose</strong>: How to provision and manage HK customer VPN access</p>
+</blockquote>
+<hr />
+<h2 id="overview">Overview</h2>
+<p>This guide explains how VCL IT admins provision WireGuard VPN access for Mega Hong Kong customers to access the ATS Health Monitor dashboard.</p>
+<hr />
+<h2 id="architecture">Architecture</h2>
+<pre class="codehilite"><code>┌─────────────────────────────────────────────────────────────────────────────┐
+│                              VPN1 WINDOWS SERVER                             │
+│                              209.127.118.182                                 │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  ┌─────────────────────────────────────────────────────────────────────┐    │
+│  │  WIREGUARD SERVER (Native Windows)                                   │    │
+│  │  Interface: NYVPNServer                                              │    │
+│  │  Listen Port: 51820/UDP                                              │    │
+│  │  Address: 10.101.0.1/24                                              │    │
+│  └─────────────────────────────────────────────────────────────────────┘    │
+│                                                                              │
+│  PEERS:                                                                      │
+│  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐                │
+│  │ tony-home      │  │ hk-mega        │  │ hk-backup      │                │
+│  │ 10.101.0.2     │  │ 10.101.0.40    │  │ 10.101.0.41    │                │
+│  │ (Admin)        │  │ (HK Primary)   │  │ (HK Backup)    │                │
+│  └────────────────┘  └────────────────┘  └────────────────┘                │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+</code></pre>
+
+<h3 id="ip-allocation">IP Allocation</h3>
+<table>
+<thead>
+<tr>
+<th>Range</th>
+<th>Purpose</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>10.101.0.1</td>
+<td>VPN1 Server</td>
+<td>Always reserved</td>
+</tr>
+<tr>
+<td>10.101.0.2-9</td>
+<td>Internal Admins</td>
+<td>VCL IT staff</td>
+</tr>
+<tr>
+<td>10.101.0.10-19</td>
+<td>Developers</td>
+<td>Development access</td>
+</tr>
+<tr>
+<td>10.101.0.40-49</td>
+<td><strong>HK Mega Team</strong></td>
+<td>Customer allocation</td>
+</tr>
+<tr>
+<td>10.101.0.50-59</td>
+<td>HK Backup/DR</td>
+<td>Reserved for failover</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="part-1-generate-new-customer-config">Part 1: Generate New Customer Config</h2>
+<h3 id="option-a-native-windows-wireguard">Option A: Native Windows WireGuard</h3>
+<p>If WireGuard runs natively on VPN1 Windows Server:</p>
+<pre class="codehilite"><code class="language-powershell"># SSH or RDP to VPN1 (209.127.118.182)
+
+# 1. Generate new keypair for customer
+wg genkey | Tee-Object -Variable PRIVATE_KEY | wg pubkey | Tee-Object -Variable PUBLIC_KEY
+
+# 2. Note the keys
+Write-Host &quot;Private Key: $PRIVATE_KEY&quot;
+Write-Host &quot;Public Key: $PUBLIC_KEY&quot;
+
+# 3. Add peer to server config
+# Edit: C:\WireGuard\wg0.conf (or wherever config is located)
+</code></pre>
+
+<p>Add this to server config:</p>
+<pre class="codehilite"><code class="language-ini">[Peer]
+# HK Mega - User Name - Added YYYY-MM-DD
+PublicKey = &lt;customer-public-key&gt;
+AllowedIPs = 10.101.0.42/32
+</code></pre>
+
+<p>Restart WireGuard:</p>
+<pre class="codehilite"><code class="language-powershell"># Restart service
+Restart-Service WireGuard
+</code></pre>
+
+<h3 id="option-b-docker-based-wireguard-linuxserverwireguard">Option B: Docker-based WireGuard (linuxserver/wireguard)</h3>
+<p>If WireGuard runs in Docker on Ubuntu VM:</p>
+<pre class="codehilite"><code class="language-bash"># SSH to Ubuntu VM (192.168.168.100)
+
+# 1. Check current peers
+docker exec ats-wireguard wg show
+
+# 2. View existing peer configs
+docker exec ats-wireguard cat /config/peer_hk-mega/peer_hk-mega.conf
+
+# 3. Add new peer by updating docker-compose.yml environment
+</code></pre>
+
+<p>Docker-compose WireGuard config:</p>
+<pre class="codehilite"><code class="language-yaml">wireguard:
+  image: linuxserver/wireguard
+  container_name: ats-wireguard
+  environment:
+    - PUID=1000
+    - PGID=1000
+    - TZ=America/New_York
+    - SERVERURL=209.127.118.182
+    - SERVERPORT=51820
+    - PEERS=hk-mega,hk-backup,hk-user2,hk-user3  # Add new peers here
+    - PEERDNS=1.1.1.1
+    - INTERNAL_SUBNET=10.101.0.0/24
+    - ALLOWEDIPS=10.101.0.0/24,192.168.168.0/24
+  volumes:
+    - ./wireguard-config:/config
+  ports:
+    - 51820:51820/udp
+  cap_add:
+    - NET_ADMIN
+  sysctls:
+    - net.ipv4.conf.all.src_valid_mark=1
+</code></pre>
+
+<p>Restart to generate new configs:</p>
+<pre class="codehilite"><code class="language-bash">docker compose up -d --force-recreate wireguard
+
+# Get new peer config
+docker exec ats-wireguard cat /config/peer_hk-user2/peer_hk-user2.conf
+</code></pre>
+
+<hr />
+<h2 id="part-2-create-customer-config-file">Part 2: Create Customer Config File</h2>
+<p>Create a <code>.conf</code> file for the customer:</p>
+<pre class="codehilite"><code class="language-ini"># hk-mega-username.conf
+# Generated: YYYY-MM-DD
+# User: [Customer Name]
+# Purpose: ATS Health Monitor Access
+
+[Interface]
+PrivateKey = &lt;customer-private-key&gt;
+Address = 10.101.0.42/32
+DNS = 1.1.1.1
+
+[Peer]
+PublicKey = &lt;VPN1-server-public-key&gt;
+AllowedIPs = 10.101.0.0/24, 192.168.168.0/24
+Endpoint = 209.127.118.182:51820
+PersistentKeepalive = 25
+</code></pre>
+
+<p><strong>CRITICAL</strong>: The <code>AllowedIPs</code> must include:
+- <code>10.101.0.0/24</code> - VPN network
+- <code>192.168.168.0/24</code> - Private network where Ubuntu VM lives</p>
+<hr />
+<h2 id="part-3-create-rbac-user">Part 3: Create RBAC User</h2>
+<p>Customer needs a dashboard login. Create in PostgreSQL:</p>
+<pre class="codehilite"><code class="language-sql">-- Connect to TimescaleDB
+psql -h 192.168.168.100 -U ats_health_user -d ats_health_monitor
+
+-- Create user with viewer role
+INSERT INTO rbac_users (username, password_hash, display_name, roles, created_by)
+VALUES (
+    'hk_mega_user1',
+    -- Generate hash: echo -n 'password' | sha256sum
+    'ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f',
+    'HK Mega User 1',
+    ARRAY['viewer'],
+    'admin'
+);
+
+-- Verify
+SELECT username, display_name, roles FROM rbac_users WHERE username LIKE 'hk_%';
+</code></pre>
+
+<h3 id="rbac-roles-for-customers">RBAC Roles for Customers</h3>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Recommended For</th>
+<th>Permissions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>viewer</strong></td>
+<td>Most HK users</td>
+<td>Read all tabs, export data</td>
+</tr>
+<tr>
+<td><strong>analyst</strong></td>
+<td>Power users</td>
+<td>Viewer + trigger syncs</td>
+</tr>
+<tr>
+<td><strong>admin</strong></td>
+<td>Never for customers</td>
+<td>Full access</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="part-4-deliver-to-customer">Part 4: Deliver to Customer</h2>
+<h3 id="secure-delivery-checklist">Secure Delivery Checklist</h3>
+<ol>
+<li>[ ] Generate WireGuard config with unique keypair</li>
+<li>[ ] Create RBAC user with appropriate role</li>
+<li>[ ] Send config file via <strong>secure channel</strong> (encrypted email, Signal, etc.)</li>
+<li>[ ] Send credentials via <strong>separate channel</strong> (phone call, different app)</li>
+<li>[ ] Verify customer can connect successfully</li>
+<li>[ ] Document in access log</li>
+</ol>
+<h3 id="email-template">Email Template</h3>
+<pre class="codehilite"><code>Subject: ATS Health Monitor Access - [Username]
+
+Hi [Name],
+
+Your ATS Health Monitor access has been provisioned.
+
+STEP 1: Install WireGuard
+- Windows/Mac: https://www.wireguard.com/install/
+- Mobile: Search &quot;WireGuard&quot; in app store
+
+STEP 2: Import the attached configuration
+- Open WireGuard
+- Click &quot;Import tunnel from file&quot;
+- Select the attached .conf file
+
+STEP 3: Connect
+- Click &quot;Activate&quot;
+- Status should show &quot;Active&quot;
+
+STEP 4: Access Dashboard
+- Open browser: http://192.168.168.100:8080
+- Login: [username]
+- Password: [sent separately]
+
+If you have issues, contact VCL IT.
+
+Best regards,
+VCL IT Operations
+</code></pre>
+
+<hr />
+<h2 id="part-5-revoke-access">Part 5: Revoke Access</h2>
+<h3 id="revoke-wireguard-access">Revoke WireGuard Access</h3>
+<pre class="codehilite"><code class="language-powershell"># On VPN1 - Remove peer from wg0.conf
+# Delete the [Peer] block for that user
+
+# Restart WireGuard
+Restart-Service WireGuard
+</code></pre>
+
+<p>Or for Docker:</p>
+<pre class="codehilite"><code class="language-bash"># Edit docker-compose.yml, remove from PEERS list
+docker compose up -d --force-recreate wireguard
+</code></pre>
+
+<h3 id="revoke-rbac-access">Revoke RBAC Access</h3>
+<pre class="codehilite"><code class="language-sql">-- Disable user (keep for audit)
+UPDATE rbac_users SET enabled = false WHERE username = 'hk_mega_user1';
+
+-- Or delete completely
+DELETE FROM rbac_users WHERE username = 'hk_mega_user1';
+</code></pre>
+
+<hr />
+<h2 id="part-6-monitoring-customer-access">Part 6: Monitoring Customer Access</h2>
+<h3 id="view-connected-peers">View Connected Peers</h3>
+<pre class="codehilite"><code class="language-powershell"># On VPN1
+wg show
+</code></pre>
+
+<p>Output shows:</p>
+<pre class="codehilite"><code>peer: &lt;public-key&gt;
+  endpoint: 1.2.3.4:54321
+  allowed ips: 10.101.0.42/32
+  latest handshake: 45 seconds ago
+  transfer: 123.45 MiB received, 67.89 MiB sent
+</code></pre>
+
+<h3 id="audit-login-activity">Audit Login Activity</h3>
+<pre class="codehilite"><code class="language-sql">-- Check recent logins
+SELECT * FROM rbac_audit_log
+WHERE username LIKE 'hk_%'
+ORDER BY created_at DESC
+LIMIT 20;
+</code></pre>
+
+<hr />
+<h2 id="part-7-troubleshooting-customer-issues">Part 7: Troubleshooting Customer Issues</h2>
+<h3 id="customer-cant-connect">Customer Can't Connect</h3>
+<table>
+<thead>
+<tr>
+<th>Check</th>
+<th>How</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Peer in server config?</td>
+<td><code>wg show</code> on VPN1</td>
+<td>Add peer to config</td>
+</tr>
+<tr>
+<td>AllowedIPs correct?</td>
+<td>Check customer .conf</td>
+<td>Must include <code>192.168.168.0/24</code></td>
+</tr>
+<tr>
+<td>IP forwarding enabled?</td>
+<td><code>netsh int ipv4 show int</code></td>
+<td>Enable on both interfaces</td>
+</tr>
+<tr>
+<td>Firewall blocking?</td>
+<td><code>Test-NetConnection -Port 51820 -UDP</code></td>
+<td>Open UDP 51820</td>
+</tr>
+</tbody>
+</table>
+<h3 id="customer-can-connect-but-dashboard-fails">Customer Can Connect but Dashboard Fails</h3>
+<table>
+<thead>
+<tr>
+<th>Check</th>
+<th>How</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ping Ubuntu VM</td>
+<td><code>ping 192.168.168.100</code></td>
+<td>Check Ubuntu routes</td>
+</tr>
+<tr>
+<td>Port 8080 open?</td>
+<td><code>Test-NetConnection -Port 8080</code></td>
+<td>Check Docker running</td>
+</tr>
+<tr>
+<td>RBAC user exists?</td>
+<td>Check PostgreSQL</td>
+<td>Create user</td>
+</tr>
+<tr>
+<td>Password correct?</td>
+<td>Reset password</td>
+<td>Update hash in DB</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="part-8-ip-forwarding-configuration">Part 8: IP Forwarding Configuration</h2>
+<p><strong>CRITICAL</strong>: VPN1 must have IP forwarding enabled for customers to reach Ubuntu VM.</p>
+<h3 id="check-current-status">Check Current Status</h3>
+<pre class="codehilite"><code class="language-powershell"># On VPN1
+netsh int ipv4 show int
+
+# Look for:
+# Idx     Met         MTU          State       Forwarding   Name
+# ---     ---         ---          -----       ----------   ----
+#  12      25        1420            connected  enabled      NYVPNServer
+#  18       5        1500            connected  enabled      vEthernet (PrivateSwitch)
+</code></pre>
+
+<h3 id="enable-if-disabled">Enable if Disabled</h3>
+<pre class="codehilite"><code class="language-powershell"># Enable on WireGuard interface
+netsh int ipv4 set int &quot;NYVPNServer&quot; forwarding=enabled
+
+# Enable on HyperV internal switch
+netsh int ipv4 set int &quot;vEthernet (PrivateSwitch)&quot; forwarding=enabled
+</code></pre>
+
+<h3 id="make-persistent-wireguard-postup">Make Persistent (WireGuard PostUp)</h3>
+<p>Add to VPN1 WireGuard config:</p>
+<pre class="codehilite"><code class="language-ini">[Interface]
+...
+PostUp = netsh int ipv4 set int &quot;NYVPNServer&quot; forwarding=enabled &amp; netsh int ipv4 set int &quot;vEthernet (PrivateSwitch)&quot; forwarding=enabled
+</code></pre>
+
+<hr />
+<h2 id="appendix-full-customer-onboarding-checklist">Appendix: Full Customer Onboarding Checklist</h2>
+<pre class="codehilite"><code>CUSTOMER ONBOARDING CHECKLIST
+=============================
+Customer: ________________
+Date: ________________
+Admin: ________________
+
+[ ] 1. Generate WireGuard keypair
+[ ] 2. Allocate IP address (10.101.0.4X)
+[ ] 3. Add peer to VPN1 WireGuard config
+[ ] 4. Restart WireGuard service
+[ ] 5. Create customer .conf file
+[ ] 6. Create RBAC user in PostgreSQL
+[ ] 7. Test connection from VCL side
+[ ] 8. Send config via secure channel
+[ ] 9. Send password via separate channel
+[ ] 10. Verify customer can connect
+[ ] 11. Document in access log
+[ ] 12. Send customer guide document
+
+Notes:
+_____________________________________
+_____________________________________
+</code></pre>
+
+<hr />
+<h2 id="revision-history">Revision History</h2>
+<table>
+<thead>
+<tr>
+<th>Version</th>
+<th>Date</th>
+<th>Changes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1.0.0</td>
+<td>2025-12-10</td>
+<td>Initial IT admin guide</td>
+</tr>
+</tbody>
+</table>
+</body>
+</html>

@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Mega HK Deployment Best Practice</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 { border-bottom: 2px solid #3498db; padding-bottom: 0.3em; }
+        h2 { border-bottom: 1px solid #ecf0f1; padding-bottom: 0.2em; }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1em;
+            overflow-x: auto;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 1em 0;
+            padding-left: 1em;
+            color: #666;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 2em 0;
+            padding: 1em;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .pdf-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 8px 16px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .pdf-link:hover {
+            background-color: #c0392b;
+        }
+    </style>
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <p><a href="Mega-HK-Deployment-Best-Practice.pdf" class="pdf-link">📄 Download PDF Version</a></p>
+    <h1 id="mega-hk-ats-health-monitor-deployment-best-practice">Mega HK ATS-Health-Monitor Deployment - Best Practice</h1>
+<blockquote>
+<p><strong>Version</strong>: 1.0.0
+<strong>Last Updated</strong>: December 10, 2025
+<strong>Status</strong>: Recommended Architecture
+<strong>Audience</strong>: VCL DevOps, Mega HK IT</p>
+</blockquote>
+<hr />
+<h2 id="executive-summary">Executive Summary</h2>
+<p>For Mega Hong Kong operations, we recommend <strong>deploying a local ATS-Health-Monitor instance in HK</strong> that receives live log feeds from NY via ZeroMQ PUB/SUB over WireGuard VPN. This provides:</p>
+<ul>
+<li><strong>Real-time monitoring</strong> during NY market hours</li>
+<li><strong>Local data storage</strong> for SFC HK compliance</li>
+<li><strong>Low latency</strong> dashboard access</li>
+<li><strong>Operational independence</strong> from NY outages</li>
+</ul>
+<hr />
+<h2 id="architecture-overview">Architecture Overview</h2>
+<pre class="codehilite"><code>┌─────────────────────────────────────────────────────────────────────────────┐
+│                           RECOMMENDED ARCHITECTURE                           │
+│                     Live Log Feed to HK (Multi-Site SUB)                    │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│   ┌─────────────────────────────────────────────────────────────────────┐   │
+│   │                              NY2                                     │   │
+│   │                   192.168.168.2 (Private)                           │   │
+│   │  ┌────────────────────────────────────────────────────────────┐     │   │
+│   │  │ ats-log-agent.exe (ZeroMQ PUB)                             │     │   │
+│   │  │ Binds: tcp://*:9000                                        │     │   │
+│   │  │ Watches: ats.log, FIX.log                                  │     │   │
+│   │  │ Publishes: JSON batches every 1 second                     │     │   │
+│   │  └─────────────────────────────┬──────────────────────────────┘     │   │
+│   └────────────────────────────────┼────────────────────────────────────┘   │
+│                                    │                                         │
+│                          Published Log Lines                                 │
+│                                    │                                         │
+│         ┌──────────────────────────┼──────────────────────────┐             │
+│         │                          │                          │             │
+│         ▼                          ▼                          ▼             │
+│   ┌───────────────┐      ┌───────────────┐      ┌───────────────┐          │
+│   │ NY Ubuntu VM  │      │ HK Mega VM    │      │ Developer     │          │
+│   │ 192.168.168.100│      │ (WireGuard)   │      │ (Local Docker)│          │
+│   │ (Primary)     │      │ (Secondary)   │      │ (Debug)       │          │
+│   ├───────────────┤      ├───────────────┤      ├───────────────┤          │
+│   │ ATS-Health-   │      │ ATS-Health-   │      │ ATS-Health-   │          │
+│   │ Monitor (SUB) │      │ Monitor (SUB) │      │ Monitor (SUB) │          │
+│   │               │      │               │      │               │          │
+│   │ TimescaleDB   │      │ TimescaleDB   │      │ TimescaleDB   │          │
+│   │ (Full history)│      │ (HK copy)     │      │ (Dev testing) │          │
+│   │               │      │               │      │               │          │
+│   │ MSSQL Access  │      │ Read-only     │      │ Mock data     │          │
+│   │ (Direct)      │      │ (via API)     │      │               │          │
+│   └───────────────┘      └───────────────┘      └───────────────┘          │
+│                                                                              │
+│   ✅ All sites receive identical log data in real-time                      │
+│   ✅ Each site has independent TimescaleDB for local queries                │
+│   ✅ HK can operate during NY network issues (using cached data)            │
+│   ✅ SFC HK audit requirements met with local data retention                │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+</code></pre>
+
+<hr />
+<h2 id="network-topology">Network Topology</h2>
+<pre class="codehilite"><code>                    INTERNET
+                        │
+            ┌───────────┴───────────┐
+            │                       │
+            ▼                       ▼
+    ┌───────────────┐       ┌───────────────┐
+    │ VPN1 (NY)     │       │ HK Office     │
+    │ 209.127.118.182│       │ Router/Server │
+    │               │       │               │
+    │ WireGuard     │◄─────►│ WireGuard     │
+    │ 10.101.0.1    │  VPN  │ 10.101.0.40   │
+    └───────┬───────┘       └───────┬───────┘
+            │                       │
+    ┌───────┴───────┐       ┌───────┴───────┐
+    │ Private Switch│       │ HK LAN        │
+    │192.168.168.0/24│       │192.168.1.0/24 │
+    └───────┬───────┘       └───────┬───────┘
+            │                       │
+    ┌───────┴───────┐       ┌───────┴───────┐
+    │ Ubuntu VM     │       │ HK Docker Host│
+    │ 192.168.168.100│       │ 192.168.1.100 │
+    │               │       │               │
+    │ :8080 Dashboard│       │ :8080 Dashboard│
+    │ :5432 Timescale│       │ :5432 Timescale│
+    │ :9000 Log RX   │       │ (SUB to NY)   │
+    └───────────────┘       └───────────────┘
+</code></pre>
+
+<hr />
+<h2 id="implementation-steps">Implementation Steps</h2>
+<h3 id="phase-1-hk-infrastructure-setup">Phase 1: HK Infrastructure Setup</h3>
+<h4 id="step-11-provision-hk-docker-host">Step 1.1: Provision HK Docker Host</h4>
+<p>Options:
+- <strong>Cloud VM</strong> (AWS HK, Azure HK, Alibaba Cloud)
+- <strong>On-premises server</strong> in Mega HK office
+- <strong>Mini PC</strong> (Intel NUC or similar) for small deployment</p>
+<p>Minimum specs:
+| Resource | Requirement |
+|----------|-------------|
+| CPU | 4 cores |
+| RAM | 8GB |
+| Storage | 100GB SSD |
+| OS | Ubuntu 22.04 LTS |</p>
+<h4 id="step-12-install-docker">Step 1.2: Install Docker</h4>
+<pre class="codehilite"><code class="language-bash"># On HK Docker host
+sudo apt-get update
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+
+# Verify
+docker --version
+docker compose version
+</code></pre>
+
+<h4 id="step-13-setup-wireguard-client">Step 1.3: Setup WireGuard Client</h4>
+<pre class="codehilite"><code class="language-bash"># Install WireGuard
+sudo apt-get install -y wireguard
+
+# Create config
+sudo nano /etc/wireguard/wg0.conf
+</code></pre>
+
+<p>Config content:</p>
+<pre class="codehilite"><code class="language-ini">[Interface]
+PrivateKey = &lt;hk-private-key&gt;
+Address = 10.101.0.40/32
+
+[Peer]
+PublicKey = &lt;ny-vpn1-public-key&gt;
+AllowedIPs = 10.101.0.0/24, 192.168.168.0/24
+Endpoint = 209.127.118.182:51820
+PersistentKeepalive = 25
+</code></pre>
+
+<p>Enable and start:</p>
+<pre class="codehilite"><code class="language-bash">sudo systemctl enable wg-quick@wg0
+sudo systemctl start wg-quick@wg0
+
+# Verify
+ping 192.168.168.2   # Should reach NY2
+ping 192.168.168.100 # Should reach NY Ubuntu VM
+</code></pre>
+
+<h3 id="phase-2-deploy-ats-health-monitor">Phase 2: Deploy ATS-Health-Monitor</h3>
+<h4 id="step-21-create-deployment-directory">Step 2.1: Create Deployment Directory</h4>
+<pre class="codehilite"><code class="language-bash">mkdir -p /opt/ats-health-monitor
+cd /opt/ats-health-monitor
+</code></pre>
+
+<h4 id="step-22-create-docker-composeyml">Step 2.2: Create docker-compose.yml</h4>
+<pre class="codehilite"><code class="language-yaml"># /opt/ats-health-monitor/docker-compose.yml
+version: '3.8'
+
+services:
+  timescaledb:
+    image: timescale/timescaledb:latest-pg15
+    container_name: timescaledb
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ats_health_user
+      POSTGRES_PASSWORD: ats_health_2024
+      POSTGRES_DB: ats_health_monitor
+    volumes:
+      - timescaledb-data:/var/lib/postgresql/data
+    ports:
+      - &quot;5432:5432&quot;
+
+  ats-health-monitor:
+    image: ats-health-monitor:latest
+    container_name: ats-health-monitor
+    restart: unless-stopped
+    environment:
+      - TZ=Asia/Hong_Kong
+    volumes:
+      - ./config.toml:/app/config/config.toml:ro
+      - ats-data:/app/data
+    command: --config /app/config/config.toml --web
+    ports:
+      - &quot;8080:8080&quot;
+    depends_on:
+      - timescaledb
+
+volumes:
+  timescaledb-data:
+  ats-data:
+</code></pre>
+
+<h4 id="step-23-create-hk-config-configtoml">Step 2.3: Create HK Config (config.toml)</h4>
+<pre class="codehilite"><code class="language-toml"># /opt/ats-health-monitor/config.toml
+# ATS Health Monitor - Hong Kong Mega Office Configuration
+
+# ==============================================================================
+# SITE IDENTIFICATION
+# ==============================================================================
+[site]
+id = &quot;HK-MEGA-01&quot;
+role = &quot;secondary&quot;
+timezone = &quot;Asia/Hong_Kong&quot;
+
+# ==============================================================================
+# DATABASE - Local TimescaleDB
+# ==============================================================================
+[database.compliance]
+enabled = true
+host = &quot;timescaledb&quot;
+port = 5432
+database = &quot;ats_health_monitor&quot;
+username = &quot;ats_health_user&quot;
+password_hash = &quot;ats_health_2024&quot;
+ssl_mode = &quot;disable&quot;
+
+# SQLite for local caching
+[database.operational]
+enabled = true
+path = &quot;/app/data/operational.db&quot;
+
+# ==============================================================================
+# MSSQL - Read-Only Access via NY API (No Direct Connection)
+# ==============================================================================
+[database]
+# HK does NOT have direct MSSQL access
+# Position data comes from log feed + NY API
+enabled = false
+
+# ==============================================================================
+# LOG RECEIVER - Subscribe to NY2 Log Agent
+# ==============================================================================
+[log_receiver]
+enabled = true
+# Connect to NY2 via WireGuard VPN
+publishers = [&quot;192.168.168.2:9000&quot;]
+reconnect_delay_seconds = 5
+buffer_size = 10000
+
+# OR use Reliable Receiver for guaranteed delivery
+[reliable_log_receiver]
+enabled = true
+pub_addr = &quot;192.168.168.2:9000&quot;
+replay_addr = &quot;192.168.168.2:9001&quot;
+state_file = &quot;/app/data/receiver_state.json&quot;
+wal_dir = &quot;/app/data/wal&quot;
+max_gap_before_replay = 100
+
+# ==============================================================================
+# TELEGRAM NOTIFICATIONS
+# ==============================================================================
+[telegram]
+enabled = true
+token = &quot;YOUR_TELEGRAM_BOT_TOKEN&quot;
+chat_id = &quot;-YOUR_HK_CHAT_ID&quot;
+min_interval_seconds = 5
+
+# ==============================================================================
+# ATS LOG ISSUE MATRIX
+# ==============================================================================
+[ats_log_issue_matrix]
+enabled = true
+duplicate_window_seconds = 300
+
+# Patterns are loaded from PostgreSQL (same as NY)
+
+# ==============================================================================
+# RBAC
+# ==============================================================================
+[rbac]
+enabled = true
+# Users managed in PostgreSQL
+
+# ==============================================================================
+# WEB SERVER
+# ==============================================================================
+[server]
+port = 8080
+host = &quot;0.0.0.0&quot;
+
+# ==============================================================================
+# RESYNC (Optional - for historical data recovery)
+# ==============================================================================
+[resync]
+enabled = true
+# Resync Manager runs on NY - HK can trigger via API
+manager_url = &quot;http://192.168.168.2:8090&quot;
+
+# ==============================================================================
+# DISPLAY SETTINGS
+# ==============================================================================
+[global_display]
+default_days = 7
+max_days = 30
+
+[timezone]
+default_timezone = &quot;Asia/Hong_Kong&quot;
+</code></pre>
+
+<h4 id="step-24-transfer-docker-image">Step 2.4: Transfer Docker Image</h4>
+<p>From NY (or build machine):</p>
+<pre class="codehilite"><code class="language-bash"># Save image
+docker save ats-health-monitor:latest -o ats-health-monitor.tar
+
+# Transfer to HK (via SCP over WireGuard)
+scp ats-health-monitor.tar hkadmin@10.101.0.40:/opt/ats-health-monitor/
+
+# On HK host - load image
+docker load -i /opt/ats-health-monitor/ats-health-monitor.tar
+</code></pre>
+
+<h4 id="step-25-start-services">Step 2.5: Start Services</h4>
+<pre class="codehilite"><code class="language-bash">cd /opt/ats-health-monitor
+docker compose up -d
+
+# Verify
+docker compose ps
+docker compose logs -f
+</code></pre>
+
+<h3 id="phase-3-verify-operations">Phase 3: Verify Operations</h3>
+<h4 id="step-31-check-log-feed-connection">Step 3.1: Check Log Feed Connection</h4>
+<pre class="codehilite"><code class="language-bash"># On HK host
+docker logs ats-health-monitor 2&gt;&amp;1 | grep -i &quot;connected\|log.*receiver&quot;
+
+# Expected:
+# &quot;Connected to log publisher at 192.168.168.2:9000&quot;
+# &quot;Receiving log batches...&quot;
+</code></pre>
+
+<h4 id="step-32-check-data-flow">Step 3.2: Check Data Flow</h4>
+<pre class="codehilite"><code class="language-bash"># Check TimescaleDB has data
+docker exec timescaledb psql -U ats_health_user -d ats_health_monitor -c &quot;SELECT COUNT(*) FROM fix_order_events;&quot;
+
+# Should show increasing count as logs come in
+</code></pre>
+
+<h4 id="step-33-access-dashboard">Step 3.3: Access Dashboard</h4>
+<p>From HK LAN:</p>
+<pre class="codehilite"><code>http://192.168.1.100:8080
+</code></pre>
+
+<p>Login with RBAC credentials.</p>
+<hr />
+<h2 id="operational-considerations">Operational Considerations</h2>
+<h3 id="data-sovereignty-sfc-compliance">Data Sovereignty (SFC Compliance)</h3>
+<table>
+<thead>
+<tr>
+<th>Data Type</th>
+<th>Storage Location</th>
+<th>Retention</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FIX Order Events</td>
+<td>HK TimescaleDB</td>
+<td>7 years</td>
+</tr>
+<tr>
+<td>ATS Log Detections</td>
+<td>HK TimescaleDB</td>
+<td>7 years</td>
+</tr>
+<tr>
+<td>Position Snapshots</td>
+<td>HK TimescaleDB</td>
+<td>7 years</td>
+</tr>
+<tr>
+<td>Audit Trail</td>
+<td>HK TimescaleDB</td>
+<td>7 years</td>
+</tr>
+</tbody>
+</table>
+<p><strong>HK instance maintains its own complete audit trail</strong> - satisfying SFC data residency requirements.</p>
+<h3 id="failover-scenarios">Failover Scenarios</h3>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th>HK Dashboard</th>
+<th>Data</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>NY2 offline</td>
+<td>✅ Works</td>
+<td>⚠️ No new data</td>
+</tr>
+<tr>
+<td>WireGuard VPN down</td>
+<td>✅ Works</td>
+<td>⚠️ No new data</td>
+</tr>
+<tr>
+<td>HK instance down</td>
+<td>❌ Down</td>
+<td>⚠️ Queued at NY</td>
+</tr>
+<tr>
+<td>Both sites down</td>
+<td>❌ Down</td>
+<td>❌ No monitoring</td>
+</tr>
+</tbody>
+</table>
+<h3 id="backup-strategy">Backup Strategy</h3>
+<pre class="codehilite"><code class="language-bash"># Daily backup of HK TimescaleDB
+0 2 * * * docker exec timescaledb pg_dump -U ats_health_user ats_health_monitor | gzip &gt; /backup/timescaledb-$(date +\%Y\%m\%d).sql.gz
+
+# Keep 30 days of backups
+find /backup -name &quot;timescaledb-*.sql.gz&quot; -mtime +30 -delete
+</code></pre>
+
+<hr />
+<h2 id="comparison-vpn-only-vs-live-log-feed">Comparison: VPN-Only vs Live Log Feed</h2>
+<table>
+<thead>
+<tr>
+<th>Aspect</th>
+<th>VPN-Only (Current)</th>
+<th>Live Log Feed (Recommended)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Dashboard latency</strong></td>
+<td>200ms (NY-HK)</td>
+<td>&lt;10ms (local)</td>
+</tr>
+<tr>
+<td><strong>Data location</strong></td>
+<td>NY only</td>
+<td>Both NY and HK</td>
+</tr>
+<tr>
+<td><strong>SFC compliance</strong></td>
+<td>⚠️ Data in US</td>
+<td>✅ Data in HK</td>
+</tr>
+<tr>
+<td><strong>Offline capability</strong></td>
+<td>❌ None</td>
+<td>✅ Historical queries</td>
+</tr>
+<tr>
+<td><strong>Setup effort</strong></td>
+<td>Low</td>
+<td>Medium</td>
+</tr>
+<tr>
+<td><strong>Ongoing cost</strong></td>
+<td>Low</td>
+<td>Medium (HK server)</td>
+</tr>
+<tr>
+<td><strong>Real-time data</strong></td>
+<td>✅ Yes (via VPN)</td>
+<td>✅ Yes (via log feed)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="migration-path">Migration Path</h2>
+<h3 id="from-vpn-only-to-live-log-feed">From VPN-Only to Live Log Feed</h3>
+<ol>
+<li><strong>Week 1</strong>: Deploy HK infrastructure (Docker host, WireGuard)</li>
+<li><strong>Week 2</strong>: Deploy ATS-Health-Monitor with log receiver</li>
+<li><strong>Week 3</strong>: Test and validate data flow</li>
+<li><strong>Week 4</strong>: Train HK team, switch to local dashboard</li>
+<li><strong>Week 5</strong>: Decommission VPN-only access (optional - can keep as backup)</li>
+</ol>
+<hr />
+<h2 id="summary">Summary</h2>
+<p><strong>For Mega HK operations, the best practice is:</strong></p>
+<ol>
+<li><strong>Deploy a local ATS-Health-Monitor instance in HK</strong></li>
+<li><strong>Subscribe to live log feed from NY2 via ZeroMQ over WireGuard</strong></li>
+<li><strong>Store data locally in HK TimescaleDB for SFC compliance</strong></li>
+<li><strong>Access dashboard locally for low-latency operations</strong></li>
+<li><strong>Keep NY instance as primary source of truth</strong></li>
+</ol>
+<p>This architecture provides:
+- ✅ Real-time monitoring
+- ✅ Local data storage (compliance)
+- ✅ Low latency (&lt;10ms)
+- ✅ Operational independence
+- ✅ Disaster recovery capability</p>
+<hr />
+<h2 id="next-steps">Next Steps</h2>
+<ol>
+<li>[ ] Provision HK Docker host</li>
+<li>[ ] Setup WireGuard VPN connection</li>
+<li>[ ] Deploy ATS-Health-Monitor stack</li>
+<li>[ ] Configure log receiver to connect to NY2</li>
+<li>[ ] Test data flow and dashboard access</li>
+<li>[ ] Setup backups and monitoring</li>
+<li>[ ] Train HK team</li>
+</ol>
+<p>Contact VCL DevOps to begin implementation.</p>
+</body>
+</html>

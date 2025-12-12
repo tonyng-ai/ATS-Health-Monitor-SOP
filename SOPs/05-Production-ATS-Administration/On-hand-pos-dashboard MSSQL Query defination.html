@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>On hand pos dashboard MSSQL Query defination</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 { border-bottom: 2px solid #3498db; padding-bottom: 0.3em; }
+        h2 { border-bottom: 1px solid #ecf0f1; padding-bottom: 0.2em; }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1em;
+            overflow-x: auto;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 1em 0;
+            padding-left: 1em;
+            color: #666;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 2em 0;
+            padding: 1em;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .pdf-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 8px 16px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .pdf-link:hover {
+            background-color: #c0392b;
+        }
+    </style>
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <p><a href="On-hand-pos-dashboard MSSQL Query defination.pdf" class="pdf-link">📄 Download PDF Version</a></p>
+    <p>Status definations
+           CASE
+                    WHEN a.Status = 6 THEN
+                        'Full'
+                    WHEN a.Status = 5 THEN
+                        'Partial'
+                    WHEN a.Status IN ( 1, 2, 3 ) THEN
+                        'With_ATS'
+                    WHEN a.Status = 4 THEN
+                        'Pending'
+                    WHEN a.Status = 7 THEN
+                        'Cancel'
+                    WHEN a.Status = 8 THEN
+                        'ERR'
+                    WHEN a.Status = 9 THEN
+                        'TimmeOut'
+                    WHEN a.Status = 10 THEN
+                        'Pending_Cancel'
+                    ELSE
+                        'OffLine'
+            end as Status</p>
+<p>BuySellType defination:
+           CASE
+               WHEN a.BuySellType = 0 THEN
+                   'Buy'
+               WHEN a.BuySellType = 1 THEN
+                   'Sell'
+               WHEN a.BuySellType = 2 THEN
+                   'Close_Buy'
+               WHEN a.BuySellType = 3 THEN
+                   'Close_Sell'
+               ELSE
+                   'Error'
+           END AS BuySellType,</p>
+<p>--Parent Orders</p>
+<p>All Column will be sortable and filtered unless given sepical instructions. 
+only apply Specail Column instruction if requested: i.e.
+       --Groupable
+       --Show Group SubTotal and Total Sum</p>
+<pre class="codehilite"><code class="language-sql">--Parent Orders
+SELECT     u.InitialPositionOrderID,
+           dbo.ConvertToGMT(a.BaseMSTime, RTRIM(s.std)) AS 'Exchange Time',
+           b.Code IB_Account, --Groupable
+           b.AccountName,
+           a.BuySellType,
+           s.Direction, --Groupable
+           s.StrategyName,
+           u.uPosition OnHand,
+           CAST(ABS(u.PosCost / u.uPosition) AS DECIMAL(16, 6)) AS TradePrice,
+           ABS(u.PosCost) posCost,
+           s.ExchangeName, --Groupable
+           s.TimeZoneIDX,
+           s.Symbol,
+           s.LotSize,
+           CASE
+               WHEN s.TimeZoneIDX IN ( 35, 20 ) THEN
+                   'US' 
+               WHEN s.TimeZoneIDX IN ( 210 ) THEN
+                   'HK' 
+               ELSE
+                   '**'
+           END AS HostExchangeCountry,--Groupable
+           o.C MKTClosePrice,
+           o.TimeStamp MKTPriceTimeStamp,
+           CASE
+               WHEN s.Direction = 'L' THEN
+           (o.C * ABS(u.uPosition)) - ABS(u.PosCost)
+               ELSE
+                   ABS(u.PosCost) - (o.C * ABS(u.uPosition))
+           END PnL,
+           a.tag37
+    FROM fnd.StockOutstdPos u (NOLOCK)
+        JOIN fnd.ATSStockOrder (NOLOCK) a
+        ON a.ATSStockOrderID = u.CurrentATSStockID
+        JOIN fnd.STAR_StockFundTB s (NOLOCK)
+            ON s.BrokerAccountID = u.BrokerAccountID
+               AND s.StrategyID = u.StrategyID
+        JOIN fnd.BrokerAccount b (NOLOCK)
+            ON b.BrokerAccountID = u.BrokerAccountID
+         LEFT OUTER JOIN  fnd.LatestOHLC (NOLOCK) o
+            ON o.SymbolID = s.SymbolID
+    WHERE u.uPosition &lt;&gt; 0
+</code></pre>
+
+<p>Exec this stored procedures to get column definations</p>
+<pre class="codehilite"><code class="language-sql">EXEC fnd.AI_GetQueryWithSchema @UserQuery = N'--Parent Orders
+SELECT 
+           u.InitialPositionOrderID, 
+           dbo.ConvertToGMT(a.BaseMSTime, RTRIM(s.std)) AS ''Exchange Time'',
+           b.Code IB_Account,
+           b.AccountName,
+           a.BuySellType,
+           s.Direction,
+           s.StrategyName,
+           u.uPosition OnHand,
+           CAST(ABS(u.PosCost / u.uPosition) AS DECIMAL(16, 6)) AS TradePrice,
+           ABS(u.PosCost) posCost,
+           s.ExchangeName,
+           s.Symbol,
+           s.LotSize,
+           CASE
+               WHEN s.TimeZoneIDX IN ( 35, 20 ) THEN
+                   ''US''
+               WHEN s.TimeZoneIDX IN ( 210 ) THEN
+                   ''HK''
+               ELSE
+                   ''**''
+           END AS HostExchangeCountry,
+           o.C MKTClosePrice,
+           o.TimeStamp MKTPriceTimeStamp,
+           CASE
+               WHEN s.Direction = ''L'' THEN
+           (o.C * ABS(u.uPosition)) - ABS(u.PosCost)
+               ELSE
+                   ABS(u.PosCost) - (o.C * ABS(u.uPosition))
+           END PnL,
+           a.tag37
+    FROM fnd.StockOutstdPos u (NOLOCK)
+        JOIN fnd.ATSStockOrder (NOLOCK) a
+        ON a.ATSStockOrderID = u.CurrentATSStockID
+        JOIN fnd.STAR_StockFundTB s (NOLOCK)
+            ON s.BrokerAccountID = u.BrokerAccountID
+               AND s.StrategyID = u.StrategyID
+        JOIN fnd.BrokerAccount b (NOLOCK)
+            ON b.BrokerAccountID = u.BrokerAccountID
+         LEFT OUTER JOIN  fnd.LatestOHLC (NOLOCK) o
+            ON o.SymbolID = s.SymbolID
+    WHERE u.uPosition &lt;&gt; 0
+
+' -- nvarchar(max)
+</code></pre>
+
+<p>Column definations</p>
+<pre class="codehilite"><code>column_name sql_type    max_length  precision   scale   is_nullable simple_type
+InitialPositionOrderID  int 4   10  0   1   integer
+Exchange Time   datetime    8   23  3   1   datetime
+IB_Account  varchar 50  0   0   1   string
+AccountName varchar 100 0   0   1   string
+BuySellType int 4   10  0   1   integer
+Direction   char    1   0   0   1   string
+StrategyName    char    100 0   0   1   string
+OnHand  int 4   10  0   1   integer
+TradePrice  decimal 9   16  6   1   decimal
+posCost decimal 9   18  6   1   decimal
+ExchangeName    char    50  0   0   1   string
+Symbol  char    11  0   0   1   string
+LotSize int 4   10  0   1   integer
+HostExchangeCountry varchar 2   0   0   0   string
+MKTClosePrice   decimal 9   17  6   1   decimal
+MKTPriceTimeStamp   datetime    8   23  3   1   datetime
+PnL decimal 17  29  6   1   decimal
+tag37   char    32  0   0   1   string
+</code></pre>
+
+<p>Output example</p>
+<pre class="codehilite"><code>InitialPositionOrderID  Exchange Time   IB_Account  AccountName Direction   StrategyName    OnHand  TradePrice  posCost ExchangeName    Symbol  LotSize HostExchangeCountry MKTClosePrice   MKTPriceTimeStamp   PnL tag37
+45  2025-12-02 22:30:00.323 U17828576   PTLong  L   ST_QQQ_LP2                                                                                              8   622.210000  4977.680000 ISLAND                                              QQQ         NULL    US  625.510000  2025-12-05 16:00:00.030 26.400000   01b2e88e.00030c8f.692e7837.0001 
+66  2025-12-03 20:05:00.230 U17828576   PTLong  L   ST_QQQ_LPMaXHigh                                                                                        8   621.510000  4972.080000 ISLAND                                              QQQ         NULL    US  625.510000  2025-12-05 16:00:00.030 32.000000   01b2e88e.00030c8f.692fc937.0001 
+</code></pre>
+
+<p>--Child Grid definations. Use InitialPositionOrderID to Sync with the Parent</p>
+<p>If Child STP is missing. Redflag the Parent Order</p>
+<pre class="codehilite"><code class="language-SQL">SELECT p.InitialPositionOrderID,
+       dbo.ConvertFromGMT(a.BaseMSTime, RTRIM(f.Std)) AS Date,
+       a.Quantity,
+       a.Price,
+       a.OrderName,
+       a.Status,
+       a.OrderType,
+       a.tag37
+FROM fnd.StockOutstdPos p WITH (NOLOCK)
+    JOIN fnd.ATSStockOrder a WITH (NOLOCK, INDEX(idx_ATSStockOrder_Date))
+        ON p.StrategyID = a.StrategyID
+           AND a.BrokerAccountID = p.BrokerAccountID
+           --AND a.ATSStockOrderID &gt; p.InitialPositionOrderID - 10
+           AND CAST(a.BaseMSTime AS SMALLDATETIME) &gt;= CAST(
+                                                      (
+                                                          SELECT b.BaseMSTime
+                                                          FROM fnd.ATSStockOrder b (NOLOCK)
+                                                          WHERE b.ATSStockOrderID = p.InitialPositionOrderID
+                                                      ) AS SMALLDATETIME)
+           AND a.StarTag &lt;&gt; 1
+           AND a.Status &lt; 6
+    JOIN fnd.STAR_StockFundTB (NOLOCK) f
+        ON f.StrategyID = p.StrategyID
+           AND f.BrokerAccountID = p.BrokerAccountID
+WHERE p.uPosition &lt;&gt; 0;
+</code></pre>
+
+<pre class="codehilite"><code>column_name sql_type    max_length  precision   scale   is_nullable simple_type
+InitialPositionOrderID  int 4   10  0   1   integer
+Date    datetime    8   23  3   1   datetime
+Quantity    int 4   10  0   1   integer
+Price   decimal 9   16  6   1   decimal
+OrderName   char    50  0   0   1   string
+Status  int 4   10  0   1   integer
+OrderType   char    10  0   0   1   string
+tag37   char    32  0   0   1   string
+</code></pre>
+
+<pre class="codehilite"><code>45  2025-12-05 10:15:00.170 8   618.030000  Init STP                                            4   STP         01b2e88e.00030c8f.69326b99.0001 
+66  2025-12-05 10:15:00.180 8   618.710000  Init STP                                            4   STP         01b2e88e.00030c8f.69326b9a.0001 
+</code></pre>
+</body>
+</html>

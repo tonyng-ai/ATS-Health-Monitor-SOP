@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>SOP Search and Filtering</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 { border-bottom: 2px solid #3498db; padding-bottom: 0.3em; }
+        h2 { border-bottom: 1px solid #ecf0f1; padding-bottom: 0.2em; }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1em;
+            overflow-x: auto;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 1em 0;
+            padding-left: 1em;
+            color: #666;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 2em 0;
+            padding: 1em;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .pdf-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 8px 16px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .pdf-link:hover {
+            background-color: #c0392b;
+        }
+    </style>
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <p><a href="SOP-Search-and-Filtering.pdf" class="pdf-link">📄 Download PDF Version</a></p>
+    <h1 id="sop-search-and-filtering-procedure">SOP Search and Filtering Procedure</h1>
+<h2 id="metadata">Metadata</h2>
+<p><strong>Category:</strong> Server Administration
+<strong>Last Updated:</strong> 2024-01-15
+<strong>Author:</strong> System Administrator
+<strong>Version:</strong> 1.0
+<strong>Review Date:</strong> 2024-04-15
+<strong>Status:</strong> Active</p>
+<hr />
+<h2 id="purpose">Purpose</h2>
+<p>This procedure covers how to search, filter, and manage Standard Operating Procedures (SOPs) using SQL-like queries and various search methods. The search system allows users to quickly find SOPs by category, status, author, date, content, and other metadata fields.</p>
+<p><strong>When to Use:</strong>
+- Finding specific SOPs quickly
+- Generating reports on SOP status
+- Identifying outdated SOPs needing review
+- Filtering SOPs by category or author
+- Exporting SOP metadata for analysis
+- Building searchable indexes for web interfaces</p>
+<h3 id="search-system-overview">Search System Overview</h3>
+<p>The SOP search system provides multiple methods to find and filter SOPs:</p>
+<pre class="codehilite"><code class="language-mermaid">flowchart TD
+    Start([Start Search]) --&gt; Method{Choose Search Method}
+    Method --&gt;|SQL-like| PowerShell[PowerShell Script&lt;br/&gt;Search-SOPs.ps1]
+    Method --&gt;|Quick| GitHub[GitHub Search]
+    Method --&gt;|Content| VSCode[VS Code Search]
+    Method --&gt;|Index| Index[Build Index&lt;br/&gt;Build-SOP-Index.ps1]
+
+    PowerShell --&gt; Query[Enter SQL Query]
+    Query --&gt; Parse[Parse Query]
+    Parse --&gt; Filter[Filter SOPs]
+    Filter --&gt; Format[Format Results]
+    Format --&gt; Output[Display/Export Results]
+
+    GitHub --&gt; GHQuery[GitHub Search Syntax]
+    GHQuery --&gt; GHResults[GitHub Results]
+
+    VSCode --&gt; VSCQuery[VS Code Search]
+    VSCQuery --&gt; VSCResults[VS Code Results]
+
+    Index --&gt; JSON[Generate JSON Index]
+    JSON --&gt; FastSearch[Fast Search]
+
+    Output --&gt; End([Complete])
+    GHResults --&gt; End
+    VSCResults --&gt; End
+    FastSearch --&gt; End
+
+    style Start fill:#90EE90
+    style End fill:#90EE90
+    style PowerShell fill:#87CEEB
+    style Index fill:#FFD700
+</code></pre>
+
+<hr />
+<h2 id="prerequisites">Prerequisites</h2>
+<h3 id="required-access">Required Access</h3>
+<ul>
+<li>[x] Read access to SOPs directory</li>
+<li>[x] PowerShell execution permissions</li>
+<li>[x] File system access (for building index)</li>
+</ul>
+<h3 id="required-tools">Required Tools</h3>
+<ul>
+<li>[x] PowerShell 5.1 or later</li>
+<li>[x] Search-SOPs.ps1 script</li>
+<li>[x] Build-SOP-Index.ps1 script (optional, for fast search)</li>
+<li>[x] VS Code (optional, for integrated search)</li>
+<li>[x] Git/GitHub access (optional, for GitHub search)</li>
+</ul>
+<h3 id="required-information">Required Information</h3>
+<ul>
+<li>[x] Path to SOPs directory (default: <code>.\SOPs</code>)</li>
+<li>[x] Search criteria (category, status, author, etc.)</li>
+<li>[x] Output format preference (Table, JSON, CSV, Markdown)</li>
+</ul>
+<h3 id="pre-conditions">Pre-Conditions</h3>
+<ul>
+<li>[x] SOPs directory exists and contains markdown files</li>
+<li>[x] SOPs have metadata sections (for structured search)</li>
+<li>[x] PowerShell scripts are in the repository root</li>
+</ul>
+<hr />
+<h2 id="procedure-steps">Procedure Steps</h2>
+<h3 id="overview-diagram">Overview Diagram</h3>
+<pre class="codehilite"><code class="language-mermaid">sequenceDiagram
+    participant User
+    participant SearchScript
+    participant SOPsDirectory
+    participant IndexFile
+
+    User-&gt;&gt;SearchScript: Execute Search Query
+    SearchScript-&gt;&gt;SOPsDirectory: Scan Markdown Files
+    SOPsDirectory--&gt;&gt;SearchScript: Return SOP Files
+    SearchScript-&gt;&gt;SearchScript: Parse Metadata
+    SearchScript-&gt;&gt;SearchScript: Apply SQL Filter
+    SearchScript-&gt;&gt;SearchScript: Format Results
+    SearchScript--&gt;&gt;User: Display Results
+
+    Note over User,IndexFile: Optional: Build Index
+    User-&gt;&gt;IndexFile: Build Index (Optional)
+    IndexFile--&gt;&gt;User: JSON Index Created
+    User-&gt;&gt;SearchScript: Search Using Index
+    SearchScript-&gt;&gt;IndexFile: Load Index
+    IndexFile--&gt;&gt;SearchScript: Return Indexed Data
+    SearchScript--&gt;&gt;User: Fast Results
+</code></pre>
+
+<h3 id="step-1-verify-search-scripts-are-available">Step 1: Verify Search Scripts Are Available</h3>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Check if search scripts exist
+Test-Path &quot;.\Search-SOPs.ps1&quot;
+Test-Path &quot;.\Build-SOP-Index.ps1&quot;
+Test-Path &quot;.\SOP-Search-Examples.ps1&quot;
+
+# Verify SOPs directory exists
+Test-Path &quot;.\SOPs&quot;
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- All scripts return <code>True</code>
+- SOPs directory exists and contains markdown files</p>
+<p><strong>If Scripts Missing:</strong>
+- Ensure you're in the repository root directory
+- Verify scripts are committed to the repository
+- Check file paths are correct</p>
+<hr />
+<h3 id="step-2-basic-search-find-sops-by-category">Step 2: Basic Search - Find SOPs by Category</h3>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Search for Server Administration SOPs
+.\Search-SOPs.ps1 -Query &quot;Category = 'Server Administration'&quot;
+
+# Search for Multicharts Models SOPs
+.\Search-SOPs.ps1 -Query &quot;Category = 'Multicharts Models'&quot;
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- Table showing SOPs matching the category
+- Columns: Title, Category, Author, LastUpdated, Status, FilePath
+- Results sorted by default order</p>
+<p><strong>Example Output:</strong></p>
+<pre class="codehilite"><code>Title                          Category              Author                LastUpdated
+-----                          --------              ------                -----------
+Firewall Management           Server Administration System Administrator  2024-01-15
+Daily Checks                   Server Administration System Administrator  2024-01-10
+</code></pre>
+
+<hr />
+<h3 id="step-3-search-by-status">Step 3: Search by Status</h3>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Find all active SOPs
+.\Search-SOPs.ps1 -Query &quot;Status = 'Active'&quot;
+
+# Find draft SOPs
+.\Search-SOPs.ps1 -Query &quot;Status = 'Draft'&quot;
+
+# Find deprecated SOPs
+.\Search-SOPs.ps1 -Query &quot;Status = 'Deprecated'&quot;
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- List of SOPs with specified status
+- Useful for generating status reports</p>
+<hr />
+<h3 id="step-4-advanced-search-multiple-conditions">Step 4: Advanced Search - Multiple Conditions</h3>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># AND condition - Find active Server Administration SOPs
+.\Search-SOPs.ps1 -Query &quot;Category = 'Server Administration' AND Status = 'Active'&quot;
+
+# OR condition - Find SOPs from multiple categories
+.\Search-SOPs.ps1 -Query &quot;Category = 'Server Administration' OR Category = 'Multicharts Models'&quot;
+
+# Complex query with parentheses
+.\Search-SOPs.ps1 -Query &quot;(Category = 'Server Administration' OR Category = 'Multicharts Models') AND Status = 'Active'&quot;
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- Filtered results matching all conditions
+- Supports complex logical operations</p>
+<hr />
+<h3 id="step-5-text-search-find-by-title-pattern">Step 5: Text Search - Find by Title Pattern</h3>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Search for SOPs with &quot;Firewall&quot; in title
+.\Search-SOPs.ps1 -Query &quot;Title LIKE '%Firewall%'&quot;
+
+# Search for SOPs starting with &quot;Daily&quot;
+.\Search-SOPs.ps1 -Query &quot;Title LIKE 'Daily%'&quot;
+
+# Search for SOPs containing &quot;Management&quot;
+.\Search-SOPs.ps1 -Query &quot;Title LIKE '%Management%'&quot;
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- SOPs matching the pattern
+- <code>%</code> matches any characters
+- <code>_</code> matches single character</p>
+<p><strong>LIKE Pattern Examples:</strong>
+- <code>'%Firewall%'</code> - Contains "Firewall"
+- <code>'Firewall%'</code> - Starts with "Firewall"
+- <code>'%Firewall'</code> - Ends with "Firewall"
+- <code>'Firewall_'</code> - Starts with "Firewall" followed by one character</p>
+<hr />
+<h3 id="step-6-date-range-search">Step 6: Date Range Search</h3>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Find SOPs updated in 2024
+.\Search-SOPs.ps1 -Query &quot;LastUpdated &gt; '2024-01-01' AND LastUpdated &lt; '2024-12-31'&quot;
+
+# Find recently updated SOPs (last 30 days)
+$thirtyDaysAgo = (Get-Date).AddDays(-30).ToString(&quot;yyyy-MM-dd&quot;)
+.\Search-SOPs.ps1 -Query &quot;LastUpdated &gt; '$thirtyDaysAgo'&quot;
+
+# Find outdated SOPs (older than 6 months)
+$sixMonthsAgo = (Get-Date).AddMonths(-6).ToString(&quot;yyyy-MM-dd&quot;)
+.\Search-SOPs.ps1 -Query &quot;LastUpdated &lt; '$sixMonthsAgo' AND Status = 'Active'&quot;
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- SOPs within the specified date range
+- Useful for identifying SOPs needing review</p>
+<hr />
+<h3 id="step-7-select-specific-fields">Step 7: Select Specific Fields</h3>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Select only title and category
+.\Search-SOPs.ps1 -Query &quot;Status = 'Active'&quot; -Select &quot;Title, Category&quot;
+
+# Select title, author, and last updated
+.\Search-SOPs.ps1 -Query &quot;Category = 'Server Administration'&quot; -Select &quot;Title, Author, LastUpdated&quot;
+
+# Select all fields (default)
+.\Search-SOPs.ps1 -Query &quot;Status = 'Active'&quot; -Select &quot;*&quot;
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- Table with only specified columns
+- Reduces output for focused results</p>
+<hr />
+<h3 id="step-8-sort-results">Step 8: Sort Results</h3>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Sort by last updated (newest first)
+.\Search-SOPs.ps1 -Query &quot;Status = 'Active'&quot; -OrderBy &quot;LastUpdated DESC&quot;
+
+# Sort by category, then by title
+.\Search-SOPs.ps1 -Query &quot;Status = 'Active'&quot; -OrderBy &quot;Category, Title&quot;
+
+# Sort by author alphabetically
+.\Search-SOPs.ps1 -Query &quot;*&quot; -OrderBy &quot;Author ASC&quot;
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- Results sorted according to specified field
+- <code>DESC</code> for descending, <code>ASC</code> for ascending (default)</p>
+<hr />
+<h3 id="step-9-export-results">Step 9: Export Results</h3>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Export to JSON
+.\Search-SOPs.ps1 -Query &quot;Status = 'Active'&quot; -OutputFormat JSON | Out-File &quot;active-sops.json&quot;
+
+# Export to CSV
+.\Search-SOPs.ps1 -Query &quot;Category = 'Server Administration'&quot; -OutputFormat CSV | Out-File &quot;server-admin-sops.csv&quot;
+
+# Export to Markdown table
+.\Search-SOPs.ps1 -Query &quot;Status = 'Active'&quot; -OutputFormat Markdown | Out-File &quot;sop-report.md&quot;
+
+# Export to JSON and view
+.\Search-SOPs.ps1 -Query &quot;Status = 'Active'&quot; -OutputFormat JSON | ConvertFrom-Json | Format-Table
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- File created with search results
+- JSON format for programmatic use
+- CSV format for spreadsheet analysis
+- Markdown format for documentation</p>
+<hr />
+<h3 id="step-10-build-searchable-index-optional-for-fast-search">Step 10: Build Searchable Index (Optional, for Fast Search)</h3>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Build index of all SOPs
+.\Build-SOP-Index.ps1
+
+# Build index with custom paths
+.\Build-SOP-Index.ps1 -SOPsPath &quot;.\SOPs&quot; -IndexPath &quot;.\SOPs\sop-index.json&quot;
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- JSON index file created at <code>SOPs\sop-index.json</code>
+- Contains metadata for all SOPs
+- Faster subsequent searches</p>
+<p><strong>Index File Structure:</strong></p>
+<pre class="codehilite"><code class="language-json">{
+  &quot;Generated&quot;: &quot;2024-01-15 10:30:00&quot;,
+  &quot;TotalSOPs&quot;: 15,
+  &quot;SOPs&quot;: [
+    {
+      &quot;Title&quot;: &quot;Firewall Management&quot;,
+      &quot;Category&quot;: &quot;Server Administration&quot;,
+      &quot;Author&quot;: &quot;System Administrator&quot;,
+      &quot;LastUpdated&quot;: &quot;2024-01-15&quot;,
+      &quot;Status&quot;: &quot;Active&quot;,
+      &quot;FilePath&quot;: &quot;I:\\...\\SOPs\\01-Server-Administration\\Firewall-Management.md&quot;,
+      &quot;HasMermaid&quot;: true,
+      &quot;WordCount&quot;: 500
+    }
+  ]
+}
+</code></pre>
+
+<hr />
+<h3 id="step-11-search-using-index-fast-method">Step 11: Search Using Index (Fast Method)</h3>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Load and search index
+$index = Get-Content &quot;SOPs\sop-index.json&quot; | ConvertFrom-Json
+
+# Filter index
+$index.SOPs | Where-Object { $_.Category -eq &quot;Server Administration&quot; }
+
+# Complex filter on index
+$index.SOPs | Where-Object {
+    $_.Status -eq &quot;Active&quot; -and
+    $_.LastUpdated -gt &quot;2024-01-01&quot;
+} | Select-Object Title, Category, LastUpdated
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- Fast search results from pre-built index
+- Useful for frequent searches
+- Can be used by web interfaces</p>
+<hr />
+<h3 id="step-12-find-sops-with-specific-features">Step 12: Find SOPs with Specific Features</h3>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Find SOPs with Mermaid diagrams
+.\Search-SOPs.ps1 -Query &quot;HasMermaid = 'True'&quot;
+
+# Find SOPs with code blocks
+.\Search-SOPs.ps1 -Query &quot;HasCodeBlocks &gt; '0'&quot;
+
+# Find SOPs with images
+.\Search-SOPs.ps1 -Query &quot;HasImages &gt; '0'&quot;
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- SOPs containing specified features
+- Useful for content audits</p>
+<hr />
+<h3 id="step-13-find-sops-needing-review">Step 13: Find SOPs Needing Review</h3>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Find SOPs with review date in the past
+$today = (Get-Date).ToString(&quot;yyyy-MM-dd&quot;)
+.\Search-SOPs.ps1 -Query &quot;ReviewDate &lt; '$today' AND Status = 'Active'&quot;
+
+# Find SOPs due for review in next 30 days
+$nextMonth = (Get-Date).AddDays(30).ToString(&quot;yyyy-MM-dd&quot;)
+.\Search-SOPs.ps1 -Query &quot;ReviewDate &lt; '$nextMonth' AND ReviewDate &gt; '$today' AND Status = 'Active'&quot;
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- List of SOPs requiring review
+- Helps maintain SOP currency</p>
+<hr />
+<h2 id="verification">Verification</h2>
+<h3 id="how-to-verify-success">How to Verify Success</h3>
+<ol>
+<li>
+<p><strong>Verify Search Returns Results:</strong>
+   <code>powershell
+   $results = .\Search-SOPs.ps1 -Query "Status = 'Active'"
+   # Should display table with results</code></p>
+</li>
+<li>
+<p><strong>Verify Index Build:</strong>
+   <code>powershell
+   Test-Path "SOPs\sop-index.json"
+   # Should return True</code></p>
+</li>
+<li>
+<p><strong>Verify Export:</strong>
+   <code>powershell
+   .\Search-SOPs.ps1 -Query "Status = 'Active'" -OutputFormat JSON | Out-File "test.json"
+   Test-Path "test.json"
+   # Should return True
+   Get-Content "test.json" | ConvertFrom-Json
+   # Should display JSON structure</code></p>
+</li>
+</ol>
+<h3 id="success-criteria">Success Criteria</h3>
+<ul>
+<li>[x] Search script executes without errors</li>
+<li>[x] Results match query criteria</li>
+<li>[x] Output format is correct</li>
+<li>[x] Index file is created successfully</li>
+<li>[x] Exported files are valid (JSON/CSV/Markdown)</li>
+</ul>
+<hr />
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="common-issues">Common Issues</h3>
+<h4 id="issue-1-sops-directory-not-found">Issue 1: "SOPs directory not found"</h4>
+<p><strong>Symptoms:</strong>
+- Error message: <code>ERROR: SOPs directory not found: .\SOPs</code>
+- Script fails to execute</p>
+<p><strong>Solution:</strong>
+1. Verify current directory:
+   <code>powershell
+   Get-Location</code>
+2. Navigate to repository root:
+   <code>powershell
+   cd I:\HyperV_PowerScript_Optimazation</code>
+3. Verify SOPs directory exists:
+   <code>powershell
+   Test-Path ".\SOPs"</code></p>
+<p><strong>Prevention:</strong>
+- Always run scripts from repository root
+- Use absolute paths if needed</p>
+<hr />
+<h4 id="issue-2-no-results-found-when-sops-exist">Issue 2: "No results found" when SOPs exist</h4>
+<p><strong>Symptoms:</strong>
+- Query returns no results
+- But SOPs exist in directory</p>
+<p><strong>Solution:</strong>
+1. Check query syntax:
+   <code>powershell
+   # Test with simple query first
+   .\Search-SOPs.ps1 -Query "Status = 'Active'"</code>
+2. Verify SOP metadata format:
+   <code>powershell
+   # Check if SOPs have metadata section
+   Get-Content "SOPs\01-Server-Administration\Production-Firewall-Best-Practices.md" | Select-String "## Metadata"</code>
+3. Check field names (case-sensitive):
+   <code>powershell
+   # Use exact field names: Title, Category, Status, etc.
+   .\Search-SOPs.ps1 -Query "Category = 'Server Administration'"</code></p>
+<p><strong>Prevention:</strong>
+- Ensure SOPs follow template format
+- Include metadata section in all SOPs
+- Use correct field names in queries</p>
+<hr />
+<h4 id="issue-3-query-syntax-errors">Issue 3: Query syntax errors</h4>
+<p><strong>Symptoms:</strong>
+- Error parsing WHERE clause
+- Unexpected results</p>
+<p><strong>Solution:</strong>
+1. Check operator syntax:
+   - Use <code>=</code> not <code>==</code>
+   - Use <code>AND</code>/<code>OR</code> (uppercase)
+   - Use quotes for text values: <code>'Value'</code>
+2. Check parentheses:
+   ```powershell
+   # Correct
+   .\Search-SOPs.ps1 -Query "(Category = 'A' OR Category = 'B') AND Status = 'Active'"</p>
+<p># Incorrect
+   .\Search-SOPs.ps1 -Query "Category = 'A' OR Category = 'B' AND Status = 'Active'"
+   <code>3. Escape special characters in LIKE patterns:</code>powershell
+   # Use % for wildcard
+   .\Search-SOPs.ps1 -Query "Title LIKE '%Firewall%'"
+   ```</p>
+<p><strong>Prevention:</strong>
+- Test queries with simple conditions first
+- Use examples from <code>SOP-Search-Examples.ps1</code>
+- Review query syntax in guide</p>
+<hr />
+<h4 id="issue-4-index-file-not-updating">Issue 4: Index file not updating</h4>
+<p><strong>Symptoms:</strong>
+- Index shows old data
+- New SOPs not appearing</p>
+<p><strong>Solution:</strong>
+1. Rebuild index:
+   <code>powershell
+   .\Build-SOP-Index.ps1</code>
+2. Verify index timestamp:
+   <code>powershell
+   $index = Get-Content "SOPs\sop-index.json" | ConvertFrom-Json
+   $index.Generated</code>
+3. Check for file locks:
+   <code>powershell
+   # Close any programs using the index file</code></p>
+<p><strong>Prevention:</strong>
+- Rebuild index after adding/modifying SOPs
+- Automate index building (GitHub Actions, scheduled task)</p>
+<hr />
+<h4 id="issue-5-export-file-format-issues">Issue 5: Export file format issues</h4>
+<p><strong>Symptoms:</strong>
+- JSON file invalid
+- CSV file missing data
+- Markdown table malformed</p>
+<p><strong>Solution:</strong>
+1. <strong>JSON:</strong>
+   <code>powershell
+   # Validate JSON
+   Get-Content "results.json" | ConvertFrom-Json
+   # Should not error</code></p>
+<ol>
+<li>
+<p><strong>CSV:</strong>
+   <code>powershell
+   # Check CSV
+   Import-Csv "results.csv"
+   # Should display data</code></p>
+</li>
+<li>
+<p><strong>Markdown:</strong>
+   <code>powershell
+   # View markdown
+   Get-Content "results.md"
+   # Should show table format</code></p>
+</li>
+</ol>
+<p><strong>Prevention:</strong>
+- Test export with small result sets first
+- Verify file encoding (UTF-8)</p>
+<hr />
+<h2 id="related-procedures">Related Procedures</h2>
+<ul>
+<li><a href="Production-Firewall-Best-Practices.md">Production Firewall Best Practices</a> - Example SOP with metadata</li>
+<li><a href="../README.md">Creating New SOPs</a> - How to create SOPs with proper metadata</li>
+</ul>
+<h2 id="related-scripts">Related Scripts</h2>
+<ul>
+<li><a href="../../Search-SOPs.ps1">Search-SOPs.ps1</a> - Main search script with SQL-like queries</li>
+<li><a href="../../Build-SOP-Index.ps1">Build-SOP-Index.ps1</a> - Index builder for fast searching</li>
+<li><a href="../../SOP-Search-Examples.ps1">SOP-Search-Examples.ps1</a> - Example queries</li>
+</ul>
+<h2 id="references">References</h2>
+<ul>
+<li><a href="../../SOP-Search-Guide.md">SOP Search Guide</a> - Comprehensive search documentation</li>
+<li><a href="../../Templates/Procedure-Template.md">Procedure Template</a> - SOP template with metadata format</li>
+<li><a href="https://docs.github.com/en/search-github/searching-on-github">GitHub Search Documentation</a> - GitHub search syntax</li>
+</ul>
+<h2 id="change-log">Change Log</h2>
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Version</th>
+<th>Author</th>
+<th>Changes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2024-01-15</td>
+<td>1.0</td>
+<td>System Administrator</td>
+<td>Initial version</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="notes">Notes</h2>
+<h3 id="quick-reference-common-queries">Quick Reference: Common Queries</h3>
+<pre class="codehilite"><code class="language-powershell"># Find all active SOPs
+.\Search-SOPs.ps1 -Query &quot;Status = 'Active'&quot;
+
+# Find by category
+.\Search-SOPs.ps1 -Query &quot;Category = 'Server Administration'&quot;
+
+# Find by author
+.\Search-SOPs.ps1 -Query &quot;Author = 'System Administrator'&quot;
+
+# Find with Mermaid diagrams
+.\Search-SOPs.ps1 -Query &quot;HasMermaid = 'True'&quot;
+
+# Find outdated SOPs
+.\Search-SOPs.ps1 -Query &quot;LastUpdated &lt; '2023-01-01' AND Status = 'Active'&quot;
+
+# Complex query
+.\Search-SOPs.ps1 -Query &quot;(Category = 'Server Administration' OR Category = 'Multicharts Models') AND Status = 'Active' AND LastUpdated &gt; '2024-01-01'&quot;
+</code></pre>
+
+<h3 id="alternative-search-methods">Alternative Search Methods</h3>
+<p><strong>GitHub Search:</strong></p>
+<pre class="codehilite"><code>path:SOPs &quot;firewall&quot;
+path:SOPs extension:md &quot;Server Administration&quot;
+</code></pre>
+
+<p><strong>VS Code Search:</strong>
+- Press <code>Ctrl+Shift+F</code>
+- Search pattern: <code>SOPs/**/*.md</code>
+- Use regex for advanced patterns</p>
+<p><strong>PowerShell Select-String:</strong></p>
+<pre class="codehilite"><code class="language-powershell">Get-ChildItem -Path SOPs -Filter &quot;*.md&quot; -Recurse |
+    Select-String -Pattern &quot;firewall&quot; -CaseSensitive:$false
+</code></pre>
+
+<p><strong>💡 TIP:</strong> Build index regularly for faster searches, especially as SOP count grows.</p>
+<p><strong>📝 NOTE:</strong> Metadata extraction relies on SOPs following the standard template format. Ensure all SOPs include the Metadata section.</p>
+<p><strong>⚠️ WARNING:</strong> Query syntax is case-sensitive for field names. Use exact field names: <code>Title</code>, <code>Category</code>, <code>Status</code>, etc.</p>
+</body>
+</html>

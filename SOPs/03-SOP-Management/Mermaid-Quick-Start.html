@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Mermaid Quick Start</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 { border-bottom: 2px solid #3498db; padding-bottom: 0.3em; }
+        h2 { border-bottom: 1px solid #ecf0f1; padding-bottom: 0.2em; }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1em;
+            overflow-x: auto;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 1em 0;
+            padding-left: 1em;
+            color: #666;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 2em 0;
+            padding: 1em;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .pdf-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 8px 16px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .pdf-link:hover {
+            background-color: #c0392b;
+        }
+    </style>
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <p><a href="Mermaid-Quick-Start.pdf" class="pdf-link">📄 Download PDF Version</a></p>
+    <h1 id="mermaidjs-quick-start-for-sops">Mermaid.js Quick Start for SOPs</h1>
+<h2 id="installation">Installation</h2>
+<h3 id="vs-code-extension-required">VS Code Extension (Required)</h3>
+<p>Install <strong>Markdown Preview Enhanced</strong> extension:
+1. Press <code>Ctrl+Shift+X</code>
+2. Search: "Markdown Preview Enhanced"
+3. Install (by Yiyi Wang)</p>
+<p>This extension renders Mermaid diagrams in Markdown preview.</p>
+<hr />
+<h2 id="quick-usage">Quick Usage</h2>
+<h3 id="1-create-diagram">1. Create Diagram</h3>
+<p>Type <code>mermaid-flow</code> + <code>Tab</code> to insert a flowchart template, or write:</p>
+<pre class="codehilite"><code class="language-markdown">```mermaid
+flowchart TD
+    A[Start] --&gt; B[End]
+</code></pre>
+
+<pre class="codehilite"><code>### 2. Preview
+
+Press `Ctrl+Shift+V` to preview - diagrams render automatically!
+
+---
+
+## Available Snippets
+
+Type these in VS Code and press `Tab`:
+
+| Snippet | What It Creates |
+|---------|----------------|
+| `mermaid-flow` | Basic flowchart |
+| `mermaid-procedure` | Procedure flowchart with verification |
+| `mermaid-seq` | Sequence diagram |
+| `mermaid-arch` | System architecture |
+| `mermaid-state` | State diagram |
+| `mermaid-gantt` | Gantt chart |
+| `mermaid-pie` | Pie chart |
+
+---
+
+## Common SOP Diagrams
+
+### Procedure Flow
+
+```markdown
+```mermaid
+flowchart TD
+    Start --&gt; Step1 --&gt; Step2 --&gt; Verify{Verify}
+    Verify --&gt;|Pass| End
+    Verify --&gt;|Fail| Troubleshoot --&gt; Step2
+</code></pre>
+
+<pre class="codehilite"><code>### Network Architecture
+
+```markdown
+```mermaid
+graph TB
+    User --&gt; VPN --&gt; Server
+    PublicIP --&gt;|Limited| Server
+</code></pre>
+
+<pre class="codehilite"><code>### Sequence Diagram
+
+```markdown
+```mermaid
+sequenceDiagram
+    User-&gt;&gt;Server: Request
+    Server--&gt;&gt;User: Response
+</code></pre>
+
+<p>```</p>
+<hr />
+<h2 id="tips">Tips</h2>
+<ol>
+<li><strong>Test Online First:</strong> Use <a href="https://mermaid.live/">mermaid.live</a> to test diagrams</li>
+<li><strong>Keep It Simple:</strong> Don't overcrowd diagrams</li>
+<li><strong>Use Colors:</strong> Make important nodes stand out</li>
+<li><strong>Preview Often:</strong> Check how it looks in preview</li>
+</ol>
+<hr />
+<h2 id="examples">Examples</h2>
+<p>See <a href="SOPs/Mermaid-Examples.md">Mermaid-Examples.md</a> for complete examples!</p>
+</body>
+</html>

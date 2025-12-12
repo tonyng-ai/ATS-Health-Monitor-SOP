@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Mega HK Handover Strategy</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 { border-bottom: 2px solid #3498db; padding-bottom: 0.3em; }
+        h2 { border-bottom: 1px solid #ecf0f1; padding-bottom: 0.2em; }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1em;
+            overflow-x: auto;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 1em 0;
+            padding-left: 1em;
+            color: #666;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 2em 0;
+            padding: 1em;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .pdf-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 8px 16px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .pdf-link:hover {
+            background-color: #c0392b;
+        }
+    </style>
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <p><a href="Mega-HK-Handover-Strategy.pdf" class="pdf-link">📄 Download PDF Version</a></p>
+    <h1 id="mega-hk-handover-strategy-beta-to-production">Mega HK Handover Strategy - Beta to Production</h1>
+<blockquote>
+<p><strong>Version</strong>: 1.0.0
+<strong>Last Updated</strong>: December 10, 2025
+<strong>Status</strong>: Planning
+<strong>Classification</strong>: Internal - VCL Management</p>
+</blockquote>
+<hr />
+<h2 id="overview">Overview</h2>
+<p>This document outlines the strategy for transitioning Mega Hong Kong from beta (using VCL NY infrastructure) to production (their own independent instance).</p>
+<hr />
+<h2 id="timeline">Timeline</h2>
+<pre class="codehilite"><code>┌─────────────────────────────────────────────────────────────────────────────┐
+│                        MEGA HK TRANSITION TIMELINE                           │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  PHASE 1: BETA                    PHASE 2: TRANSITION    PHASE 3: PRODUCTION│
+│  (Current - Jan 31, 2025)         (Feb 1-28, 2025)       (Mar 1, 2025+)     │
+│                                                                              │
+│  ┌────────────────────┐           ┌────────────────────┐  ┌────────────────┐│
+│  │ Mega uses VCL NY   │           │ Deploy HK instance │  │ Mega operates  ││
+│  │ via WireGuard VPN  │   ───►    │ Run in parallel    │  │ independently  ││
+│  │                    │           │ Validate data flow │  │                ││
+│  │ VCL manages all    │           │ Train HK team      │  │ VCL provides   ││
+│  │                    │           │                    │  │ updates only   ││
+│  └────────────────────┘           └────────────────────┘  └────────────────┘│
+│                                                                              │
+│  CUTOFF DATE: February 28, 2025                                             │
+│  After this date, Mega uses their own HK instance exclusively.              │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+</code></pre>
+
+<hr />
+<h2 id="milestones">Milestones</h2>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Date</th>
+<th>Milestone</th>
+<th>Owner</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Beta</strong></td>
+<td>Now - Jan 31</td>
+<td>Mega uses VCL NY instance via VPN</td>
+<td>VCL</td>
+</tr>
+<tr>
+<td></td>
+<td>Jan 15</td>
+<td>Mega provisions HK Docker host</td>
+<td>Mega IT</td>
+</tr>
+<tr>
+<td></td>
+<td>Jan 20</td>
+<td>VCL deploys ATS-Health-Monitor to HK</td>
+<td>VCL DevOps</td>
+</tr>
+<tr>
+<td><strong>Transition</strong></td>
+<td>Feb 1</td>
+<td>HK instance goes live (parallel with NY)</td>
+<td>VCL + Mega</td>
+</tr>
+<tr>
+<td></td>
+<td>Feb 7</td>
+<td>Validate data matches between NY and HK</td>
+<td>VCL QA</td>
+</tr>
+<tr>
+<td></td>
+<td>Feb 14</td>
+<td>Train Mega IT on operations</td>
+<td>VCL</td>
+</tr>
+<tr>
+<td></td>
+<td>Feb 21</td>
+<td>Mega IT performs first independent update</td>
+<td>Mega IT</td>
+</tr>
+<tr>
+<td><strong>Production</strong></td>
+<td><strong>Feb 28</strong></td>
+<td><strong>CUTOFF: VPN access to NY disabled</strong></td>
+<td>VCL</td>
+</tr>
+<tr>
+<td></td>
+<td>Mar 1+</td>
+<td>Mega operates HK instance independently</td>
+<td>Mega</td>
+</tr>
+<tr>
+<td></td>
+<td>Ongoing</td>
+<td>VCL provides Docker images for updates</td>
+<td>VCL</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="delivery-mechanism-comparison">Delivery Mechanism Comparison</h2>
+<h3 id="option-a-github-private-repository">Option A: GitHub (Private Repository)</h3>
+<pre class="codehilite"><code>VCL Dev ───► GitHub (Private) ───► Mega Pulls &amp; Builds
+</code></pre>
+
+<table>
+<thead>
+<tr>
+<th>Aspect</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Pros</strong></td>
+<td>Version control, release notes, audit trail</td>
+</tr>
+<tr>
+<td><strong>Cons</strong></td>
+<td>Exposes source code, Mega needs Go build environment</td>
+</tr>
+<tr>
+<td><strong>Security</strong></td>
+<td>Medium - code visible to customer</td>
+</tr>
+<tr>
+<td><strong>Effort</strong></td>
+<td>Medium - requires CI/CD setup</td>
+</tr>
+<tr>
+<td><strong>Best for</strong></td>
+<td>Open-source or semi-open projects</td>
+</tr>
+</tbody>
+</table>
+<h3 id="option-b-private-docker-registry">Option B: Private Docker Registry</h3>
+<pre class="codehilite"><code>VCL Dev ───► VCL Registry ───► Mega Pulls Image
+</code></pre>
+
+<table>
+<thead>
+<tr>
+<th>Aspect</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Pros</strong></td>
+<td>No source code exposure, easy for customer</td>
+</tr>
+<tr>
+<td><strong>Cons</strong></td>
+<td>Requires registry infrastructure</td>
+</tr>
+<tr>
+<td><strong>Security</strong></td>
+<td>High - only binaries shared</td>
+</tr>
+<tr>
+<td><strong>Effort</strong></td>
+<td>Low - simple docker pull</td>
+</tr>
+<tr>
+<td><strong>Best for</strong></td>
+<td><strong>Recommended for Mega</strong></td>
+</tr>
+</tbody>
+</table>
+<h3 id="option-c-direct-docker-access-sshvpn">Option C: Direct Docker Access (SSH/VPN)</h3>
+<pre class="codehilite"><code>VCL Dev ───► SSH to Mega Host ───► Deploy Directly
+</code></pre>
+
+<table>
+<thead>
+<tr>
+<th>Aspect</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Pros</strong></td>
+<td>Full control, quick deployments</td>
+</tr>
+<tr>
+<td><strong>Cons</strong></td>
+<td>Security concerns, dependency on VCL availability</td>
+</tr>
+<tr>
+<td><strong>Security</strong></td>
+<td>Low - VCL has access to customer infrastructure</td>
+</tr>
+<tr>
+<td><strong>Effort</strong></td>
+<td>Low for VCL, high dependency for Mega</td>
+</tr>
+<tr>
+<td><strong>Best for</strong></td>
+<td>Beta/POC only, NOT production</td>
+</tr>
+</tbody>
+</table>
+<h3 id="option-d-manual-image-transfer">Option D: Manual Image Transfer</h3>
+<pre class="codehilite"><code>VCL Dev ───► Build Image ───► Export .tar ───► SCP to Mega ───► Mega Loads
+</code></pre>
+
+<table>
+<thead>
+<tr>
+<th>Aspect</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Pros</strong></td>
+<td>No infrastructure needed, works offline</td>
+</tr>
+<tr>
+<td><strong>Cons</strong></td>
+<td>Manual process, error-prone</td>
+</tr>
+<tr>
+<td><strong>Security</strong></td>
+<td>Medium - image file shared</td>
+</tr>
+<tr>
+<td><strong>Effort</strong></td>
+<td>Medium - requires coordination</td>
+</tr>
+<tr>
+<td><strong>Best for</strong></td>
+<td>Air-gapped environments, initial deployment</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="recommendation-private-docker-registry-automation">Recommendation: Private Docker Registry + Automation</h2>
+<h3 id="architecture">Architecture</h3>
+<pre class="codehilite"><code>┌─────────────────────────────────────────────────────────────────────────────┐
+│                     RECOMMENDED DELIVERY ARCHITECTURE                        │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│   VCL Development                                                            │
+│   ┌──────────────────────────────────────────────────────────────────┐      │
+│   │  GitHub (Private - VCL only)                                      │      │
+│   │  ├── Source code                                                  │      │
+│   │  ├── Dockerfile                                                   │      │
+│   │  └── GitHub Actions (CI/CD)                                       │      │
+│   │           │                                                       │      │
+│   │           ▼                                                       │      │
+│   │      Build &amp; Test                                                 │      │
+│   │           │                                                       │      │
+│   │           ▼                                                       │      │
+│   │      Push to Registry                                             │      │
+│   └──────────┼───────────────────────────────────────────────────────┘      │
+│              │                                                               │
+│              ▼                                                               │
+│   ┌──────────────────────────────────────────────────────────────────┐      │
+│   │  VCL Docker Registry (ghcr.io or private)                        │      │
+│   │  ghcr.io/vcl-trading/ats-health-monitor:v1.2.3                   │      │
+│   │                                                                   │      │
+│   │  Access: Mega IT has READ-ONLY token                             │      │
+│   └──────────┬───────────────────────────────────────────────────────┘      │
+│              │                                                               │
+│              │  docker pull                                                  │
+│              ▼                                                               │
+│   ┌──────────────────────────────────────────────────────────────────┐      │
+│   │  Mega HK Docker Host                                              │      │
+│   │                                                                   │      │
+│   │  Mega IT runs:                                                    │      │
+│   │  docker pull ghcr.io/vcl-trading/ats-health-monitor:v1.2.3       │      │
+│   │  docker compose up -d                                             │      │
+│   └──────────────────────────────────────────────────────────────────┘      │
+│                                                                              │
+│  ✅ VCL retains source code ownership                                       │
+│  ✅ Mega gets pre-built, tested images                                      │
+│  ✅ Clear separation of responsibilities                                    │
+│  ✅ Audit trail via registry logs                                           │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+</code></pre>
+
+<hr />
+<h2 id="implementation-github-container-registry-ghcr">Implementation: GitHub Container Registry (GHCR)</h2>
+<h3 id="step-1-vcl-setup-enable-ghcr">Step 1: VCL Setup - Enable GHCR</h3>
+<pre class="codehilite"><code class="language-yaml"># .github/workflows/release.yml
+name: Release Docker Image
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/vcl-trading/ats-health-monitor:${{ github.ref_name }}
+            ghcr.io/vcl-trading/ats-health-monitor:latest
+</code></pre>
+
+<h3 id="step-2-create-mega-access-token">Step 2: Create Mega Access Token</h3>
+<pre class="codehilite"><code class="language-bash"># VCL Admin creates a Personal Access Token (PAT) for Mega
+# Scope: read:packages only
+# No write, no repo access
+
+# Token format: ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+</code></pre>
+
+<h3 id="step-3-mega-setup-configure-docker-login">Step 3: Mega Setup - Configure Docker Login</h3>
+<pre class="codehilite"><code class="language-bash"># On Mega HK Docker host
+echo &quot;ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx&quot; | docker login ghcr.io -u mega-readonly --password-stdin
+
+# Verify access
+docker pull ghcr.io/vcl-trading/ats-health-monitor:latest
+</code></pre>
+
+<h3 id="step-4-mega-update-process">Step 4: Mega Update Process</h3>
+<pre class="codehilite"><code class="language-bash"># When VCL announces new version:
+cd /opt/ats-health-monitor
+
+# Pull new image
+docker pull ghcr.io/vcl-trading/ats-health-monitor:v1.2.3
+
+# Update docker-compose.yml to use new tag
+# OR use :latest tag
+
+# Restart
+docker compose down
+docker compose up -d
+
+# Verify
+docker compose logs -f
+</code></pre>
+
+<hr />
+<h2 id="alternative-manual-scp-delivery">Alternative: Manual SCP Delivery</h2>
+<p>If GHCR is not feasible, use manual delivery:</p>
+<h3 id="vcl-side-build-export">VCL Side (Build &amp; Export)</h3>
+<pre class="codehilite"><code class="language-powershell"># Build-and-deliver.ps1
+$VERSION = &quot;v1.2.3&quot;
+$OUTPUT = &quot;ats-health-monitor-$VERSION.tar&quot;
+
+# Build
+docker build -t ats-health-monitor:$VERSION .
+
+# Export
+docker save ats-health-monitor:$VERSION -o $OUTPUT
+
+# Compress
+gzip $OUTPUT
+
+# SCP to Mega (via WireGuard)
+scp &quot;$OUTPUT.gz&quot; megaadmin@10.101.0.40:/opt/ats-health-monitor/
+
+Write-Host &quot;Delivered $OUTPUT.gz to Mega HK&quot;
+</code></pre>
+
+<h3 id="mega-side-import-deploy">Mega Side (Import &amp; Deploy)</h3>
+<pre class="codehilite"><code class="language-bash">#!/bin/bash
+# update.sh
+VERSION=$1
+
+if [ -z &quot;$VERSION&quot; ]; then
+    echo &quot;Usage: ./update.sh v1.2.3&quot;
+    exit 1
+fi
+
+cd /opt/ats-health-monitor
+
+# Decompress
+gunzip ats-health-monitor-$VERSION.tar.gz
+
+# Load image
+docker load -i ats-health-monitor-$VERSION.tar
+
+# Update docker-compose to use new version
+sed -i &quot;s|image: ats-health-monitor:.*|image: ats-health-monitor:$VERSION|&quot; docker-compose.yml
+
+# Restart
+docker compose down
+docker compose up -d
+
+echo &quot;Updated to $VERSION&quot;
+docker compose ps
+</code></pre>
+
+<hr />
+<h2 id="access-decisions">Access Decisions</h2>
+<h3 id="during-beta-now-feb-28">During Beta (Now - Feb 28)</h3>
+<table>
+<thead>
+<tr>
+<th>Access</th>
+<th>VCL</th>
+<th>Mega</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>NY Dashboard</td>
+<td>✅ Admin</td>
+<td>✅ Viewer</td>
+</tr>
+<tr>
+<td>NY SSH/Docker</td>
+<td>✅ Full</td>
+<td>❌ None</td>
+</tr>
+<tr>
+<td>HK Dashboard</td>
+<td>✅ Admin</td>
+<td>✅ Admin</td>
+</tr>
+<tr>
+<td>HK SSH/Docker</td>
+<td>✅ Deploy</td>
+<td>⚠️ Limited</td>
+</tr>
+</tbody>
+</table>
+<h3 id="after-cutoff-mar-1">After Cutoff (Mar 1+)</h3>
+<table>
+<thead>
+<tr>
+<th>Access</th>
+<th>VCL</th>
+<th>Mega</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>NY Dashboard</td>
+<td>✅ Admin</td>
+<td>❌ Disabled</td>
+</tr>
+<tr>
+<td>NY SSH/Docker</td>
+<td>✅ Full</td>
+<td>❌ None</td>
+</tr>
+<tr>
+<td>HK Dashboard</td>
+<td>❌ None</td>
+<td>✅ Full</td>
+</tr>
+<tr>
+<td>HK SSH/Docker</td>
+<td>❌ None</td>
+<td>✅ Full</td>
+</tr>
+<tr>
+<td>Docker Registry</td>
+<td>✅ Push</td>
+<td>✅ Pull-only</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="cutoff-checklist">Cutoff Checklist</h2>
+<h3 id="before-cutoff-week-of-feb-24">Before Cutoff (Week of Feb 24)</h3>
+<ul>
+<li>[ ] Mega HK instance fully operational</li>
+<li>[ ] Data validated matches NY</li>
+<li>[ ] Mega IT trained on operations</li>
+<li>[ ] Mega IT performed independent update</li>
+<li>[ ] Backup/restore tested</li>
+<li>[ ] Monitoring/alerting configured</li>
+<li>[ ] Support escalation path documented</li>
+</ul>
+<h3 id="on-cutoff-date-feb-28">On Cutoff Date (Feb 28)</h3>
+<ul>
+<li>[ ] Remove Mega WireGuard peers from VPN1</li>
+<li>[ ] Disable Mega RBAC accounts on NY</li>
+<li>[ ] Archive Mega-related NY data</li>
+<li>[ ] Send confirmation email to Mega</li>
+<li>[ ] Update internal documentation</li>
+</ul>
+<h3 id="post-cutoff-mar-1">Post-Cutoff (Mar 1+)</h3>
+<ul>
+<li>[ ] Verify Mega can pull new Docker images</li>
+<li>[ ] Test communication channel for updates</li>
+<li>[ ] Schedule first production update</li>
+</ul>
+<hr />
+<h2 id="support-model-after-cutoff">Support Model After Cutoff</h2>
+<table>
+<thead>
+<tr>
+<th>Issue Type</th>
+<th>Mega Responsibility</th>
+<th>VCL Support</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Infrastructure (Docker, OS)</td>
+<td>✅ Mega IT</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>Application bugs</td>
+<td>Report to VCL</td>
+<td>✅ Fix &amp; release</td>
+</tr>
+<tr>
+<td>Configuration</td>
+<td>✅ Mega IT</td>
+<td>⚠️ Guidance only</td>
+</tr>
+<tr>
+<td>New features</td>
+<td>Request</td>
+<td>✅ Roadmap</td>
+</tr>
+<tr>
+<td>Security patches</td>
+<td>Apply updates</td>
+<td>✅ Provide images</td>
+</tr>
+</tbody>
+</table>
+<h3 id="communication-channels">Communication Channels</h3>
+<table>
+<thead>
+<tr>
+<th>Purpose</th>
+<th>Channel</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Bug reports</td>
+<td>Plane (shared project)</td>
+</tr>
+<tr>
+<td>Feature requests</td>
+<td>Plane</td>
+</tr>
+<tr>
+<td>Security alerts</td>
+<td>Email + Telegram</td>
+</tr>
+<tr>
+<td>Release announcements</td>
+<td>Email</td>
+</tr>
+<tr>
+<td>Emergency support</td>
+<td>Phone (critical only)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="summary">Summary</h2>
+<h3 id="recommended-approach">Recommended Approach</h3>
+<ol>
+<li><strong>Use GitHub Container Registry (GHCR)</strong> for image delivery</li>
+<li><strong>Mega gets read-only access</strong> to pull images</li>
+<li><strong>VCL retains source code</strong> - not shared</li>
+<li><strong>Cutoff Date: February 28, 2025</strong></li>
+<li><strong>After cutoff</strong>: Mega operates independently, VCL provides updates via registry</li>
+</ol>
+<h3 id="key-decisions-needed">Key Decisions Needed</h3>
+<table>
+<thead>
+<tr>
+<th>Decision</th>
+<th>Options</th>
+<th>Recommendation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Delivery mechanism</td>
+<td>GHCR / Manual SCP</td>
+<td><strong>GHCR</strong></td>
+</tr>
+<tr>
+<td>Cutoff date</td>
+<td>Jan 31 / Feb 28 / Mar 31</td>
+<td><strong>Feb 28, 2025</strong></td>
+</tr>
+<tr>
+<td>VCL access to Mega</td>
+<td>None / SSH / VPN</td>
+<td><strong>None after cutoff</strong></td>
+</tr>
+<tr>
+<td>Source code sharing</td>
+<td>Full / Partial / None</td>
+<td><strong>None</strong></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="next-actions">Next Actions</h2>
+<ol>
+<li>[ ] <strong>VCL</strong>: Setup GHCR and CI/CD pipeline</li>
+<li>[ ] <strong>VCL</strong>: Create read-only access token for Mega</li>
+<li>[ ] <strong>Mega</strong>: Provision HK Docker host</li>
+<li>[ ] <strong>VCL</strong>: Deploy initial HK instance</li>
+<li>[ ] <strong>Both</strong>: Validate parallel operation</li>
+<li>[ ] <strong>VCL</strong>: Train Mega IT</li>
+<li>[ ] <strong>Both</strong>: Execute cutoff on Feb 28</li>
+</ol>
+<hr />
+<h2 id="revision-history">Revision History</h2>
+<table>
+<thead>
+<tr>
+<th>Version</th>
+<th>Date</th>
+<th>Changes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1.0.0</td>
+<td>2025-12-10</td>
+<td>Initial strategy document</td>
+</tr>
+</tbody>
+</table>
+</body>
+</html>

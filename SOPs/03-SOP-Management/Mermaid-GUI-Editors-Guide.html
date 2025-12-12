@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Mermaid GUI Editors Guide</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 { border-bottom: 2px solid #3498db; padding-bottom: 0.3em; }
+        h2 { border-bottom: 1px solid #ecf0f1; padding-bottom: 0.2em; }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1em;
+            overflow-x: auto;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 1em 0;
+            padding-left: 1em;
+            color: #666;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 2em 0;
+            padding: 1em;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .pdf-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 8px 16px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .pdf-link:hover {
+            background-color: #c0392b;
+        }
+    </style>
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <p><a href="Mermaid-GUI-Editors-Guide.pdf" class="pdf-link">📄 Download PDF Version</a></p>
+    <h1 id="mermaidjs-gui-editors-open-source-options">Mermaid.js GUI Editors - Open Source Options</h1>
+<h2 id="overview">Overview</h2>
+<p>While Mermaid.js is text-based, there are several open-source tools that provide GUI interfaces to make editing easier. Here are the best options:</p>
+<hr />
+<h2 id="1-mermaid-live-editor-official-recommended">1. Mermaid Live Editor (Official) ⭐ <strong>RECOMMENDED</strong></h2>
+<p><strong>Type:</strong> Web-based editor with live preview
+<strong>License:</strong> Open Source (MIT)
+<strong>URL:</strong> https://mermaid.live/
+<strong>GitHub:</strong> https://github.com/mermaid-js/mermaid-live-editor</p>
+<h3 id="features">Features:</h3>
+<ul>
+<li>✅ <strong>Real-time Preview</strong>: See diagram as you type</li>
+<li>✅ <strong>Export Options</strong>: PNG, SVG, PDF</li>
+<li>✅ <strong>Share Links</strong>: Generate shareable URLs</li>
+<li>✅ <strong>Syntax Highlighting</strong>: Code highlighting</li>
+<li>✅ <strong>Examples</strong>: Built-in examples</li>
+<li>✅ <strong>Fully Open Source</strong></li>
+</ul>
+<h3 id="how-to-use">How to Use:</h3>
+<ol>
+<li>Go to https://mermaid.live/</li>
+<li>Edit Mermaid code on left</li>
+<li>See preview on right</li>
+<li>Export or share</li>
+</ol>
+<h3 id="for-your-sops">For Your SOPs:</h3>
+<ul>
+<li>Create diagram in Mermaid Live Editor</li>
+<li>Copy the Mermaid code</li>
+<li>Paste into your SOP markdown file</li>
+</ul>
+<hr />
+<h2 id="2-simplemermaid">2. SimpleMermaid</h2>
+<p><strong>Type:</strong> Web-based editor
+<strong>URL:</strong> https://simplemermaid.com/
+<strong>License:</strong> Open Source</p>
+<h3 id="features_1">Features:</h3>
+<ul>
+<li>✅ <strong>Fast &amp; Lightweight</strong>: Minimal interface</li>
+<li>✅ <strong>Privacy-Focused</strong>: Runs entirely in browser</li>
+<li>✅ <strong>Offline Support</strong>: Works offline</li>
+<li>✅ <strong>Real-time Preview</strong></li>
+<li>✅ <strong>Export Options</strong></li>
+</ul>
+<h3 id="best-for">Best For:</h3>
+<ul>
+<li>Quick diagram creation</li>
+<li>Privacy-conscious users</li>
+<li>Offline editing</li>
+</ul>
+<hr />
+<h2 id="3-vs-code-extensions-with-gui">3. VS Code Extensions with GUI</h2>
+<h3 id="a-mermaid-editor-by-tomoyukim">A. Mermaid Editor (by tomoyukim)</h3>
+<p><strong>Extension:</strong> Mermaid Editor
+<strong>VS Code Marketplace:</strong> Search "Mermaid Editor"</p>
+<h3 id="features_2">Features:</h3>
+<ul>
+<li>✅ <strong>Live Preview</strong>: Side-by-side editing</li>
+<li>✅ <strong>Export to Image</strong>: PNG, SVG</li>
+<li>✅ <strong>Syntax Support</strong>: Auto-completion</li>
+<li>✅ <strong>Integrated</strong>: Works in VS Code</li>
+</ul>
+<h3 id="installation">Installation:</h3>
+<ol>
+<li>Open VS Code</li>
+<li>Press <code>Ctrl+Shift+X</code></li>
+<li>Search: "Mermaid Editor"</li>
+<li>Install</li>
+</ol>
+<h3 id="usage">Usage:</h3>
+<ol>
+<li>Create <code>.mmd</code> file</li>
+<li>Edit Mermaid code</li>
+<li>Right-click → "Mermaid: Preview"</li>
+<li>See live preview</li>
+</ol>
+<hr />
+<h3 id="b-markdown-preview-enhanced-already-installed">B. Markdown Preview Enhanced (Already Installed!)</h3>
+<p><strong>You already have this!</strong> It renders Mermaid in Markdown preview.</p>
+<h3 id="features_3">Features:</h3>
+<ul>
+<li>✅ <strong>Renders Mermaid</strong>: In Markdown preview</li>
+<li>✅ <strong>Export</strong>: PDF with diagrams</li>
+<li>✅ <strong>Live Preview</strong>: Real-time rendering</li>
+</ul>
+<h3 id="usage_1">Usage:</h3>
+<ol>
+<li>Write Mermaid in <code>.md</code> file</li>
+<li>Press <code>Ctrl+Shift+V</code> to preview</li>
+<li>Diagrams render automatically</li>
+</ol>
+<hr />
+<h2 id="4-mermaid-graphical-editor-chrome-extension">4. Mermaid Graphical Editor (Chrome Extension)</h2>
+<p><strong>Type:</strong> Chrome Extension
+<strong>License:</strong> Open Source
+<strong>GitHub:</strong> Search "mermaid-graphical-editor"</p>
+<h3 id="features_4">Features:</h3>
+<ul>
+<li>✅ <strong>Visual Interface</strong>: Drag-and-drop (limited)</li>
+<li>✅ <strong>Code Generation</strong>: Generates Mermaid code</li>
+<li>✅ <strong>Browser-Based</strong>: Works in Chrome</li>
+</ul>
+<h3 id="note">Note:</h3>
+<ul>
+<li>More limited than text editors</li>
+<li>Good for simple diagrams</li>
+<li>Generates code you can copy</li>
+</ul>
+<hr />
+<h2 id="5-drawio-diagramsnet-alternative">5. Draw.io / diagrams.net (Alternative)</h2>
+<p><strong>Type:</strong> Web-based, Desktop app
+<strong>License:</strong> Apache 2.0 (Open Source)
+<strong>URL:</strong> https://app.diagrams.net/
+<strong>GitHub:</strong> https://github.com/jgraph/drawio</p>
+<h3 id="features_5">Features:</h3>
+<ul>
+<li>✅ <strong>Full GUI Editor</strong>: True drag-and-drop</li>
+<li>✅ <strong>Export to Mermaid</strong>: Can export as Mermaid code</li>
+<li>✅ <strong>Professional</strong>: Industry-standard tool</li>
+<li>✅ <strong>Free &amp; Open Source</strong></li>
+</ul>
+<h3 id="for-mermaid">For Mermaid:</h3>
+<ul>
+<li>Create diagram visually</li>
+<li>Export as Mermaid (if supported)</li>
+<li>Or use as alternative to Mermaid</li>
+</ul>
+<hr />
+<h2 id="6-self-hosted-options">6. Self-Hosted Options</h2>
+<h3 id="mermaid-live-editor-self-host">Mermaid Live Editor (Self-Host)</h3>
+<p><strong>GitHub:</strong> https://github.com/mermaid-js/mermaid-live-editor</p>
+<h3 id="setup">Setup:</h3>
+<pre class="codehilite"><code class="language-bash"># Clone repository
+git clone https://github.com/mermaid-js/mermaid-live-editor.git
+cd mermaid-live-editor
+
+# Install dependencies
+npm install
+
+# Run locally
+npm start
+</code></pre>
+
+<h3 id="benefits">Benefits:</h3>
+<ul>
+<li>Full control</li>
+<li>Customizable</li>
+<li>Can integrate with your systems</li>
+</ul>
+<hr />
+<h2 id="recommendation-for-your-use-case">Recommendation for Your Use Case</h2>
+<h3 id="for-sop-creation">For SOP Creation:</h3>
+<p><strong>Best Option: Mermaid Live Editor + VS Code</strong></p>
+<ol>
+<li><strong>Create Diagram:</strong></li>
+<li>Use https://mermaid.live/ to create/edit</li>
+<li>Visual preview helps get it right</li>
+<li>
+<p>Test different layouts</p>
+</li>
+<li>
+<p><strong>Copy to SOP:</strong></p>
+</li>
+<li>Copy Mermaid code</li>
+<li>Paste into your SOP markdown</li>
+<li>
+<p>Preview in VS Code with Markdown Preview Enhanced</p>
+</li>
+<li>
+<p><strong>Workflow:</strong>
+   <code>Mermaid Live Editor → Copy Code → Paste in SOP → Preview in VS Code</code></p>
+</li>
+</ol>
+<h3 id="why-this-works-best">Why This Works Best:</h3>
+<ul>
+<li>✅ <strong>Easy Creation</strong>: Visual preview in browser</li>
+<li>✅ <strong>Version Control</strong>: Code in your SOP files</li>
+<li>✅ <strong>GitHub Compatible</strong>: Renders on GitHub</li>
+<li>✅ <strong>Team Friendly</strong>: Non-technical users can use Mermaid Live Editor</li>
+</ul>
+<hr />
+<h2 id="quick-comparison">Quick Comparison</h2>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Type</th>
+<th>GUI Level</th>
+<th>Best For</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Mermaid Live Editor</strong></td>
+<td>Web</td>
+<td>Text + Preview</td>
+<td>General use</td>
+</tr>
+<tr>
+<td><strong>SimpleMermaid</strong></td>
+<td>Web</td>
+<td>Text + Preview</td>
+<td>Quick edits</td>
+</tr>
+<tr>
+<td><strong>VS Code Extensions</strong></td>
+<td>Extension</td>
+<td>Text + Preview</td>
+<td>Integrated workflow</td>
+</tr>
+<tr>
+<td><strong>Draw.io</strong></td>
+<td>Web/Desktop</td>
+<td>Full GUI</td>
+<td>Complex diagrams</td>
+</tr>
+<tr>
+<td><strong>Mermaid Graphical Editor</strong></td>
+<td>Extension</td>
+<td>Limited GUI</td>
+<td>Simple diagrams</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="true-drag-and-drop-options">True Drag-and-Drop Options</h2>
+<h3 id="current-state">Current State:</h3>
+<p><strong>There is no fully-featured drag-and-drop GUI editor for Mermaid.js</strong> that's open source and production-ready.</p>
+<h3 id="why">Why:</h3>
+<ul>
+<li>Mermaid is designed as text-based</li>
+<li>Visual editors are complex to build</li>
+<li>Most tools provide text editing + visual preview</li>
+</ul>
+<h3 id="alternatives">Alternatives:</h3>
+<ol>
+<li><strong>Draw.io</strong> - Full GUI, can export to various formats</li>
+<li><strong>Lucidchart</strong> - Commercial, has Mermaid export</li>
+<li><strong>PlantUML</strong> - Text-based like Mermaid, has better GUI tools</li>
+</ol>
+<hr />
+<h2 id="practical-solution-for-your-team">Practical Solution for Your Team</h2>
+<h3 id="for-technical-users">For Technical Users:</h3>
+<ul>
+<li>Use VS Code with Markdown Preview Enhanced</li>
+<li>Edit Mermaid code directly</li>
+<li>See preview in real-time</li>
+</ul>
+<h3 id="for-non-technical-users">For Non-Technical Users:</h3>
+<ol>
+<li><strong>Use Mermaid Live Editor</strong> (https://mermaid.live/)</li>
+<li>Visual preview helps</li>
+<li>Can learn syntax gradually</li>
+<li>
+<p>Export/share easily</p>
+</li>
+<li>
+<p><strong>Or Use Draw.io</strong></p>
+</li>
+<li>Full GUI editor</li>
+<li>Create diagrams visually</li>
+<li>Export as image</li>
+<li>Include images in SOPs</li>
+</ol>
+<h3 id="hybrid-approach">Hybrid Approach:</h3>
+<ul>
+<li>Technical users: Edit Mermaid code in VS Code</li>
+<li>Non-technical users: Use Mermaid Live Editor or Draw.io</li>
+<li>Both result in diagrams in SOPs</li>
+</ul>
+<hr />
+<h2 id="integration-with-your-sop-workflow">Integration with Your SOP Workflow</h2>
+<h3 id="option-1-mermaid-live-editor-workflow">Option 1: Mermaid Live Editor Workflow</h3>
+<pre class="codehilite"><code>1. Open https://mermaid.live/
+2. Create/edit diagram
+3. Copy Mermaid code
+4. Paste into SOP markdown file
+5. Commit to GitHub
+</code></pre>
+
+<h3 id="option-2-vs-code-integrated-workflow">Option 2: VS Code Integrated Workflow</h3>
+<pre class="codehilite"><code>1. Open SOP in VS Code
+2. Type mermaid-procedure snippet
+3. Edit Mermaid code
+4. Preview with Ctrl+Shift+V
+5. Commit to GitHub
+</code></pre>
+
+<h3 id="option-3-drawio-workflow">Option 3: Draw.io Workflow</h3>
+<pre class="codehilite"><code>1. Create diagram in Draw.io
+2. Export as PNG/SVG
+3. Save to SOPs/images/
+4. Reference in SOP markdown
+</code></pre>
+
+<hr />
+<h2 id="setting-up-mermaid-live-editor-locally">Setting Up Mermaid Live Editor Locally</h2>
+<p>If you want to self-host:</p>
+<pre class="codehilite"><code class="language-powershell"># Clone repository
+git clone https://github.com/mermaid-js/mermaid-live-editor.git
+cd mermaid-live-editor
+
+# Install (requires Node.js)
+npm install
+
+# Run
+npm start
+
+# Access at http://localhost:3000
+</code></pre>
+
+<hr />
+<h2 id="best-practice-recommendation">Best Practice Recommendation</h2>
+<h3 id="for-your-sops_1">For Your SOPs:</h3>
+<p><strong>Use Mermaid Live Editor for Creation:</strong>
+- Non-technical users can use it
+- Visual preview is helpful
+- Easy to learn</p>
+<p><strong>Store as Code in SOPs:</strong>
+- Version controlled
+- Editable by anyone
+- Renders on GitHub</p>
+<p><strong>Workflow:</strong>
+1. Create in Mermaid Live Editor
+2. Copy code to SOP
+3. Preview in VS Code
+4. Commit to GitHub</p>
+<hr />
+<h2 id="summary">Summary</h2>
+<p><strong>Best Open Source GUI Editor:</strong>
+- <strong>Mermaid Live Editor</strong> (https://mermaid.live/)
+  - Official tool
+  - Open source
+  - Real-time preview
+  - Easy to use</p>
+<p><strong>For VS Code Integration:</strong>
+- <strong>Markdown Preview Enhanced</strong> (you already have it!)
+  - Renders Mermaid in preview
+  - Works with your SOPs</p>
+<p><strong>For Full GUI:</strong>
+- <strong>Draw.io</strong> (diagrams.net)
+  - True drag-and-drop
+  - Open source
+  - Export as images</p>
+<p><strong>Recommendation:</strong> Use Mermaid Live Editor for creating diagrams, then copy the code into your SOPs. This gives you the best of both worlds - visual editing and version-controlled code.</p>
+</body>
+</html>

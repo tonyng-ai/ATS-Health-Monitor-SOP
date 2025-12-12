@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Load Multicharts Shortcuts</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 { border-bottom: 2px solid #3498db; padding-bottom: 0.3em; }
+        h2 { border-bottom: 1px solid #ecf0f1; padding-bottom: 0.2em; }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1em;
+            overflow-x: auto;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 1em 0;
+            padding-left: 1em;
+            color: #666;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 2em 0;
+            padding: 1em;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .pdf-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 8px 16px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .pdf-link:hover {
+            background-color: #c0392b;
+        }
+    </style>
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <p><a href="Load-Multicharts-Shortcuts.pdf" class="pdf-link">📄 Download PDF Version</a></p>
+    <h1 id="load-multicharts-desktop-shortcuts">Load Multicharts Desktop Shortcuts</h1>
+<h2 id="metadata">Metadata</h2>
+<p><strong>Category:</strong> Production Administration
+<strong>Last Updated:</strong> 2024-01-15
+<strong>Author:</strong> System Administrator
+<strong>Version:</strong> 2.0
+<strong>Review Date:</strong> 2024-04-15
+<strong>Status:</strong> Active</p>
+<hr />
+<h2 id="purpose">Purpose</h2>
+<p>This procedure covers loading all Multicharts Desktop shortcuts from a predefined folder using an automated PowerShell script. This is useful for bulk-loading multiple Multicharts instances during production startup or after system reboots.</p>
+<p>The script includes advanced delay loading features that ensure each Multicharts instance is properly started before launching the next one, preventing system overload and ensuring reliable startup sequences.</p>
+<p><strong>When to Use:</strong>
+- Production system startup
+- After system maintenance or reboots
+- Bulk-loading multiple Multicharts instances
+- Automated deployment scenarios
+- Testing multiple Multicharts configurations
+- Sequential loading with process verification</p>
+<h3 id="procedure-overview">Procedure Overview</h3>
+<pre class="codehilite"><code class="language-mermaid">flowchart TD
+    Start([Start]) --&gt; Check{Check Folder Exists}
+    Check --&gt;|Not Found| Error[Error: Create Folder]
+    Check --&gt;|Found| Scan[Scan for .lnk Files]
+    Scan --&gt; Found{Shortcuts Found?}
+    Found --&gt;|No| Warning[Warning: No Shortcuts]
+    Found --&gt;|Yes| Preview[Preview Shortcuts]
+    Preview --&gt; Confirm{Confirm Launch?}
+    Confirm --&gt;|No| Cancel[Operation Cancelled]
+    Confirm --&gt;|Yes| Launch[Launch Shortcut]
+    Launch --&gt; WaitProcess{Wait for Process?}
+    WaitProcess --&gt;|Yes| CheckProcess[Check Process Started]
+    CheckProcess --&gt; Timeout{Timeout?}
+    Timeout --&gt;|Yes| WarnTimeout[Warning: Timeout]
+    Timeout --&gt;|No| ProcessReady[Process Ready]
+    WaitProcess --&gt;|No| ProcessReady
+    ProcessReady --&gt; WaitDelay[Wait Delay Seconds]
+    WarnTimeout --&gt; WaitDelay
+    WaitDelay --&gt; More{More Shortcuts?}
+    More --&gt;|Yes| Launch
+    More --&gt;|No| Summary[Display Summary]
+    Summary --&gt; End([Complete])
+    Error --&gt; End
+    Warning --&gt; End
+    Cancel --&gt; End
+
+    style Start fill:#90EE90
+    style End fill:#90EE90
+    style Error fill:#FFB6C1
+    style Warning fill:#FFD700
+    style Cancel fill:#FFD700
+    style ProcessReady fill:#90EE90
+    style WarnTimeout fill:#FFD700
+</code></pre>
+
+<hr />
+<h2 id="prerequisites">Prerequisites</h2>
+<h3 id="required-access">Required Access</h3>
+<ul>
+<li>[x] User account with permissions to launch applications</li>
+<li>[x] Read access to shortcut folder</li>
+<li>[x] Execute permissions for target applications</li>
+</ul>
+<h3 id="required-tools">Required Tools</h3>
+<ul>
+<li>[x] PowerShell 5.1 or later</li>
+<li>[x] Script: <code>Scripts\04-Production-Administration\Load-Multicharts-Shortcuts.ps1</code></li>
+<li>[x] Folder containing Multicharts shortcuts (.lnk files)</li>
+</ul>
+<h3 id="required-information">Required Information</h3>
+<ul>
+<li>[x] Path to folder containing shortcuts (or use default)</li>
+<li>[x] Desired delay strategy (wait for process, fixed delay, or both)</li>
+<li>[x] Delay duration if using fixed delay (default: 5 seconds)</li>
+<li>[x] Maximum wait time for process start (default: 60 seconds)</li>
+</ul>
+<h3 id="pre-conditions">Pre-Conditions</h3>
+<ul>
+<li>[x] Shortcut folder exists and contains .lnk files</li>
+<li>[x] All shortcuts point to valid Multicharts executables</li>
+<li>[x] System has sufficient resources for multiple instances</li>
+<li>[x] Multicharts licenses are available for all instances</li>
+</ul>
+<hr />
+<h2 id="procedure-steps">Procedure Steps</h2>
+<h3 id="step-1-prepare-shortcut-folder">Step 1: Prepare Shortcut Folder</h3>
+<p><strong>Action:</strong>
+1. Create a folder to store Multicharts shortcuts (if not already created)
+2. Place all Multicharts Desktop shortcuts (.lnk files) in this folder
+3. Verify shortcuts are valid and point to correct Multicharts executables</p>
+<p><strong>Default Location:</strong></p>
+<pre class="codehilite"><code>C:\Multicharts\Shortcuts
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- Folder exists with one or more .lnk files
+- Each shortcut launches Multicharts successfully when tested manually</p>
+<hr />
+<h3 id="step-2-review-script-parameters">Step 2: Review Script Parameters</h3>
+<p><strong>Action:</strong>
+Open PowerShell and navigate to the script location:</p>
+<pre class="codehilite"><code class="language-powershell">cd I:\SOP-Management\Scripts\04-Production-Administration
+</code></pre>
+
+<p>Review available parameters:</p>
+<pre class="codehilite"><code class="language-powershell">Get-Help .\Load-Multicharts-Shortcuts.ps1 -Full
+</code></pre>
+
+<p><strong>Available Parameters:</strong>
+- <code>-ShortcutFolder</code>: Path to folder containing shortcuts (default: <code>C:\Multicharts\Shortcuts</code>)
+- <code>-DelaySeconds</code>: Additional seconds to wait after process starts (default: <code>5</code>)
+- <code>-WaitForProcess</code>: Wait for Multicharts process to start before next launch (default: <code>$true</code>)
+- <code>-ProcessName</code>: Process name to wait for (default: <code>MultiCharts64</code>)
+- <code>-MaxWaitSeconds</code>: Maximum seconds to wait for process start (default: <code>60</code>)
+- <code>-DryRun</code>: Preview mode without launching (default: <code>$false</code>)
+- <code>-Filter</code>: File pattern to match (default: <code>*.lnk</code>)</p>
+<p><strong>Delay Loading Strategies:</strong>
+1. <strong>Wait for Process + Fixed Delay</strong> (default): Waits for process to start, then adds fixed delay
+2. <strong>Wait for Process Only</strong>: Only waits for process, no additional delay
+3. <strong>Fixed Delay Only</strong>: Uses only fixed delay, doesn't wait for process</p>
+<p><strong>Expected Result:</strong>
+- Understanding of available script options
+- Decision on which parameters to use</p>
+<hr />
+<h3 id="step-3-test-with-dry-run">Step 3: Test with Dry Run</h3>
+<p><strong>Action:</strong>
+Run the script in dry-run mode to preview what will be launched:</p>
+<pre class="codehilite"><code class="language-powershell">.\Load-Multicharts-Shortcuts.ps1 -DryRun
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- Script displays all shortcuts found
+- Shows target path for each shortcut
+- No shortcuts are actually launched
+- Summary shows what would be processed</p>
+<p><strong>Screenshot/Example:</strong></p>
+<pre class="codehilite"><code>=== Load Multicharts Shortcuts Script ===
+*** DRY RUN MODE - No shortcuts will be launched ***
+Shortcut folder: C:\Multicharts\Shortcuts
+Found 10 shortcut(s) to process
+
+Shortcuts to launch:
+  • MC_Instance_01.lnk → F:\MC64\MultiCharts64.exe
+  • MC_Instance_02.lnk → F:\MC64\MultiCharts64.exe
+  ...
+</code></pre>
+
+<hr />
+<h3 id="step-4-launch-shortcuts">Step 4: Launch Shortcuts</h3>
+<p><strong>Action:</strong>
+Run the script to launch all shortcuts:</p>
+<p><strong>Default Mode (Recommended):</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Waits for each process to start, then waits 5 seconds
+.\Load-Multicharts-Shortcuts.ps1
+</code></pre>
+
+<p><strong>Custom Delay Settings:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Custom folder, wait for process, then 10 second delay
+.\Load-Multicharts-Shortcuts.ps1 -ShortcutFolder &quot;D:\MyShortcuts&quot; -DelaySeconds 10 -WaitForProcess
+
+# Wait for process only, no additional delay
+.\Load-Multicharts-Shortcuts.ps1 -DelaySeconds 0 -WaitForProcess
+
+# Fixed delay only, don't wait for process (faster but less reliable)
+.\Load-Multicharts-Shortcuts.ps1 -DelaySeconds 8 -WaitForProcess:$false
+
+# Extended timeout for slow systems
+.\Load-Multicharts-Shortcuts.ps1 -WaitForProcess -MaxWaitSeconds 120 -DelaySeconds 5
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- Script prompts for confirmation
+- Each shortcut launches sequentially
+- If <code>-WaitForProcess</code> is enabled, script waits for process to start
+- Additional delay occurs after process is ready
+- Progress displayed for each launch
+- Summary shows success/failure counts</p>
+<p><strong>Screenshot/Example (Default Mode):</strong></p>
+<pre class="codehilite"><code>Proceed with launching all shortcuts? (Y/N): Y
+
+=== Starting Launch Sequence ===
+[1/10] Processing: MC_Instance_01.lnk
+  Target: F:\MC64\MultiCharts64.exe
+  ✓ Shortcut launched (PID: 12345)
+  Waiting for MultiCharts64 process to start (max 60 seconds)...
+  ✓ MultiCharts64 process(es) detected (PID: 12346) after 3.2 seconds
+  Waiting 5 seconds before next launch...
+[2/10] Processing: MC_Instance_02.lnk
+  ...
+</code></pre>
+
+<p><strong>Screenshot/Example (Fixed Delay Only):</strong></p>
+<pre class="codehilite"><code>[1/10] Processing: MC_Instance_01.lnk
+  Target: F:\MC64\MultiCharts64.exe
+  ✓ Shortcut launched (PID: 12345)
+  Waiting 8 seconds before next launch...
+</code></pre>
+
+<hr />
+<h3 id="step-5-verify-launch-success">Step 5: Verify Launch Success</h3>
+<p><strong>Action:</strong>
+After script completion, verify Multicharts instances are running:</p>
+<pre class="codehilite"><code class="language-powershell">Get-Process -Name &quot;MultiCharts64&quot; | Select-Object Id, ProcessName, StartTime
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- Multiple MultiCharts64 processes visible
+- Process count matches number of shortcuts launched
+- All processes started successfully</p>
+<hr />
+<h2 id="verification">Verification</h2>
+<h3 id="how-to-verify-success">How to Verify Success</h3>
+<ol>
+<li>Check script output summary:</li>
+<li>Success count matches total shortcuts</li>
+<li>
+<p>No failures reported</p>
+</li>
+<li>
+<p>Verify running processes:
+   <code>powershell
+   (Get-Process -Name "MultiCharts64" -ErrorAction SilentlyContinue).Count</code></p>
+</li>
+<li>
+<p>Check log file:
+   <code>powershell
+   Get-Content "$env:ProgramData\Load-Multicharts-Shortcuts.log" -Tail 20</code></p>
+</li>
+</ol>
+<h3 id="success-criteria">Success Criteria</h3>
+<ul>
+<li>[ ] All shortcuts processed successfully</li>
+<li>[ ] Expected number of Multicharts instances running</li>
+<li>[ ] No error messages in script output</li>
+<li>[ ] Log file contains successful launch entries</li>
+</ul>
+<hr />
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="common-issues">Common Issues</h3>
+<h4 id="issue-1-folder-not-found">Issue 1: Folder Not Found</h4>
+<p><strong>Symptoms:</strong>
+- Error: "Folder does not exist"
+- Script exits immediately</p>
+<p><strong>Solution:</strong>
+1. Verify folder path is correct
+2. Create folder if it doesn't exist:
+   <code>powershell
+   New-Item -ItemType Directory -Path "C:\Multicharts\Shortcuts" -Force</code>
+3. Use <code>-ShortcutFolder</code> parameter to specify correct path</p>
+<p><strong>Prevention:</strong>
+- Document shortcut folder location
+- Use consistent folder structure</p>
+<hr />
+<h4 id="issue-2-no-shortcuts-found">Issue 2: No Shortcuts Found</h4>
+<p><strong>Symptoms:</strong>
+- Warning: "No shortcuts found matching pattern"
+- Script exits with 0 shortcuts</p>
+<p><strong>Solution:</strong>
+1. Verify shortcuts are .lnk files (not .url or other types)
+2. Check filter pattern matches your files:
+   <code>powershell
+   Get-ChildItem -Path "C:\Multicharts\Shortcuts" -Filter "*.lnk"</code>
+3. Adjust <code>-Filter</code> parameter if needed (e.g., <code>"MC_*.lnk"</code>)</p>
+<p><strong>Prevention:</strong>
+- Use consistent naming convention
+- Verify shortcuts before running script</p>
+<hr />
+<h4 id="issue-3-shortcut-launch-fails">Issue 3: Shortcut Launch Fails</h4>
+<p><strong>Symptoms:</strong>
+- Error: "Failed to launch" for specific shortcuts
+- Process object not returned</p>
+<p><strong>Solution:</strong>
+1. Test shortcut manually by double-clicking
+2. Verify shortcut target path is valid:
+   <code>powershell
+   $shell = New-Object -ComObject WScript.Shell
+   $shortcut = $shell.CreateShortcut("C:\Path\To\Shortcut.lnk")
+   $shortcut.TargetPath</code>
+3. Check target executable exists and is accessible
+4. Verify user has execute permissions</p>
+<p><strong>Prevention:</strong>
+- Test all shortcuts before bulk launch
+- Keep shortcuts updated when Multicharts paths change</p>
+<hr />
+<h4 id="issue-4-system-overload">Issue 4: System Overload</h4>
+<p><strong>Symptoms:</strong>
+- System becomes unresponsive
+- High CPU/memory usage
+- Processes fail to start</p>
+<p><strong>Solution:</strong>
+1. Increase delay between launches:
+   <code>powershell
+   .\Load-Multicharts-Shortcuts.ps1 -DelaySeconds 15</code>
+2. Launch in smaller batches
+3. Monitor system resources:
+   <code>powershell
+   Get-Counter "\Processor(_Total)\% Processor Time"
+   Get-Counter "\Memory\Available MBytes"</code></p>
+<p><strong>Prevention:</strong>
+- Use appropriate delay (5-10 seconds minimum)
+- Monitor system resources during launch
+- Consider launching during off-peak hours</p>
+<hr />
+<h4 id="issue-5-insufficient-licenses">Issue 5: Insufficient Licenses</h4>
+<p><strong>Symptoms:</strong>
+- Multicharts instances fail to start
+- License error messages
+- Some instances launch, others don't</p>
+<p><strong>Solution:</strong>
+1. Verify available Multicharts licenses
+2. Launch only as many instances as licenses available
+3. Remove excess shortcuts from folder
+4. Check Multicharts license server status</p>
+<p><strong>Prevention:</strong>
+- Maintain shortcut count within license limits
+- Monitor license usage regularly</p>
+<hr />
+<h4 id="issue-6-process-wait-timeout">Issue 6: Process Wait Timeout</h4>
+<p><strong>Symptoms:</strong>
+- Warning: "Process wait timed out"
+- Script continues but process may not have started
+- Timeout messages in log</p>
+<p><strong>Solution:</strong>
+1. Increase timeout value:
+   <code>powershell
+   .\Load-Multicharts-Shortcuts.ps1 -MaxWaitSeconds 120</code>
+2. Check if process name is correct:
+   <code>powershell
+   Get-Process | Where-Object {$_.ProcessName -like "*Chart*"}</code>
+3. Verify shortcuts point to correct executable
+4. Check system resources - slow systems may need longer timeouts
+5. If process starts but script doesn't detect it, verify process name matches <code>-ProcessName</code> parameter</p>
+<p><strong>Prevention:</strong>
+- Use appropriate timeout for system speed
+- Verify process name matches actual Multicharts process
+- Monitor system performance during launches</p>
+<hr />
+<h4 id="issue-7-delay-loading-too-slow">Issue 7: Delay Loading Too Slow</h4>
+<p><strong>Symptoms:</strong>
+- Script takes very long to complete
+- Each instance waits full timeout even if process starts quickly
+- Unnecessary delays between launches</p>
+<p><strong>Solution:</strong>
+1. Reduce fixed delay if process wait is enabled:
+   <code>powershell
+   .\Load-Multicharts-Shortcuts.ps1 -DelaySeconds 2 -WaitForProcess</code>
+2. Disable process wait if not needed (faster but less reliable):
+   <code>powershell
+   .\Load-Multicharts-Shortcuts.ps1 -WaitForProcess:$false -DelaySeconds 3</code>
+3. Reduce timeout if processes start quickly:
+   <code>powershell
+   .\Load-Multicharts-Shortcuts.ps1 -MaxWaitSeconds 30 -DelaySeconds 2</code></p>
+<p><strong>Prevention:</strong>
+- Test delay settings to find optimal balance
+- Monitor actual process start times
+- Adjust delays based on system performance</p>
+<hr />
+<h4 id="issue-8-delay-loading-too-fast">Issue 8: Delay Loading Too Fast</h4>
+<p><strong>Symptoms:</strong>
+- System becomes overloaded
+- Processes fail to start properly
+- High CPU/memory usage
+- Instances crash or hang</p>
+<p><strong>Solution:</strong>
+1. Enable process waiting:
+   <code>powershell
+   .\Load-Multicharts-Shortcuts.ps1 -WaitForProcess -DelaySeconds 5</code>
+2. Increase delay between launches:
+   <code>powershell
+   .\Load-Multicharts-Shortcuts.ps1 -DelaySeconds 10 -WaitForProcess</code>
+3. Increase timeout to ensure processes fully initialize:
+   <code>powershell
+   .\Load-Multicharts-Shortcuts.ps1 -MaxWaitSeconds 90 -DelaySeconds 8</code></p>
+<p><strong>Prevention:</strong>
+- Always use process waiting for production
+- Use appropriate delays (minimum 5 seconds recommended)
+- Monitor system resources during testing</p>
+<hr />
+<h2 id="related-procedures">Related Procedures</h2>
+<ul>
+<li><a href="../02-Multicharts-Models/Multicharts-Optimization.md">Multicharts Optimization</a> - System optimization for multiple instances</li>
+<li><a href="../02-Multicharts-Models/Multicharts-Backup-and-Restore.md">Multicharts Backup and Restore</a> - Backup procedures</li>
+</ul>
+<h2 id="related-scripts">Related Scripts</h2>
+<ul>
+<li><a href="../../Scripts/04-Production-Administration/Load-Multicharts-Shortcuts.ps1">Load-Multicharts-Shortcuts.ps1</a> - This script</li>
+<li><a href="../../Scripts/02-Multicharts-Models/Optimized-Multicharts-Management.ps1">Optimized-Multicharts-Management.ps1</a> - System optimization</li>
+</ul>
+<h2 id="references">References</h2>
+<ul>
+<li>Multicharts Desktop Documentation</li>
+<li>PowerShell Start-Process Documentation: <a href="https://docs.microsoft.com/powershell/module/microsoft.powershell.management/start-process">Microsoft Docs</a></li>
+</ul>
+<h2 id="change-log">Change Log</h2>
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Version</th>
+<th>Author</th>
+<th>Changes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2024-01-15</td>
+<td>1.0</td>
+<td>System Administrator</td>
+<td>Initial version</td>
+</tr>
+<tr>
+<td>2024-01-15</td>
+<td>2.0</td>
+<td>System Administrator</td>
+<td>Added delay loading features: WaitForProcess, MaxWaitSeconds, improved delay strategies</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="notes">Notes</h2>
+<p><strong>⚠️ WARNING:</strong>
+- Launching too many instances simultaneously can overload the system
+- Always test with dry-run mode first
+- Monitor system resources during bulk launches
+- Ensure sufficient Multicharts licenses are available
+- Disabling <code>-WaitForProcess</code> can cause system overload if processes start slowly</p>
+<p><strong>💡 TIP:</strong>
+- <strong>Delay Loading Strategy Recommendations:</strong>
+  - <strong>Production</strong>: Use <code>-WaitForProcess</code> with 5-10 second delay (default)
+  - <strong>Fast Systems</strong>: Reduce delay to 2-3 seconds, keep process wait enabled
+  - <strong>Slow Systems</strong>: Increase timeout to 90-120 seconds, use 8-10 second delays
+  - <strong>Testing</strong>: Use <code>-WaitForProcess:$false</code> with 3-5 second delays for speed
+- Create separate shortcut folders for different configurations
+- Use descriptive shortcut names for easier identification
+- Monitor first few launches to determine optimal delay settings</p>
+<p><strong>📝 NOTE:</strong>
+- <strong>Delay Loading Behavior:</strong>
+  - By default, script waits for <code>MultiCharts64</code> process to start (up to 60 seconds)
+  - After process is detected, additional delay occurs (default: 5 seconds)
+  - This ensures each instance is loaded before starting the next
+  - Process detection checks every second and shows progress every 5 seconds
+- Default folder location can be changed via parameter
+- Script logs all activity to <code>$env:ProgramData\Load-Multicharts-Shortcuts.log</code>
+- Each launch attempt is logged with timestamp and result
+- Failed launches don't stop the script - all shortcuts are attempted
+- Process wait timeout warnings don't stop the script - it continues with next shortcut</p>
+</body>
+</html>

@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>TradeShield Remote Common Tasks</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 { border-bottom: 2px solid #3498db; padding-bottom: 0.3em; }
+        h2 { border-bottom: 1px solid #ecf0f1; padding-bottom: 0.2em; }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1em;
+            overflow-x: auto;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 1em 0;
+            padding-left: 1em;
+            color: #666;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 2em 0;
+            padding: 1em;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .pdf-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 8px 16px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .pdf-link:hover {
+            background-color: #c0392b;
+        }
+    </style>
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <p><a href="TradeShield-Remote-Common-Tasks.pdf" class="pdf-link">📄 Download PDF Version</a></p>
+    <h1 id="tradeshield-remote-common-administrative-tasks">TradeShield Remote - Common Administrative Tasks</h1>
+<h2 id="metadata">Metadata</h2>
+<p><strong>Category:</strong> Security and Trading Platform Administration
+<strong>Last Updated:</strong> 2024-11-29
+<strong>Author:</strong> System Administrator
+<strong>Version:</strong> 1.0
+<strong>Review Date:</strong> 2025-02-28
+<strong>Status:</strong> Active</p>
+<hr />
+<h2 id="purpose">Purpose</h2>
+<p>This document provides quick reference for common administrative tasks in the TradeShield Remote system, including daily operations, troubleshooting, and maintenance procedures.</p>
+<p><strong>When to Use:</strong>
+- Daily system checks
+- Troubleshooting issues
+- Routine maintenance
+- Quick reference for common operations</p>
+<hr />
+<h2 id="daily-operations">Daily Operations</h2>
+<h3 id="morning-health-check">Morning Health Check</h3>
+<p><strong>Action:</strong>
+Run automated health check:</p>
+<pre class="codehilite"><code class="language-powershell">cd Scripts\06-Security-and-Trading-Platform-Administration
+.\Health-Check-TradeShield.ps1
+</code></pre>
+
+<p><strong>Review:</strong>
+- Check overall status (should be "Healthy")
+- Review any warnings or failures
+- Check log file for details</p>
+<p><strong>Quick Status Check:</strong></p>
+<pre class="codehilite"><code class="language-powershell">Get-Content C:\TradeShield\logs\health-status.json | ConvertFrom-Json | Format-List
+</code></pre>
+
+<hr />
+<h3 id="check-chr-status">Check CHR Status</h3>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Check primary CHR
+ssh -i C:\TradeShield\keys\ssh\tradeshield-admin-key -p 2222 tradeshield-admin@192.168.100.1 &quot;/system resource print&quot;
+
+# Check secondary CHR
+ssh -i C:\TradeShield\keys\ssh\tradeshield-admin-key -p 2222 tradeshield-admin@192.168.100.2 &quot;/system resource print&quot;
+
+# Check VRRP status
+ssh -i C:\TradeShield\keys\ssh\tradeshield-admin-key -p 2222 tradeshield-admin@192.168.100.1 &quot;/interface vrrp print detail&quot;
+</code></pre>
+
+<p><strong>Expected:</strong>
+- CPU usage &lt; 50%
+- Memory usage &lt; 80%
+- VRRP shows primary with priority 254</p>
+<hr />
+<h3 id="check-rustdesk-services">Check RustDesk Services</h3>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Check primary node
+ssh -i C:\TradeShield\keys\ssh\tradeshield-admin-key tradeshield-admin@192.168.100.10 &quot;docker ps --filter name=rustdesk&quot;
+
+# Check secondary node
+ssh -i C:\TradeShield\keys\ssh\tradeshield-admin-key tradeshield-admin@192.168.100.11 &quot;docker ps --filter name=rustdesk&quot;
+
+# Test connectivity via Virtual IP
+Test-NetConnection -ComputerName 192.168.100.20 -Port 21115
+</code></pre>
+
+<p><strong>Expected:</strong>
+- Both HBBS and HBBR containers running
+- Services accessible via Virtual IP</p>
+<hr />
+<h3 id="check-load-balancer">Check Load Balancer</h3>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Check NLB cluster
+Get-NlbCluster | Format-List
+
+# Check cluster nodes
+Get-NlbClusterNode | Format-Table
+
+# Check port rules
+Get-NlbClusterPortRule | Format-Table
+</code></pre>
+
+<p><strong>Expected:</strong>
+- Cluster is converged
+- All nodes are active
+- Port rules are configured correctly</p>
+<hr />
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="chr-not-responding">CHR Not Responding</h3>
+<p><strong>Symptoms:</strong>
+- Cannot SSH to CHR
+- Ping fails
+- Services not accessible</p>
+<p><strong>Quick Fix:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Check VM status
+Get-VM | Where-Object { $_.Name -like &quot;TradeShield-CHR-*&quot; }
+
+# Restart VM if needed
+Restart-VM -Name &quot;TradeShield-CHR-01&quot; -Force
+</code></pre>
+
+<p><strong>Investigation:</strong>
+1. Check Hyper-V host resources
+2. Check network connectivity
+3. Review CHR logs via console
+4. Verify VM is running</p>
+<hr />
+<h3 id="rustdesk-service-down">RustDesk Service Down</h3>
+<p><strong>Symptoms:</strong>
+- Cannot connect to RustDesk
+- Services not responding
+- Containers not running</p>
+<p><strong>Quick Fix:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Restart services on affected node
+ssh -i C:\TradeShield\keys\ssh\tradeshield-admin-key tradeshield-admin@192.168.100.10 &quot;cd /opt/tradeshield/rustdesk &amp;&amp; docker compose restart&quot;
+
+# Check service logs
+ssh -i C:\TradeShield\keys\ssh\tradeshield-admin-key tradeshield-admin@192.168.100.10 &quot;docker logs rustdesk-hbbs-primary --tail 50&quot;
+</code></pre>
+
+<p><strong>Investigation:</strong>
+1. Check container logs
+2. Verify Docker is running
+3. Check disk space
+4. Review system resources</p>
+<hr />
+<h3 id="virtual-ip-not-accessible">Virtual IP Not Accessible</h3>
+<p><strong>Symptoms:</strong>
+- Cannot ping Virtual IP
+- Services not accessible via VIP
+- Failover not working</p>
+<p><strong>Quick Fix:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Check VRRP status
+ssh -i C:\TradeShield\keys\ssh\tradeshield-admin-key -p 2222 tradeshield-admin@192.168.100.1 &quot;/interface vrrp print detail&quot;
+
+# Manually trigger failover if needed
+ssh -i C:\TradeShield\keys\ssh\tradeshield-admin-key -p 2222 tradeshield-admin@192.168.100.1 &quot;/interface vrrp set [find name=vrrp-tradeshield] priority=100&quot;
+</code></pre>
+
+<p><strong>Investigation:</strong>
+1. Verify VRRP configuration
+2. Check network connectivity
+3. Verify multicast is enabled
+4. Check firewall rules</p>
+<hr />
+<h2 id="maintenance-tasks">Maintenance Tasks</h2>
+<h3 id="update-chr-configuration">Update CHR Configuration</h3>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Export current configuration
+ssh -i C:\TradeShield\keys\ssh\tradeshield-admin-key -p 2222 tradeshield-admin@192.168.100.1 &quot;/export file=config-backup&quot;
+
+# Make changes via SSH
+ssh -i C:\TradeShield\keys\ssh\tradeshield-admin-key -p 2222 tradeshield-admin@192.168.100.1 &quot;/ip firewall filter add ...&quot;
+
+# Apply same changes to secondary
+ssh -i C:\TradeShield\keys\ssh\tradeshield-admin-key -p 2222 tradeshield-admin@192.168.100.2 &quot;/ip firewall filter add ...&quot;
+</code></pre>
+
+<p><strong>Best Practice:</strong>
+- Always backup configuration before changes
+- Test changes on secondary first
+- Apply changes during maintenance window</p>
+<hr />
+<h3 id="restart-rustdesk-services">Restart RustDesk Services</h3>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Restart on primary (with failover)
+ssh -i C:\TradeShield\keys\ssh\tradeshield-admin-key tradeshield-admin@192.168.100.10 &quot;cd /opt/tradeshield/rustdesk &amp;&amp; docker compose restart&quot;
+
+# Wait for services to be healthy
+Start-Sleep -Seconds 30
+
+# Verify services
+Test-NetConnection -ComputerName 192.168.100.20 -Port 21115
+</code></pre>
+
+<p><strong>Best Practice:</strong>
+- Restart one node at a time
+- Verify services are healthy before restarting next node
+- Monitor load balancer during restart</p>
+<hr />
+<h3 id="update-rustdesk-version">Update RustDesk Version</h3>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Update docker-compose.yml with new version
+ssh -i C:\TradeShield\keys\ssh\tradeshield-admin-key tradeshield-admin@192.168.100.10 &quot;cd /opt/tradeshield/rustdesk &amp;&amp; sed -i 's/rustdesk-server:.*/rustdesk-server:1.2.0/' docker-compose.yml&quot;
+
+# Pull new images
+ssh -i C:\TradeShield\keys\ssh\tradeshield-admin-key tradeshield-admin@192.168.100.10 &quot;cd /opt/tradeshield/rustdesk &amp;&amp; docker compose pull&quot;
+
+# Restart services
+ssh -i C:\TradeShield\keys\ssh\tradeshield-admin-key tradeshield-admin@192.168.100.10 &quot;cd /opt/tradeshield/rustdesk &amp;&amp; docker compose up -d&quot;
+</code></pre>
+
+<p><strong>Best Practice:</strong>
+- Update secondary node first
+- Test thoroughly before updating primary
+- Keep backup of previous version</p>
+<hr />
+<h2 id="monitoring-tasks">Monitoring Tasks</h2>
+<h3 id="view-system-status">View System Status</h3>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Access monitoring dashboard
+Start-Process &quot;http://localhost:3000&quot;  # Grafana
+
+# Or check health status JSON
+Get-Content C:\TradeShield\logs\health-status.json | ConvertFrom-Json | Format-List
+</code></pre>
+
+<hr />
+<h3 id="check-backup-status">Check Backup Status</h3>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># List recent backups
+Get-ChildItem C:\TradeShield\backups -Recurse -File | Sort-Object LastWriteTime -Descending | Select-Object -First 10
+
+# Check backup summary
+Get-ChildItem C:\TradeShield\backups\backup-summary-*.json | Sort-Object LastWriteTime -Descending | Select-Object -First 1 | Get-Content | ConvertFrom-Json
+</code></pre>
+
+<hr />
+<h3 id="review-logs">Review Logs</h3>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Health check logs
+Get-Content C:\TradeShield\logs\health-check.log -Tail 50
+
+# Backup logs
+Get-Content C:\TradeShield\logs\backup-*.log -Tail 50
+
+# Failover test logs
+Get-Content C:\TradeShield\logs\failover-test-*.log -Tail 50
+</code></pre>
+
+<hr />
+<h2 id="security-tasks">Security Tasks</h2>
+<h3 id="rotate-ssh-keys">Rotate SSH Keys</h3>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Generate new SSH key
+.\Setup-SSH-Key-Authentication.ps1
+
+# Distribute to all CHR instances
+# Update all scripts to use new key
+</code></pre>
+
+<p><strong>Frequency:</strong> Quarterly or after security incident</p>
+<hr />
+<h3 id="rotate-wireguard-keys">Rotate WireGuard Keys</h3>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Generate new keys
+.\Generate-TradeShield-Keys.ps1
+
+# Update CHR configurations
+.\Configure-TradeShield-CHR-HA.ps1
+
+# Distribute new client keys
+</code></pre>
+
+<p><strong>Frequency:</strong> Every 90 days</p>
+<hr />
+<h3 id="review-audit-logs">Review Audit Logs</h3>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Check syslog server
+# Review Windows Event Logs
+Get-WinEvent -LogName Security -MaxEvents 100 | Where-Object { $_.LevelDisplayName -eq &quot;Error&quot; }
+
+# Review firewall logs on CHR
+ssh -i C:\TradeShield\keys\ssh\tradeshield-admin-key -p 2222 tradeshield-admin@192.168.100.1 &quot;/log print where topics~firewall&quot;
+</code></pre>
+
+<p><strong>Frequency:</strong> Daily for security events, weekly for general review</p>
+<hr />
+<h2 id="quick-reference-commands">Quick Reference Commands</h2>
+<h3 id="chr-management">CHR Management</h3>
+<pre class="codehilite"><code class="language-powershell"># Connect to CHR
+ssh -i C:\TradeShield\keys\ssh\tradeshield-admin-key -p 2222 tradeshield-admin@192.168.100.1
+
+# Export configuration
+ssh -i C:\TradeShield\keys\ssh\tradeshield-admin-key -p 2222 tradeshield-admin@192.168.100.1 &quot;/export file=backup&quot;
+
+# Check resource usage
+ssh -i C:\TradeShield\keys\ssh\tradeshield-admin-key -p 2222 tradeshield-admin@192.168.100.1 &quot;/system resource print&quot;
+
+# View firewall rules
+ssh -i C:\TradeShield\keys\ssh\tradeshield-admin-key -p 2222 tradeshield-admin@192.168.100.1 &quot;/ip firewall filter print&quot;
+</code></pre>
+
+<h3 id="rustdesk-management">RustDesk Management</h3>
+<pre class="codehilite"><code class="language-powershell"># Connect to RustDesk node
+ssh -i C:\TradeShield\keys\ssh\tradeshield-admin-key tradeshield-admin@192.168.100.10
+
+# Check container status
+docker ps --filter name=rustdesk
+
+# View logs
+docker logs rustdesk-hbbs-primary --tail 100
+
+# Restart services
+cd /opt/tradeshield/rustdesk &amp;&amp; docker compose restart
+</code></pre>
+
+<h3 id="load-balancer-management">Load Balancer Management</h3>
+<pre class="codehilite"><code class="language-powershell"># Check cluster status
+Get-NlbCluster
+
+# View nodes
+Get-NlbClusterNode
+
+# Drain node (stop new connections)
+Stop-NlbClusterNode -InterfaceName &quot;Ethernet&quot; -HostName &quot;192.168.100.10&quot;
+</code></pre>
+
+<hr />
+<h2 id="related-procedures">Related Procedures</h2>
+<ul>
+<li><a href="TradeShield-Remote-Deployment.md">TradeShield Remote - Deployment Guide</a></li>
+<li><a href="TradeShield-Remote-Failover-Procedures.md">TradeShield Remote - Failover Procedures</a></li>
+<li><a href="TradeShield-Remote-Security-Review.md">TradeShield Remote - Security Review</a></li>
+</ul>
+<h2 id="related-scripts">Related Scripts</h2>
+<ul>
+<li><a href="../../Scripts/06-Security-and-Trading-Platform-Administration/Health-Check-TradeShield.ps1">Health-Check-TradeShield.ps1</a> - Health monitoring</li>
+<li><a href="../../Scripts/06-Security-and-Trading-Platform-Administration/Backup-TradeShield-Automated.ps1">Backup-TradeShield-Automated.ps1</a> - Automated backups</li>
+</ul>
+<h2 id="change-log">Change Log</h2>
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Version</th>
+<th>Author</th>
+<th>Changes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2024-11-29</td>
+<td>1.0</td>
+<td>System Administrator</td>
+<td>Initial version</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="notes">Notes</h2>
+<p><strong>TIP:</strong> Bookmark this document for quick reference during daily operations.</p>
+<p><strong>NOTE:</strong> Update this document as new common tasks are identified.</p>
+<p><strong>WARNING:</strong> Always verify commands before executing in production.</p>
+</body>
+</html>

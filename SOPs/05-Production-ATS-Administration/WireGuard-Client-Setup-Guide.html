@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>WireGuard Client Setup Guide</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 { border-bottom: 2px solid #3498db; padding-bottom: 0.3em; }
+        h2 { border-bottom: 1px solid #ecf0f1; padding-bottom: 0.2em; }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1em;
+            overflow-x: auto;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 1em 0;
+            padding-left: 1em;
+            color: #666;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 2em 0;
+            padding: 1em;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .pdf-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 8px 16px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .pdf-link:hover {
+            background-color: #c0392b;
+        }
+    </style>
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <p><a href="WireGuard-Client-Setup-Guide.pdf" class="pdf-link">📄 Download PDF Version</a></p>
+    <h1 id="wireguard-client-setup-guide">WireGuard Client Setup Guide</h1>
+<h2 id="purpose">Purpose</h2>
+<p>This guide helps HK team members (and other authorized users) set up WireGuard VPN on Windows 10/11 to securely access ATS services.</p>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>Windows 10 or Windows 11</li>
+<li>Administrator access (for installation)</li>
+<li>WireGuard configuration file (provided by IT)</li>
+</ul>
+<h2 id="quick-start-5-minutes">Quick Start (5 Minutes)</h2>
+<h3 id="step-1-download-wireguard">Step 1: Download WireGuard</h3>
+<ol>
+<li>Go to: <strong>https://www.wireguard.com/install/</strong></li>
+<li>Click <strong>"Download Windows Installer"</strong></li>
+<li>Run the downloaded <code>.msi</code> file</li>
+<li>Click <strong>Next</strong> through the installer</li>
+</ol>
+<h3 id="step-2-import-configuration">Step 2: Import Configuration</h3>
+<ol>
+<li>Open <strong>WireGuard</strong> from Start Menu</li>
+<li>Click <strong>"Import tunnel(s) from file"</strong> (or Ctrl+I)</li>
+<li>Select the <code>.conf</code> file provided by IT (e.g., <code>hk-mega.conf</code>)</li>
+<li>Click <strong>Open</strong></li>
+</ol>
+<h3 id="step-3-connect">Step 3: Connect</h3>
+<ol>
+<li>Select your tunnel from the list</li>
+<li>Click <strong>"Activate"</strong></li>
+<li>Status should show <strong>"Active"</strong> with green indicator</li>
+</ol>
+<p>You're connected! You can now access:
+- Plane (Issue Tracking): http://10.13.13.1:8000
+- Other internal services as needed</p>
+<h2 id="configuration-file">Configuration File</h2>
+<p>You will receive a configuration file like this:</p>
+<pre class="codehilite"><code class="language-ini">[Interface]
+PrivateKey = &lt;your-private-key&gt;
+Address = 10.13.13.2/32
+DNS = 1.1.1.1
+
+[Peer]
+PublicKey = &lt;server-public-key&gt;
+AllowedIPs = 10.13.13.0/24, 192.168.168.0/24
+Endpoint = 209.127.118.182:51820
+PersistentKeepalive = 25
+</code></pre>
+
+<p><strong>DO NOT share this file</strong> - it contains your private key.</p>
+<h2 id="status-check">Status Check</h2>
+<p>When connected, you should see:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Expected Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Status</td>
+<td>Active</td>
+</tr>
+<tr>
+<td>Latest Handshake</td>
+<td>Less than 2 minutes ago</td>
+</tr>
+<tr>
+<td>Transfer</td>
+<td>Shows rx/tx bytes</td>
+</tr>
+</tbody>
+</table>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="handshake-did-not-complete">"Handshake did not complete"</h3>
+<p><strong>Cause</strong>: Cannot reach VPN server</p>
+<p><strong>Solutions</strong>:
+1. Check your internet connection
+2. Verify firewall allows UDP port 51820 outbound
+3. Contact IT - server may be down</p>
+<h3 id="invalid-configuration">"Invalid configuration"</h3>
+<p><strong>Cause</strong>: Corrupted config file</p>
+<p><strong>Solutions</strong>:
+1. Request new config file from IT
+2. Ensure file was not modified</p>
+<h3 id="connected-but-cant-access-services">Connected but can't access services</h3>
+<p><strong>Cause</strong>: Routing issue</p>
+<p><strong>Solutions</strong>:
+1. Check "AllowedIPs" in config
+2. Try disconnecting and reconnecting
+3. Restart WireGuard application</p>
+<h3 id="very-slow-connection">Very slow connection</h3>
+<p><strong>Cause</strong>: Network congestion or MTU issues</p>
+<p><strong>Solutions</strong>:
+1. Add to [Interface] section: <code>MTU = 1280</code>
+2. Try different network (home vs office)</p>
+<h2 id="auto-start-optional">Auto-Start (Optional)</h2>
+<p>To connect automatically when Windows starts:</p>
+<ol>
+<li>Open WireGuard</li>
+<li>Right-click your tunnel</li>
+<li>Check <strong>"Activate on boot"</strong></li>
+</ol>
+<h2 id="security-notes">Security Notes</h2>
+<ol>
+<li><strong>Never share your config file</strong> - each user has unique keys</li>
+<li><strong>Report lost devices immediately</strong> - IT will revoke the key</li>
+<li><strong>Don't modify the config</strong> - contact IT for changes</li>
+<li><strong>Disconnect when not needed</strong> - especially on public WiFi</li>
+</ol>
+<h2 id="need-help">Need Help?</h2>
+<p>Contact IT Operations:
+- Email: it-support@yourcompany.com
+- Telegram: @IT_Support_Channel</p>
+<p>Provide:
+- Your username/device name
+- Error message (screenshot if possible)
+- When the issue started</p>
+</body>
+</html>

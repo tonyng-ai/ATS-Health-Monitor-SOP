@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>README</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 { border-bottom: 2px solid #3498db; padding-bottom: 0.3em; }
+        h2 { border-bottom: 1px solid #ecf0f1; padding-bottom: 0.2em; }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1em;
+            overflow-x: auto;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 1em 0;
+            padding-left: 1em;
+            color: #666;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 2em 0;
+            padding: 1em;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .pdf-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 8px 16px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .pdf-link:hover {
+            background-color: #c0392b;
+        }
+    </style>
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <p><a href="README.pdf" class="pdf-link">📄 Download PDF Version</a></p>
+    <h1 id="ats-health-monitor-screenshot-guide">ATS Health Monitor - Screenshot Guide</h1>
+<p>This folder contains screenshots for the ATS Health Monitor Complete Guide.</p>
+<h2 id="required-screenshots">Required Screenshots</h2>
+<table>
+<thead>
+<tr>
+<th>Figure #</th>
+<th>Filename</th>
+<th>Description</th>
+<th>Recommended Size</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>ats-health-monitor-overview.png</code></td>
+<td>Main dashboard overview showing system status and navigation tabs</td>
+<td>1920x1080</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>ats-health-monitor-console-startup.png</code></td>
+<td>Console output showing successful startup with database connection</td>
+<td>800x400</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>ats-health-monitor-navigation-tabs.png</code></td>
+<td>Dashboard navigation showing all available tabs</td>
+<td>1200x100</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>ats-health-monitor-tab-overview.png</code></td>
+<td>System Overview tab with monitoring area status cards</td>
+<td>1920x1080</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>ats-health-monitor-tab-positions.png</code></td>
+<td>Positions dashboard with IB FIX 4.2 fields (read-only)</td>
+<td>1920x1080</td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>ats-health-monitor-tab-fix.png</code></td>
+<td>FIX Protocol dashboard with message statistics</td>
+<td>1920x1080</td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>ats-health-monitor-tab-pro.png</code></td>
+<td>Pro dashboard with Material-UI charts</td>
+<td>1920x1080</td>
+</tr>
+<tr>
+<td>8</td>
+<td><code>ats-health-monitor-tab-email.png</code></td>
+<td>Email Monitor with captured emails</td>
+<td>1920x1080</td>
+</tr>
+<tr>
+<td>9</td>
+<td><code>ats-health-monitor-tab-database.png</code></td>
+<td>Database Issue Matrix detections</td>
+<td>1920x1080</td>
+</tr>
+<tr>
+<td>10</td>
+<td><code>ats-health-monitor-tab-atslog.png</code></td>
+<td>ATS Log Issue Matrix detections</td>
+<td>1920x1080</td>
+</tr>
+<tr>
+<td>11</td>
+<td><code>ats-health-monitor-tab-stp-orders.png</code></td>
+<td>STP Orders with order aggregation</td>
+<td>1920x1080</td>
+</tr>
+<tr>
+<td>12</td>
+<td><code>ats-health-monitor-tab-history.png</code></td>
+<td>Order History timeline</td>
+<td>1920x1080</td>
+</tr>
+<tr>
+<td>13</td>
+<td><code>ats-health-monitor-tab-health.png</code></td>
+<td>System Health with custom queries</td>
+<td>1920x1080</td>
+</tr>
+<tr>
+<td>14</td>
+<td><code>ats-health-monitor-tab-debug.png</code></td>
+<td>Debug dashboard for ChaiSQL</td>
+<td>1920x1080</td>
+</tr>
+<tr>
+<td>15</td>
+<td><code>ats-health-monitor-tab-setup.png</code></td>
+<td>Setup/Configuration editor</td>
+<td>1920x1080</td>
+</tr>
+<tr>
+<td>16</td>
+<td><code>ats-health-monitor-login-page.png</code></td>
+<td>RBAC login page</td>
+<td>800x600</td>
+</tr>
+<tr>
+<td>17</td>
+<td><code>ats-health-monitor-user-session.png</code></td>
+<td>User session info in nav bar</td>
+<td>400x100</td>
+</tr>
+<tr>
+<td>18</td>
+<td><code>ats-health-monitor-telegram-alert.png</code></td>
+<td>Telegram alert notification</td>
+<td>400x300</td>
+</tr>
+<tr>
+<td>19</td>
+<td><code>ats-health-monitor-api-response.png</code></td>
+<td>API response in browser/Postman</td>
+<td>800x600</td>
+</tr>
+<tr>
+<td>20</td>
+<td><code>ats-health-monitor-test-results.png</code></td>
+<td>PowerShell test script output</td>
+<td>800x600</td>
+</tr>
+<tr>
+<td>21</td>
+<td><code>ats-health-monitor-go-test.png</code></td>
+<td>Go unit test results</td>
+<td>800x400</td>
+</tr>
+</tbody>
+</table>
+<h2 id="screenshot-capture-instructions">Screenshot Capture Instructions</h2>
+<h3 id="windows-recommended">Windows (Recommended)</h3>
+<ol>
+<li><strong>Full Screen Capture</strong>: Press <code>Win + Shift + S</code> and select "Full screen snip"</li>
+<li><strong>Window Capture</strong>: Press <code>Win + Shift + S</code> and select "Window snip"</li>
+<li><strong>Region Capture</strong>: Press <code>Win + Shift + S</code> and select "Rectangular snip"</li>
+</ol>
+<h3 id="using-snipping-tool">Using Snipping Tool</h3>
+<pre class="codehilite"><code class="language-powershell"># Open Snipping Tool
+Start-Process snippingtool
+</code></pre>
+
+<h3 id="using-powershell-screenshot">Using PowerShell Screenshot</h3>
+<pre class="codehilite"><code class="language-powershell"># Install screenshot module (optional)
+Install-Module -Name Screenshot -Force
+
+# Take screenshot
+$screenshot = [System.Windows.Forms.Screen]::PrimaryScreen
+Add-Type -AssemblyName System.Windows.Forms
+[System.Windows.Forms.Screen]::PrimaryScreen | Out-Null
+</code></pre>
+
+<h2 id="file-format-guidelines">File Format Guidelines</h2>
+<ul>
+<li><strong>Format</strong>: PNG (preferred) or JPEG</li>
+<li><strong>Resolution</strong>: 1920x1080 for full dashboard, smaller for partial views</li>
+<li><strong>Quality</strong>: High quality, no compression artifacts</li>
+<li><strong>Color Mode</strong>: RGB</li>
+<li><strong>File Size</strong>: Keep under 500KB per image if possible</li>
+</ul>
+<h2 id="naming-convention">Naming Convention</h2>
+<p>All files should follow this pattern:</p>
+<pre class="codehilite"><code>ats-health-monitor-[section]-[description].png
+</code></pre>
+
+<p>Examples:
+- <code>ats-health-monitor-tab-overview.png</code>
+- <code>ats-health-monitor-login-page.png</code>
+- <code>ats-health-monitor-console-startup.png</code></p>
+<h2 id="checklist">Checklist</h2>
+<p>Use this checklist when capturing screenshots:</p>
+<ul>
+<li>[ ] Dashboard is running at http://localhost:8080</li>
+<li>[ ] Test data is loaded (use <code>config.test.toml</code>)</li>
+<li>[ ] Browser is Chrome or Edge (modern UI)</li>
+<li>[ ] Browser zoom is set to 100%</li>
+<li>[ ] No personal information visible</li>
+<li>[ ] No sensitive credentials visible</li>
+<li>[ ] Timestamps show realistic dates</li>
+<li>[ ] All UI elements are fully rendered</li>
+<li>[ ] No browser dev tools visible (unless intentional)</li>
+</ul>
+<h2 id="quick-capture-script">Quick Capture Script</h2>
+<p>Save this as <code>Capture-Screenshots.ps1</code>:</p>
+<pre class="codehilite"><code class="language-powershell"># Quick screenshot capture reminder script
+$screenshots = @(
+    &quot;ats-health-monitor-overview.png&quot;,
+    &quot;ats-health-monitor-console-startup.png&quot;,
+    &quot;ats-health-monitor-navigation-tabs.png&quot;,
+    &quot;ats-health-monitor-tab-overview.png&quot;,
+    &quot;ats-health-monitor-tab-positions.png&quot;,
+    &quot;ats-health-monitor-tab-fix.png&quot;,
+    &quot;ats-health-monitor-tab-pro.png&quot;,
+    &quot;ats-health-monitor-tab-email.png&quot;,
+    &quot;ats-health-monitor-tab-database.png&quot;,
+    &quot;ats-health-monitor-tab-atslog.png&quot;,
+    &quot;ats-health-monitor-tab-stp-orders.png&quot;,
+    &quot;ats-health-monitor-tab-history.png&quot;,
+    &quot;ats-health-monitor-tab-health.png&quot;,
+    &quot;ats-health-monitor-tab-debug.png&quot;,
+    &quot;ats-health-monitor-tab-setup.png&quot;,
+    &quot;ats-health-monitor-login-page.png&quot;,
+    &quot;ats-health-monitor-user-session.png&quot;,
+    &quot;ats-health-monitor-telegram-alert.png&quot;,
+    &quot;ats-health-monitor-api-response.png&quot;,
+    &quot;ats-health-monitor-test-results.png&quot;,
+    &quot;ats-health-monitor-go-test.png&quot;
+)
+
+Write-Host &quot;=== ATS Health Monitor Screenshot Capture ===&quot; -ForegroundColor Cyan
+Write-Host &quot;&quot;
+Write-Host &quot;Required screenshots:&quot; -ForegroundColor Yellow
+
+$i = 1
+foreach ($screenshot in $screenshots) {
+    $exists = Test-Path $screenshot
+    $status = if ($exists) { &quot;[OK]&quot; } else { &quot;[MISSING]&quot; }
+    $color = if ($exists) { &quot;Green&quot; } else { &quot;Red&quot; }
+    Write-Host &quot;  $i. $status $screenshot&quot; -ForegroundColor $color
+    $i++
+}
+
+$existing = (Get-ChildItem -Filter &quot;*.png&quot; -ErrorAction SilentlyContinue).Count
+$missing = $screenshots.Count - $existing
+
+Write-Host &quot;&quot;
+Write-Host &quot;Total: $($screenshots.Count) required, $existing captured, $missing missing&quot; -ForegroundColor Cyan
+</code></pre>
+
+<h2 id="after-capturing">After Capturing</h2>
+<ol>
+<li>Place all PNG files in this <code>images/</code> directory</li>
+<li>Run the checklist script to verify all files exist</li>
+<li>Verify images display correctly in the markdown preview</li>
+<li>Commit to version control</li>
+</ol>
+<hr />
+<p><em>Last Updated: 2025-12-03</em></p>
+</body>
+</html>

@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>ATS Log Monitor   Real Time Error Monitoring & Telegram Notifications</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 { border-bottom: 2px solid #3498db; padding-bottom: 0.3em; }
+        h2 { border-bottom: 1px solid #ecf0f1; padding-bottom: 0.2em; }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1em;
+            overflow-x: auto;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 1em 0;
+            padding-left: 1em;
+            color: #666;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 2em 0;
+            padding: 1em;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .pdf-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 8px 16px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .pdf-link:hover {
+            background-color: #c0392b;
+        }
+    </style>
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <p><a href="ATS Log Monitor - Real-Time Error Monitoring & Telegram Notifications.pdf" class="pdf-link">📄 Download PDF Version</a></p>
+    <h1 id="ats-log-monitor-real-time-error-monitoring-telegram-notifications">ATS Log Monitor - Real-Time Error Monitoring &amp; Telegram Notifications</h1>
+<h2 id="metadata">Metadata</h2>
+<p><strong>Category:</strong> Trading System Administration - Monitoring
+<strong>Last Updated:</strong> 2025-12-26
+<strong>Author:</strong> ATS Production Team
+<strong>Version:</strong> 1.0
+<strong>Review Date:</strong> 2026-01-26
+<strong>Status:</strong> Active</p>
+<hr />
+<h2 id="purpose">Purpose</h2>
+<p>This procedure covers the deployment, configuration, and operation of the ATS Log Monitor program, a Go-based real-time log monitoring tool that extracts ERROR and WARN messages from ATS log files and sends notifications via Telegram.</p>
+<p><strong>When to Use:</strong></p>
+<ul>
+<li>Monitoring ATS 900 production systems for errors in real-time</li>
+<li>Setting up automated error notifications via Telegram</li>
+<li>Troubleshooting ATS application issues by analyzing log patterns</li>
+<li>Implementing proactive alerting for critical system events</li>
+<li>Reviewing historical error patterns from log files</li>
+</ul>
+<h3 id="procedure-overview">Procedure Overview</h3>
+<pre class="codehilite"><code class="language-mermaid">flowchart TD
+    Start([Start ATS Log Monitor Setup]) --&gt; CheckPrereq{Check Prerequisites}
+    CheckPrereq --&gt;|Missing| Install[Install Go &amp; Dependencies]
+    CheckPrereq --&gt;|Pass| Build[Build Executable]
+    Install --&gt; Build
+    Build --&gt; Config[Configure config.toml]
+    Config --&gt; Telegram{Telegram Required?}
+    Telegram --&gt;|Yes| SetupTelegram[Setup Telegram Bot]
+    Telegram --&gt;|No| Test[Test Monitor]
+    SetupTelegram --&gt; Test
+    Test --&gt; Deploy{Deployment Type}
+    Deploy --&gt;|Manual| ManualRun[Run Manually]
+    Deploy --&gt;|Production| ScheduledTask[Create Scheduled Task]
+    ManualRun --&gt; Monitor[Monitor Logs]
+    ScheduledTask --&gt; Monitor
+    Monitor --&gt; Process{Errors Found?}
+    Process --&gt;|Yes| Notify[Send Telegram Alert]
+    Process --&gt;|No| Continue[Continue Monitoring]
+    Notify --&gt; Continue
+    Continue --&gt; Monitor
+</code></pre>
+
+<hr />
+<h2 id="prerequisites">Prerequisites</h2>
+<h3 id="required-access">Required Access</h3>
+<ul>
+<li>[x] Read access to ATS log file directory</li>
+<li>[x] Write access to program directory (for state file)</li>
+<li>[x] Network access to Telegram API (if using Telegram notifications)</li>
+<li>[x] Administrator access (if creating scheduled task)</li>
+</ul>
+<h3 id="required-tools">Required Tools</h3>
+<ul>
+<li>[x] Go programming language (version 1.21 or later)</li>
+<li>[x] PowerShell (for Windows execution)</li>
+<li>[x] Telegram account (if using Telegram notifications)</li>
+<li>[x] Text editor (for configuration)</li>
+</ul>
+<h3 id="required-information">Required Information</h3>
+<ul>
+<li>[x] Path to ATS log file (e.g., <code>C:\ATS\ats900\run\ats.log</code>)</li>
+<li>[x] Telegram bot token (if using Telegram - from @BotFather)</li>
+<li>[x] Telegram chat ID (if using Telegram - user ID or group ID)</li>
+<li>[x] Desired monitoring level (ERROR only, or include WARN)</li>
+</ul>
+<h3 id="pre-conditions">Pre-Conditions</h3>
+<ul>
+<li>[x] ATS log file exists and is accessible</li>
+<li>[x] Go is installed and in PATH (verify with <code>go version</code>)</li>
+<li>[x] Network connectivity to Telegram API (if using Telegram)</li>
+<li>[x] Sufficient disk space for state file (minimal, &lt;1KB)</li>
+</ul>
+<hr />
+<h2 id="procedure-steps">Procedure Steps</h2>
+<h3 id="step-1-build-the-executable">Step 1: Build the Executable</h3>
+<p><strong>Action:</strong></p>
+<p>Navigate to the program directory and build the executable:</p>
+<pre class="codehilite"><code class="language-powershell">cd I:\SOP-Management\Scripts\05-Production-ATS-Administration\ats-log-monitor
+
+# Download dependencies
+go mod tidy
+
+# Build executable
+go build -o ats-log-monitor.exe .
+</code></pre>
+
+<p><strong>Expected Result:</strong></p>
+<ul>
+<li><code>ats-log-monitor.exe</code> created in the program directory</li>
+<li>No compilation errors</li>
+<li>File size approximately 5-10 MB</li>
+</ul>
+<p><strong>Alternative:</strong> Use the provided build script:</p>
+<pre class="codehilite"><code class="language-powershell">.\COMPILE-NOW.ps1
+</code></pre>
+
+<hr />
+<h3 id="step-2-configure-telegram-bot-optional-but-recommended">Step 2: Configure Telegram Bot (Optional but Recommended)</h3>
+<p><strong>Action:</strong></p>
+<h4 id="21-create-telegram-bot">2.1: Create Telegram Bot</h4>
+<ol>
+<li>Open Telegram and search for <code>@BotFather</code></li>
+<li>Send <code>/newbot</code> command</li>
+<li>Follow prompts to name your bot (e.g., "ATS Monitoring Bot")</li>
+<li>Copy the bot token provided (format: <code>123456789:ABCdefGHIjklMNOpqrsTUVwxyz</code>)</li>
+</ol>
+<h4 id="22-get-chat-id">2.2: Get Chat ID</h4>
+<p><strong>For Personal Chat:</strong></p>
+<ol>
+<li>Start a chat with your bot</li>
+<li>Send any message to the bot</li>
+<li>Visit: <code>https://api.telegram.org/bot&lt;YOUR_BOT_TOKEN&gt;/getUpdates</code></li>
+<li>Find <code>"chat":{"id":123456789}</code> - that's your chat ID</li>
+</ol>
+<p><strong>For Group Chat:</strong></p>
+<ol>
+<li>Add bot to your Telegram group</li>
+<li>Send a message in the group</li>
+<li>Visit the same URL as above</li>
+<li>Find <code>"chat":{"id":-1001234567890}</code> (negative number for groups)</li>
+</ol>
+<p><strong>Expected Result:</strong></p>
+<ul>
+<li>Bot token obtained and saved securely</li>
+<li>Chat ID identified (positive for user, negative for group)</li>
+<li>Bot responds to <code>/start</code> command</li>
+</ul>
+<hr />
+<h3 id="step-3-configure-configtoml">Step 3: Configure config.toml</h3>
+<p><strong>Action:</strong></p>
+<ol>
+<li>Copy the example configuration file:</li>
+</ol>
+<pre class="codehilite"><code class="language-powershell">Copy-Item config.toml.example config.toml
+</code></pre>
+
+<ol>
+<li>Edit <code>config.toml</code> with your settings:</li>
+</ol>
+<pre class="codehilite"><code class="language-toml">[log_file]
+# Path to the ATS log file
+path = &quot;C:\\ATS\\ats900\\run\\ats.log&quot;
+
+[monitor]
+# Show WARN level messages in addition to ERROR
+show_warn = true
+
+# Show INFO level messages
+show_info = false
+
+# Show DEBUG level messages
+show_debug = false
+
+# Follow log file for new entries (like tail -f)
+follow = true
+
+# Use color highlighting in console output
+highlight = true
+
+# Polling interval in seconds (how often to check for new log entries)
+# Recommended: 5 seconds (optimal balance)
+poll_interval_seconds = 5
+
+[telegram]
+# Enable Telegram notifications
+enabled = true
+
+# Telegram bot token (get from @BotFather)
+token = &quot;YOUR_BOT_TOKEN_HERE&quot;
+
+# Telegram chat ID (your user ID or group ID)
+chat_id = &quot;YOUR_CHAT_ID_HERE&quot;
+
+# Only send to Telegram, don't display to console
+only = false
+</code></pre>
+
+<p><strong>Expected Result:</strong></p>
+<ul>
+<li><code>config.toml</code> file created with correct settings</li>
+<li>Log file path points to actual ATS log location</li>
+<li>Telegram credentials configured (if using Telegram)</li>
+<li>Configuration validated (no syntax errors)</li>
+</ul>
+<p><strong>Security Note:</strong> Never commit <code>config.toml</code> to version control. Add it to <code>.gitignore</code>.</p>
+<hr />
+<h3 id="step-4-test-the-monitor">Step 4: Test the Monitor</h3>
+<p><strong>Action:</strong></p>
+<p>Run the monitor in test mode to verify configuration:</p>
+<pre class="codehilite"><code class="language-powershell"># Test with console output
+.\ats-log-monitor.exe
+
+# Or test with one-time scan (no following)
+.\ats-log-monitor.exe -follow=false
+</code></pre>
+
+<p><strong>Expected Result:</strong></p>
+<ul>
+<li>Program starts without errors</li>
+<li>Handshake message sent to Telegram (if enabled)</li>
+<li>Log file is read successfully</li>
+<li>ERROR/WARN messages are displayed in console</li>
+<li>Telegram notifications are received (if enabled)</li>
+</ul>
+<p><strong>Verify:</strong></p>
+<ul>
+<li>Check console for: <code>"Resuming from last processed timestamp: ..."</code> or <code>"No previous state found"</code></li>
+<li>Check Telegram chat for handshake message</li>
+<li>Verify ERROR messages appear in console output</li>
+</ul>
+<hr />
+<h3 id="step-5-deploy-for-production">Step 5: Deploy for Production</h3>
+<p><strong>Action:</strong></p>
+<p>Choose deployment method based on requirements:</p>
+<h4 id="option-a-manual-execution">Option A: Manual Execution</h4>
+<p>Run the monitor in a PowerShell window:</p>
+<pre class="codehilite"><code class="language-powershell">cd I:\SOP-Management\Scripts\05-Production-ATS-Administration\ats-log-monitor
+.\ats-log-monitor.exe
+</code></pre>
+
+<p><strong>Use Case:</strong> Testing, troubleshooting, or temporary monitoring</p>
+<h4 id="option-b-scheduled-task-recommended-for-production">Option B: Scheduled Task (Recommended for Production)</h4>
+<p>Create a Windows Scheduled Task to run the monitor automatically:</p>
+<pre class="codehilite"><code class="language-powershell"># Create scheduled task to start on system boot
+$action = New-ScheduledTaskAction -Execute &quot;I:\SOP-Management\Scripts\05-Production-ATS-Administration\ats-log-monitor\ats-log-monitor.exe&quot; -WorkingDirectory &quot;I:\SOP-Management\Scripts\05-Production-ATS-Administration\ats-log-monitor&quot;
+$trigger = New-ScheduledTaskTrigger -AtStartup
+$principal = New-ScheduledTaskPrincipal -UserId &quot;$env:USERDOMAIN\$env:USERNAME&quot; -LogonType Interactive -RunLevel Highest
+$settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1)
+Register-ScheduledTask -TaskName &quot;ATS-Log-Monitor&quot; -Action $action -Trigger $trigger -Principal $principal -Settings $settings -Description &quot;ATS Log Monitor - Real-time error monitoring with Telegram notifications&quot;
+</code></pre>
+
+<p><strong>Expected Result:</strong></p>
+<ul>
+<li>Monitor runs automatically on system startup</li>
+<li>Program continues running in background</li>
+<li>Errors are detected and sent to Telegram</li>
+<li>State file persists between restarts</li>
+</ul>
+<hr />
+<h2 id="quick-reference-guide">Quick Reference Guide</h2>
+<h3 id="how-configtoml-is-loaded">How Config.toml is Loaded</h3>
+<p>The program <strong>automatically loads <code>config.toml</code></strong> from the current directory when you run it. No special command needed!</p>
+<p><strong>Default behavior:</strong></p>
+<ul>
+<li>Looks for <code>config.toml</code> in the same directory as the executable</li>
+<li>If not found, uses default settings</li>
+<li>Command-line flags can override any config setting</li>
+</ul>
+<h3 id="common-usage-examples">Common Usage Examples</h3>
+<h4 id="basic-use-configtoml-settings">Basic - Use config.toml settings</h4>
+<pre class="codehilite"><code class="language-powershell">.\ats-log-monitor.exe
+</code></pre>
+
+<h4 id="test-with-specific-log-file-overrides-config">Test with specific log file (overrides config)</h4>
+<pre class="codehilite"><code class="language-powershell">.\ats-log-monitor.exe -file &quot;ATS.log&quot;
+</code></pre>
+
+<h4 id="test-with-absolute-path">Test with absolute path</h4>
+<pre class="codehilite"><code class="language-powershell">.\ats-log-monitor.exe -file &quot;C:\ATS\ats900\run\ats.log&quot;
+</code></pre>
+
+<h4 id="test-without-following-one-time-scan">Test without following (one-time scan)</h4>
+<pre class="codehilite"><code class="language-powershell">.\ats-log-monitor.exe -file &quot;ATS.log&quot; -follow=false
+</code></pre>
+
+<h4 id="test-with-warn-messages-too">Test with WARN messages too</h4>
+<pre class="codehilite"><code class="language-powershell">.\ats-log-monitor.exe -file &quot;ATS.log&quot; -warn
+</code></pre>
+
+<h4 id="test-telegram-only-no-console-output">Test Telegram only (no console output)</h4>
+<pre class="codehilite"><code class="language-powershell">.\ats-log-monitor.exe -file &quot;ATS.log&quot; -telegram-only
+</code></pre>
+
+<h4 id="override-config-file">Override config file</h4>
+<pre class="codehilite"><code class="language-powershell"># Use a different config file
+.\ats-log-monitor.exe -config &quot;C:\Path\To\custom-config.toml&quot;
+
+# Override log file path (ignores config)
+.\ats-log-monitor.exe -file &quot;C:\ATS\ats900\run\ats.log&quot;
+
+# Override log file AND use different config
+.\ats-log-monitor.exe -config &quot;custom.toml&quot; -file &quot;ATS.log&quot;
+</code></pre>
+
+<h3 id="command-line-flags-reference">Command Line Flags Reference</h3>
+<p>All config.toml settings can be overridden with command-line flags:</p>
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-config &lt;path&gt;</code></td>
+<td>Use different config file</td>
+<td><code>-config "custom.toml"</code></td>
+</tr>
+<tr>
+<td><code>-file &lt;path&gt;</code></td>
+<td>Override log file path</td>
+<td><code>-file "C:\ATS\ats.log"</code></td>
+</tr>
+<tr>
+<td><code>-warn</code></td>
+<td>Show WARN messages</td>
+<td><code>-warn</code></td>
+</tr>
+<tr>
+<td><code>-info</code></td>
+<td>Show INFO messages</td>
+<td><code>-info</code></td>
+</tr>
+<tr>
+<td><code>-debug</code></td>
+<td>Show DEBUG messages</td>
+<td><code>-debug</code></td>
+</tr>
+<tr>
+<td><code>-follow=false</code></td>
+<td>One-time scan (don't follow)</td>
+<td><code>-follow=false</code></td>
+</tr>
+<tr>
+<td><code>-highlight=false</code></td>
+<td>Disable colors</td>
+<td><code>-highlight=false</code></td>
+</tr>
+<tr>
+<td><code>-telegram-token &lt;token&gt;</code></td>
+<td>Override Telegram token</td>
+<td><code>-telegram-token "..."</code></td>
+</tr>
+<tr>
+<td><code>-telegram-chat &lt;id&gt;</code></td>
+<td>Override Telegram chat ID</td>
+<td><code>-telegram-chat "..."</code></td>
+</tr>
+<tr>
+<td><code>-telegram-only</code></td>
+<td>Telegram only, no console</td>
+<td><code>-telegram-only</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="quick-testing-workflow">Quick Testing Workflow</h3>
+<ol>
+<li><strong>Make sure <code>config.toml</code> exists</strong> in the same directory as <code>ats-log-monitor.exe</code></li>
+<li><strong>Verify the log file path</strong> in <code>config.toml</code> points to your <code>ATS.log</code></li>
+<li><strong>Run the program:</strong></li>
+</ol>
+<p><code>powershell
+   .\ats-log-monitor.exe</code></p>
+<ol>
+<li><strong>Watch for:</strong></li>
+<li>Console output showing ERROR/WARN messages</li>
+<li>Telegram messages in your chat group</li>
+<li>Handshake message when program starts</li>
+</ol>
+<h3 id="quick-troubleshooting-tips">Quick Troubleshooting Tips</h3>
+<p><strong>Config not loading?</strong></p>
+<ul>
+<li>Make sure <code>config.toml</code> is in the same directory as the executable</li>
+<li>Check for typos in the filename (must be exactly <code>config.toml</code>)</li>
+<li>Program will use defaults if config is missing (no error)</li>
+</ul>
+<p><strong>Log file not found?</strong></p>
+<ul>
+<li>Check the path in <code>config.toml</code> is correct</li>
+<li>Use absolute path if relative path doesn't work</li>
+<li>Or override with <code>-file</code> flag</li>
+</ul>
+<p><strong>Want to see what config is loaded?</strong></p>
+<ul>
+<li>Run the program and check the startup output</li>
+<li>It shows: log file path, monitoring levels, Telegram status</li>
+</ul>
+<hr />
+<h2 id="verification">Verification</h2>
+<h3 id="how-to-verify-success">How to Verify Success</h3>
+<ol>
+<li><strong>Program Running:</strong></li>
+</ol>
+<p><code>powershell
+   Get-Process -Name "ats-log-monitor" -ErrorAction SilentlyContinue</code></p>
+<p><strong>Expected:</strong> Process found and running</p>
+<ol>
+<li><strong>State File Created:</strong></li>
+</ol>
+<p><code>powershell
+   Test-Path "C:\ATS\ats900\run\.ats-log-monitor.state"</code></p>
+<p><strong>Expected:</strong> File exists after processing at least one message</p>
+<ol>
+<li>
+<p><strong>Telegram Notifications:</strong></p>
+</li>
+<li>
+<p>Check Telegram chat for handshake message on startup</p>
+</li>
+<li>
+<p>Verify ERROR messages appear in Telegram when they occur in logs</p>
+</li>
+<li>
+<p><strong>Console Output:</strong></p>
+</li>
+<li>
+<p>ERROR messages displayed with red color</p>
+</li>
+<li>WARN messages displayed with yellow color (if enabled)</li>
+<li>Timestamps shown correctly</li>
+</ol>
+<h3 id="success-criteria">Success Criteria</h3>
+<ul>
+<li>[x] Program starts without errors</li>
+<li>[x] Log file is read successfully</li>
+<li>[x] ERROR messages are detected and displayed</li>
+<li>[x] Telegram notifications are sent (if enabled)</li>
+<li>[x] State file is created and updated</li>
+<li>[x] Program resumes from last processed timestamp on restart</li>
+<li>[x] No duplicate messages sent after restart</li>
+</ul>
+<hr />
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="issue-1-program-fails-to-start">Issue 1: Program Fails to Start</h3>
+<p><strong>Symptoms:</strong></p>
+<ul>
+<li>Executable not found</li>
+<li>"Cannot open log file" error</li>
+<li>Configuration file not found</li>
+</ul>
+<p><strong>Root Cause:</strong></p>
+<ul>
+<li>Missing executable or incorrect path</li>
+<li>Log file path incorrect in config.toml</li>
+<li>config.toml not in same directory as executable</li>
+</ul>
+<p><strong>Solution:</strong></p>
+<ol>
+<li>Verify executable exists:</li>
+</ol>
+<p><code>powershell
+   Test-Path ".\ats-log-monitor.exe"</code></p>
+<ol>
+<li>Check log file path in config.toml:</li>
+</ol>
+<p><code>powershell
+   Get-Content config.toml | Select-String "path ="</code></p>
+<ol>
+<li>Verify log file exists:</li>
+</ol>
+<p><code>powershell
+   Test-Path "C:\ATS\ats900\run\ats.log"</code></p>
+<ol>
+<li>Ensure config.toml is in same directory as executable</li>
+</ol>
+<p><strong>Prevention:</strong></p>
+<ul>
+<li>Use absolute paths in config.toml</li>
+<li>Verify all paths before deployment</li>
+<li>Test configuration before production use</li>
+</ul>
+<hr />
+<h3 id="issue-2-telegram-notifications-not-working">Issue 2: Telegram Notifications Not Working</h3>
+<p><strong>Symptoms:</strong></p>
+<ul>
+<li>No handshake message received</li>
+<li>ERROR messages not appearing in Telegram</li>
+<li>"Failed to send Telegram message" errors</li>
+</ul>
+<p><strong>Root Cause:</strong></p>
+<ul>
+<li>Invalid bot token</li>
+<li>Incorrect chat ID</li>
+<li>Network connectivity issues</li>
+<li>Telegram API rate limiting</li>
+</ul>
+<p><strong>Solution:</strong></p>
+<ol>
+<li>Verify bot token is correct:</li>
+</ol>
+<p><code>powershell
+   # Test with PowerShell
+   $token = "YOUR_BOT_TOKEN"
+   $chatId = "YOUR_CHAT_ID"
+   $url = "https://api.telegram.org/bot$token/sendMessage"
+   $body = @{chat_id=$chatId; text="Test message"} | ConvertTo-Json
+   Invoke-RestMethod -Uri $url -Method Post -Body $body -ContentType "application/json"</code></p>
+<ol>
+<li>Check chat ID format:</li>
+<li>User chat ID: positive number (e.g., <code>123456789</code>)</li>
+<li>
+<p>Group chat ID: negative number (e.g., <code>-1001234567890</code>)</p>
+</li>
+<li>
+<p>Verify network connectivity:</p>
+</li>
+</ol>
+<p><code>powershell
+   Test-NetConnection api.telegram.org -Port 443</code></p>
+<ol>
+<li>Check program debug output for Telegram errors</li>
+</ol>
+<p><strong>Prevention:</strong></p>
+<ul>
+<li>Test Telegram setup before production deployment</li>
+<li>Use group chats for team notifications</li>
+<li>Monitor Telegram API rate limits (20 messages/minute)</li>
+</ul>
+<hr />
+<h3 id="issue-3-duplicate-messages-after-restart">Issue 3: Duplicate Messages After Restart</h3>
+<p><strong>Symptoms:</strong></p>
+<ul>
+<li>Same ERROR messages sent multiple times</li>
+<li>State file not working correctly</li>
+</ul>
+<p><strong>Root Cause:</strong></p>
+<ul>
+<li>State file not being saved</li>
+<li>Timestamp parsing issues</li>
+<li>State file in wrong location</li>
+</ul>
+<p><strong>Solution:</strong></p>
+<ol>
+<li>Check state file exists:</li>
+</ol>
+<p><code>powershell
+   Get-ChildItem -Path "C:\ATS\ats900\run" -Filter ".ats-log-monitor.state" -Force</code></p>
+<ol>
+<li>Verify state file content:</li>
+</ol>
+<p><code>powershell
+   Get-Content "C:\ATS\ats900\run\.ats-log-monitor.state"</code></p>
+<p><strong>Expected:</strong> RFC3339 timestamp format</p>
+<ol>
+<li>Delete state file to reset (will process all messages again):</li>
+</ol>
+<p><code>powershell
+   Remove-Item "C:\ATS\ats900\run\.ats-log-monitor.state" -Force</code></p>
+<p><strong>Prevention:</strong></p>
+<ul>
+<li>Ensure write permissions in log file directory</li>
+<li>Monitor state file creation on first run</li>
+<li>Verify timestamp format in logs matches parser expectations</li>
+</ul>
+<hr />
+<h3 id="issue-4-program-stops-unexpectedly">Issue 4: Program Stops Unexpectedly</h3>
+<p><strong>Symptoms:</strong></p>
+<ul>
+<li>Process no longer running</li>
+<li>No error messages in console</li>
+<li>Scheduled task shows "stopped" status</li>
+</ul>
+<p><strong>Root Cause:</strong></p>
+<ul>
+<li>Log file rotation/truncation</li>
+<li>Network connectivity loss</li>
+<li>System resource constraints</li>
+<li>Scheduled task configuration issues</li>
+</ul>
+<p><strong>Solution:</strong></p>
+<ol>
+<li>Check Windows Event Viewer for errors</li>
+<li>Verify scheduled task restart settings:</li>
+</ol>
+<p><code>powershell
+   Get-ScheduledTask -TaskName "ATS-Log-Monitor" | Get-ScheduledTaskInfo</code></p>
+<ol>
+<li>Check if log file was rotated:</li>
+</ol>
+<p><code>powershell
+   Get-Item "C:\ATS\ats900\run\ats.log" | Select-Object Length, LastWriteTime</code></p>
+<ol>
+<li>Restart the program manually to verify it works</li>
+</ol>
+<p><strong>Prevention:</strong></p>
+<ul>
+<li>Configure scheduled task with automatic restart</li>
+<li>Monitor program health with external monitoring</li>
+<li>Set up alerts for program failures</li>
+</ul>
+<hr />
+<h3 id="issue-5-high-cpu-or-memory-usage">Issue 5: High CPU or Memory Usage</h3>
+<p><strong>Symptoms:</strong></p>
+<ul>
+<li>System performance degradation</li>
+<li>Program consuming excessive resources</li>
+</ul>
+<p><strong>Root Cause:</strong></p>
+<ul>
+<li>Polling interval too frequent</li>
+<li>Processing very large log files</li>
+<li>Memory leaks (unlikely, but possible)</li>
+</ul>
+<p><strong>Solution:</strong></p>
+<ol>
+<li>Increase polling interval in config.toml:</li>
+</ol>
+<p><code>toml
+   poll_interval_seconds = 10  # Increase from 5 to 10 seconds</code></p>
+<ol>
+<li>Monitor resource usage:</li>
+</ol>
+<p><code>powershell
+   Get-Process -Name "ats-log-monitor" | Select-Object CPU, WorkingSet</code></p>
+<ol>
+<li>Restart program periodically if needed</li>
+</ol>
+<p><strong>Prevention:</strong></p>
+<ul>
+<li>Use recommended polling interval (5 seconds)</li>
+<li>Monitor resource usage in production</li>
+<li>Adjust polling based on log file growth rate</li>
+</ul>
+<hr />
+<h2 id="maintenance-procedures">Maintenance Procedures</h2>
+<h3 id="daily">Daily</h3>
+<ul>
+<li>[x] Verify program is running (check process or scheduled task)</li>
+<li>[x] Review Telegram notifications for critical errors</li>
+<li>[x] Check state file exists and is updating</li>
+</ul>
+<h3 id="weekly">Weekly</h3>
+<ul>
+<li>[x] Review error patterns in Telegram chat history</li>
+<li>[x] Verify log file is accessible and growing</li>
+<li>[x] Check disk space for state file (minimal impact)</li>
+</ul>
+<h3 id="monthly">Monthly</h3>
+<ul>
+<li>[x] Review and update config.toml if needed</li>
+<li>[x] Test Telegram connectivity</li>
+<li>[x] Verify program version is current</li>
+<li>[x] Review scheduled task configuration</li>
+</ul>
+<h3 id="as-needed">As Needed</h3>
+<ul>
+<li>[x] Update Telegram bot token if compromised</li>
+<li>[x] Adjust monitoring levels (ERROR/WARN) based on needs</li>
+<li>[x] Modify polling interval based on system load</li>
+<li>[x] Reset state file if duplicate message issues occur</li>
+</ul>
+<hr />
+<h2 id="prevention-measures">Prevention Measures</h2>
+<h3 id="build-standards">Build Standards</h3>
+<ul>
+<li>Always build from source code in version control</li>
+<li>Use <code>go mod tidy</code> before building to ensure dependencies</li>
+<li>Verify executable is not flagged by antivirus</li>
+<li>Test build on target system before deployment</li>
+</ul>
+<h3 id="configuration-management">Configuration Management</h3>
+<ul>
+<li>Use <code>config.toml.example</code> as template</li>
+<li>Never commit <code>config.toml</code> with credentials to version control</li>
+<li>Document all configuration changes</li>
+<li>Validate configuration syntax before deployment</li>
+</ul>
+<h3 id="monitoring-best-practices">Monitoring Best Practices</h3>
+<ul>
+<li>Use group Telegram chats for team notifications</li>
+<li>Set appropriate polling intervals (5 seconds recommended)</li>
+<li>Monitor program health with external tools</li>
+<li>Set up alerts for program failures</li>
+</ul>
+<h3 id="security">Security</h3>
+<ul>
+<li>Protect Telegram bot token (treat as sensitive credential)</li>
+<li>Use group chats instead of personal chats for production</li>
+<li>Regularly rotate bot tokens if compromised</li>
+<li>Limit bot permissions in Telegram groups</li>
+</ul>
+<hr />
+<h2 id="related-procedures">Related Procedures</h2>
+<ul>
+<li><a href="./ATS_Administration_SOP.md">ATS 900 Production Deployment SOP</a></li>
+<li><a href="./ATS%20Hyper-V%20VM%20Network%20Configuration%20&amp;%20Troubleshooting.md">ATS Hyper-V VM Network Configuration</a></li>
+<li><a href="./Essential%20Networking%20Concepts%20for%20ATS%20VM%20Troubleshooting.md">Essential Networking Concepts for ATS VM</a></li>
+</ul>
+<hr />
+<h2 id="related-scripts">Related Scripts</h2>
+<ul>
+<li><strong>ats-log-monitor.exe</strong> - Main monitoring program</li>
+<li>Location: <code>Scripts/05-Production-ATS-Administration/ats-log-monitor/ats-log-monitor.exe</code></li>
+<li>
+<p>Source: <code>Scripts/05-Production-ATS-Administration/ats-log-monitor/main.go</code></p>
+</li>
+<li>
+<p><strong>COMPILE-NOW.ps1</strong> - Build script</p>
+</li>
+<li>Location: <code>Scripts/05-Production-ATS-Administration/ats-log-monitor/COMPILE-NOW.ps1</code></li>
+<li>
+<p>Purpose: Compiles the Go program with dependency management</p>
+</li>
+<li>
+<p><strong>Build-And-Test.ps1</strong> - Build and test script</p>
+</li>
+<li>Location: <code>Scripts/05-Production-ATS-Administration/ats-log-monitor/Build-And-Test.ps1</code></li>
+<li>
+<p>Purpose: Builds executable and runs test with sample log file</p>
+</li>
+<li>
+<p><strong>Test-Telegram-Connection.ps1</strong> - Telegram connectivity test</p>
+</li>
+<li>Location: <code>Scripts/05-Production-ATS-Administration/ats-log-monitor/Test-Telegram-Connection.ps1</code></li>
+<li>Purpose: Tests Telegram API connectivity and adds test ERROR to log</li>
+</ul>
+<hr />
+<h2 id="references">References</h2>
+<h3 id="program-documentation">Program Documentation</h3>
+<ul>
+<li><strong>README.md</strong> - Program overview and basic usage</li>
+<li>
+<p>Location: <code>Scripts/05-Production-ATS-Administration/ats-log-monitor/README.md</code></p>
+</li>
+<li>
+<p><strong>QUICK-START.md</strong> - Quick reference guide (content merged into this SOP)</p>
+</li>
+<li>Location: <code>Scripts/05-Production-ATS-Administration/ats-log-monitor/QUICK-START.md</code></li>
+<li>
+<p>Note: Quick reference content is now included in the "Quick Reference Guide" section above</p>
+</li>
+<li>
+<p><strong>TELEGRAM-SETUP.md</strong> - Detailed Telegram configuration guide</p>
+</li>
+<li>Location: <code>Scripts/05-Production-ATS-Administration/ats-log-monitor/TELEGRAM-SETUP.md</code></li>
+</ul>
+<h3 id="external-resources">External Resources</h3>
+<ul>
+<li><strong>Go Programming Language:</strong> https://golang.org/</li>
+<li><strong>Telegram Bot API:</strong> https://core.telegram.org/bots/api</li>
+<li><strong>Telegram BotFather:</strong> https://t.me/BotFather</li>
+<li><strong>TOML Configuration Format:</strong> https://toml.io/</li>
+</ul>
+<h3 id="configuration-files">Configuration Files</h3>
+<ul>
+<li><strong>config.toml.example</strong> - Example configuration template</li>
+<li>
+<p>Location: <code>Scripts/05-Production-ATS-Administration/ats-log-monitor/config.toml.example</code></p>
+</li>
+<li>
+<p><strong>config.toml</strong> - Active configuration (user-created, not in version control)</p>
+</li>
+<li>Location: <code>Scripts/05-Production-ATS-Administration/ats-log-monitor/config.toml</code></li>
+</ul>
+<hr />
+<h2 id="change-log">Change Log</h2>
+<table>
+<thead>
+<tr>
+<th>Version</th>
+<th>Date</th>
+<th>Author</th>
+<th>Changes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1.0</td>
+<td>2025-12-26</td>
+<td>ATS Production Team</td>
+<td>Initial SOP creation</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="notes">Notes</h2>
+<h3 id="state-file-management">State File Management</h3>
+<ul>
+<li><strong>Location:</strong> State file (<code>.ats-log-monitor.state</code>) is created in the same directory as the log file</li>
+<li><strong>Purpose:</strong> Tracks last processed timestamp to prevent duplicate messages after restart</li>
+<li><strong>Format:</strong> RFC3339Nano timestamp format</li>
+<li><strong>Reset:</strong> Delete state file to process all messages from beginning</li>
+</ul>
+<h3 id="timestamp-parsing">Timestamp Parsing</h3>
+<p>The program supports multiple timestamp formats:</p>
+<ul>
+<li>ATS format: <code>2025-11-26 06:43:05.034</code></li>
+<li>Standard format: <code>2025-11-26 06:43:05</code></li>
+<li>ISO format: <code>2025-11-26T06:43:05.034Z</code></li>
+<li>Comma separator: <code>2025-11-26 06:43:05,034</code></li>
+</ul>
+<h3 id="telegram-rate-limiting">Telegram Rate Limiting</h3>
+<ul>
+<li><strong>Limit:</strong> 20 messages per minute per chat</li>
+<li><strong>Implementation:</strong> Program enforces 3-second minimum interval between messages</li>
+<li><strong>Behavior:</strong> Messages are queued and sent as rate limit allows</li>
+<li><strong>Buffer:</strong> Channel buffer size of 50 messages prevents blocking</li>
+</ul>
+<h3 id="log-file-handling">Log File Handling</h3>
+<ul>
+<li><strong>Read-Only Access:</strong> Program opens log file in read-only mode to avoid locking</li>
+<li><strong>File Rotation:</strong> Automatically handles log file rotation (size decrease detection)</li>
+<li><strong>Polling:</strong> Checks for new entries every 5 seconds (configurable)</li>
+<li><strong>First Run:</strong> On first run, scans entire file to catch existing ERROR/WARN messages</li>
+</ul>
+<h3 id="command-line-overrides">Command-Line Overrides</h3>
+<p>All config.toml settings can be overridden with command-line flags:</p>
+<ul>
+<li><code>-file &lt;path&gt;</code> - Override log file path</li>
+<li><code>-warn</code> - Enable WARN message display</li>
+<li><code>-info</code> - Enable INFO message display</li>
+<li><code>-debug</code> - Enable DEBUG message display</li>
+<li><code>-follow=false</code> - One-time scan (don't follow)</li>
+<li><code>-highlight=false</code> - Disable color highlighting</li>
+<li><code>-telegram-token &lt;token&gt;</code> - Override Telegram token</li>
+<li><code>-telegram-chat &lt;id&gt;</code> - Override Telegram chat ID</li>
+<li><code>-telegram-only</code> - Telegram only, no console output</li>
+<li><code>-config &lt;path&gt;</code> - Use different config file</li>
+</ul>
+<h3 id="production-deployment-tips">Production Deployment Tips</h3>
+<ol>
+<li><strong>Use Scheduled Task:</strong> For 24/7 monitoring, use Windows Scheduled Task with auto-restart</li>
+<li><strong>Group Telegram Chat:</strong> Use group chats for team notifications</li>
+<li><strong>Monitor Program Health:</strong> Set up external monitoring to alert if program stops</li>
+<li><strong>Regular Testing:</strong> Periodically test Telegram connectivity</li>
+<li><strong>State File Backup:</strong> Consider backing up state file for disaster recovery</li>
+</ol>
+<h3 id="security-considerations">Security Considerations</h3>
+<ul>
+<li><strong>Bot Token:</strong> Treat Telegram bot token as sensitive credential</li>
+<li><strong>Config File:</strong> Never commit config.toml to version control</li>
+<li><strong>Permissions:</strong> Ensure program has read access to log file and write access to state file directory</li>
+<li><strong>Network:</strong> Program requires outbound HTTPS to api.telegram.org</li>
+</ul>
+<hr />
+<p><strong>End of Procedure</strong></p>
+</body>
+</html>

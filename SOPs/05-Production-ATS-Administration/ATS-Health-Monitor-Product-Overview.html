@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>ATS Health Monitor Product Overview</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 { border-bottom: 2px solid #3498db; padding-bottom: 0.3em; }
+        h2 { border-bottom: 1px solid #ecf0f1; padding-bottom: 0.2em; }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1em;
+            overflow-x: auto;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 1em 0;
+            padding-left: 1em;
+            color: #666;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 2em 0;
+            padding: 1em;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .pdf-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 8px 16px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .pdf-link:hover {
+            background-color: #c0392b;
+        }
+    </style>
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <p><a href="ATS-Health-Monitor-Product-Overview.pdf" class="pdf-link">📄 Download PDF Version</a></p>
+    <h1 id="ats-health-monitor">ATS Health Monitor</h1>
+<h2 id="enterprise-trading-compliance-operations-platform">Enterprise Trading Compliance &amp; Operations Platform</h2>
+<blockquote>
+<p><strong>Version</strong>: 2.3.1
+<strong>Last Updated</strong>: December 2025
+<strong>Target Market</strong>: SFC Hong Kong Licensed Trading Firms</p>
+</blockquote>
+<hr />
+<h2 id="executive-summary">🎯 Executive Summary</h2>
+<p><strong>ATS Health Monitor</strong> is a purpose-built compliance and operations platform designed for proprietary trading firms operating under <strong>Securities and Futures Commission (SFC) Hong Kong</strong> regulations. It provides real-time visibility into trading operations, comprehensive audit trails, and enterprise-grade security.</p>
+<pre class="codehilite"><code class="language-mermaid">graph LR
+    subgraph &quot;Trading Operations&quot;
+        A[📊 Live Positions] --&gt; D[ATS Health Monitor]
+        B[📋 On-Hand Orders] --&gt; D
+        C[📈 FIX Messages] --&gt; D
+    end
+
+    subgraph &quot;Compliance Output&quot;
+        D --&gt; E[📁 Audit Reports]
+        D --&gt; F[📊 P&amp;L Analysis]
+        D --&gt; G[🔍 Trade History]
+    end
+
+    style D fill:#2563eb,stroke:#1d4ed8,color:#fff
+</code></pre>
+
+<hr />
+<h2 id="sfc-hong-kong-compliance">🏛️ SFC Hong Kong Compliance</h2>
+<p>Built specifically to meet SFC regulatory requirements for licensed trading firms.</p>
+<h3 id="compliance-requirements-matrix">Compliance Requirements Matrix</h3>
+<table>
+<thead>
+<tr>
+<th>SFC Requirement</th>
+<th>How ATS Health Monitor Delivers</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>7-Year Trade Retention</strong></td>
+<td>TimescaleDB with automated archival and compression</td>
+</tr>
+<tr>
+<td><strong>Complete Audit Trail</strong></td>
+<td>Immutable FIX message storage with microsecond timestamps</td>
+</tr>
+<tr>
+<td><strong>On-Demand Export</strong></td>
+<td>Excel-friendly CSV with flexible date ranges</td>
+</tr>
+<tr>
+<td><strong>Access Controls</strong></td>
+<td>Role-Based Access Control (RBAC) with audit logging</td>
+</tr>
+<tr>
+<td><strong>Data Integrity</strong></td>
+<td>PostgreSQL ACID compliance, no data loss</td>
+</tr>
+</tbody>
+</table>
+<pre class="codehilite"><code class="language-mermaid">flowchart TB
+    subgraph &quot;Data Capture&quot;
+        FIX[FIX 4.2 Orders] --&gt; |Real-time| AGENT[Log Agent]
+        MSSQL[(MSSQL Trading DB)] --&gt; |Sync| BACKEND[Backend API]
+    end
+
+    subgraph &quot;Storage &amp; Retention&quot;
+        AGENT --&gt; TSDB[(TimescaleDB)]
+        BACKEND --&gt; TSDB
+        TSDB --&gt; |7 Years| ARCHIVE[Compressed Archives]
+    end
+
+    subgraph &quot;Audit &amp; Compliance&quot;
+        TSDB --&gt; EXPORT[📊 Export Engine]
+        EXPORT --&gt; CSV[CSV Reports]
+        EXPORT --&gt; EXCEL[Excel Analysis]
+        EXPORT --&gt; AUDITOR[SFC Auditor]
+    end
+
+    style TSDB fill:#10b981,stroke:#059669,color:#fff
+    style AUDITOR fill:#f59e0b,stroke:#d97706,color:#fff
+</code></pre>
+
+<hr />
+<h2 id="positions-dashboard">📊 Positions Dashboard</h2>
+<p>Complete visibility into your trading positions with enterprise-grade analytics.</p>
+<h3 id="features">Features</h3>
+<pre class="codehilite"><code class="language-mermaid">mindmap
+  root((Positions))
+    Round Trips
+      Entry/Exit Pairing
+      P&amp;L Calculation
+      Strategy Breakdown
+      Broker Segregation
+    MSSQL Sync
+      Real-time Updates
+      Historical Resync
+      Configurable Intervals
+    Exports
+      P&amp;L Summary
+      Raw Data CSV
+      Date Filters
+      Symbol Filters
+    Display
+      Virtual Scrolling
+      Sortable Columns
+      Status Indicators
+</code></pre>
+
+<h3 id="round-trip-analysis">Round Trip Analysis</h3>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Entry Date/Time</strong></td>
+<td>Position open timestamp (EST timezone)</td>
+</tr>
+<tr>
+<td><strong>Exit Date/Time</strong></td>
+<td>Position close timestamp (EST timezone)</td>
+</tr>
+<tr>
+<td><strong>Symbol</strong></td>
+<td>Trading instrument</td>
+</tr>
+<tr>
+<td><strong>Strategy</strong></td>
+<td>Trading strategy identifier</td>
+</tr>
+<tr>
+<td><strong>Quantity</strong></td>
+<td>Number of shares/contracts</td>
+</tr>
+<tr>
+<td><strong>P&amp;L</strong></td>
+<td>Realized profit/loss</td>
+</tr>
+<tr>
+<td><strong>Broker Account</strong></td>
+<td>IB account identifier</td>
+</tr>
+</tbody>
+</table>
+<h3 id="export-capabilities">Export Capabilities</h3>
+<ul>
+<li><strong>P&amp;L Summary Report</strong> - Aggregated P&amp;L with position breakdown</li>
+<li><strong>Raw Data Export</strong> - Full detail for external analysis tools</li>
+<li><strong>Date Range Presets</strong> - Today, Yesterday, 7 Days, 30 Days, This Month, Last Month</li>
+<li><strong>Custom Date Range</strong> - Any historical period</li>
+<li><strong>Symbol Filter</strong> - Focus on specific instruments</li>
+</ul>
+<hr />
+<h2 id="on-hand-orders">📋 On-Hand Orders</h2>
+<p>Real-time tracking of open positions across all accounts.</p>
+<pre class="codehilite"><code class="language-mermaid">flowchart LR
+    subgraph &quot;Data Sources&quot;
+        IB1[IB Account 1]
+        IB2[IB Account 2]
+        IB3[IB Account N]
+    end
+
+    subgraph &quot;ATS Health Monitor&quot;
+        SYNC[MSSQL Sync]
+        VIEW[On-Hand Dashboard]
+        EXPORT[Export Engine]
+    end
+
+    subgraph &quot;Output&quot;
+        CSV[📊 CSV Export]
+        SCREEN[🖥️ Live Display]
+    end
+
+    IB1 --&gt; SYNC
+    IB2 --&gt; SYNC
+    IB3 --&gt; SYNC
+    SYNC --&gt; VIEW
+    VIEW --&gt; SCREEN
+    VIEW --&gt; EXPORT
+    EXPORT --&gt; CSV
+
+    style VIEW fill:#8b5cf6,stroke:#7c3aed,color:#fff
+</code></pre>
+
+<h3 id="on-hand-features">On-Hand Features</h3>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Benefit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Live View</strong></td>
+<td>Current open orders across all accounts</td>
+</tr>
+<tr>
+<td><strong>Multi-Broker</strong></td>
+<td>Consolidated view across IB accounts</td>
+</tr>
+<tr>
+<td><strong>Symbol Breakdown</strong></td>
+<td>Net position by instrument</td>
+</tr>
+<tr>
+<td><strong>Risk Monitoring</strong></td>
+<td>Position size validation</td>
+</tr>
+<tr>
+<td><strong>One-Click Export</strong></td>
+<td>Instant CSV for reconciliation</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="role-based-access-control-rbac">🔐 Role-Based Access Control (RBAC)</h2>
+<p>Enterprise security designed for financial operations with granular permission control.</p>
+<pre class="codehilite"><code class="language-mermaid">graph TB
+    subgraph &quot;User Roles&quot;
+        ADMIN[👑 Admin]
+        DEV[💻 Developer]
+        OP[📊 Operator]
+        ANALYST[📈 Analyst]
+        VIEWER[👁️ Viewer]
+    end
+
+    subgraph &quot;Permissions&quot;
+        ALL[Full Access]
+        SYNC[MSSQL Sync]
+        TRADE[Trading Views]
+        EXPORT[Export Data]
+        READ[Read Only]
+    end
+
+    ADMIN --&gt; ALL
+    DEV --&gt; SYNC
+    DEV --&gt; TRADE
+    DEV --&gt; EXPORT
+    OP --&gt; TRADE
+    OP --&gt; EXPORT
+    ANALYST --&gt; TRADE
+    ANALYST --&gt; EXPORT
+    VIEWER --&gt; READ
+
+    style ADMIN fill:#dc2626,stroke:#b91c1c,color:#fff
+    style DEV fill:#2563eb,stroke:#1d4ed8,color:#fff
+    style OP fill:#16a34a,stroke:#15803d,color:#fff
+    style ANALYST fill:#ca8a04,stroke:#a16207,color:#fff
+    style VIEWER fill:#6b7280,stroke:#4b5563,color:#fff
+</code></pre>
+
+<h3 id="role-definitions">Role Definitions</h3>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Access Level</th>
+<th>Typical Users</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Admin</strong></td>
+<td>Full system control, RBAC management</td>
+<td>IT Director, Compliance Head</td>
+</tr>
+<tr>
+<td><strong>Developer</strong></td>
+<td>Technical features, MSSQL sync</td>
+<td>Development Team</td>
+</tr>
+<tr>
+<td><strong>Operator</strong></td>
+<td>Trading views, trigger actions</td>
+<td>Trading Desk</td>
+</tr>
+<tr>
+<td><strong>Analyst</strong></td>
+<td>Read-only with export capability</td>
+<td>Risk, Compliance Staff</td>
+</tr>
+<tr>
+<td><strong>Viewer</strong></td>
+<td>Overview dashboard only</td>
+<td>Management, Observers</td>
+</tr>
+</tbody>
+</table>
+<h3 id="security-features">Security Features</h3>
+<ul>
+<li>✅ Session-based authentication with secure tokens</li>
+<li>✅ Permission-based API endpoint access</li>
+<li>✅ Audit logging for all sensitive actions</li>
+<li>✅ MSSQL sync restricted to authorized roles only</li>
+<li>✅ Export permissions controlled by role</li>
+<li>✅ Admin-only RBAC toggle in Setup</li>
+</ul>
+<hr />
+<h2 id="system-architecture">🏗️ System Architecture</h2>
+<pre class="codehilite"><code class="language-mermaid">flowchart TB
+    subgraph &quot;NY2 Trading Server&quot;
+        ATS[ATS Trading App]
+        MSSQL[(MSSQL Database)]
+        AGENT[reliable-log-agent]
+    end
+
+    subgraph &quot;VPN1 Ubuntu VM&quot;
+        subgraph &quot;Docker Containers&quot;
+            MONITOR[ATS Health Monitor]
+            TSDB[(TimescaleDB)]
+            SMTP[SMTP4Dev]
+        end
+    end
+
+    subgraph &quot;Users&quot;
+        TRADER[👤 Traders]
+        COMPLIANCE[👤 Compliance]
+        MGMT[👤 Management]
+    end
+
+    ATS --&gt; |FIX Logs| AGENT
+    ATS --&gt; MSSQL
+    AGENT --&gt; |ZeroMQ:9000| MONITOR
+    MSSQL --&gt; |VPN Sync| MONITOR
+    MONITOR --&gt; TSDB
+    MONITOR --&gt; SMTP
+
+    MONITOR --&gt; |HTTPS| TRADER
+    MONITOR --&gt; |HTTPS| COMPLIANCE
+    MONITOR --&gt; |HTTPS| MGMT
+
+    style MONITOR fill:#2563eb,stroke:#1d4ed8,color:#fff
+    style TSDB fill:#10b981,stroke:#059669,color:#fff
+</code></pre>
+
+<h3 id="technology-stack">Technology Stack</h3>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Technology</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Frontend</strong></td>
+<td>React 18 + Vite</td>
+<td>Modern, responsive UI</td>
+</tr>
+<tr>
+<td><strong>Backend</strong></td>
+<td>Go 1.23 + Gin</td>
+<td>High-performance API</td>
+</tr>
+<tr>
+<td><strong>Database</strong></td>
+<td>TimescaleDB</td>
+<td>Time-series optimized storage</td>
+</tr>
+<tr>
+<td><strong>Messaging</strong></td>
+<td>ZeroMQ</td>
+<td>Real-time log streaming</td>
+</tr>
+<tr>
+<td><strong>Container</strong></td>
+<td>Docker</td>
+<td>Easy deployment &amp; scaling</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="performance-metrics">📈 Performance Metrics</h2>
+<pre class="codehilite"><code class="language-mermaid">xychart-beta
+    title &quot;System Performance Benchmarks&quot;
+    x-axis [&quot;FIX Processing&quot;, &quot;DB Query&quot;, &quot;UI Load&quot;, &quot;Export 100K&quot;]
+    y-axis &quot;Response Time (ms)&quot; 0 --&gt; 5000
+    bar [100, 50, 2000, 5000]
+</code></pre>
+
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Target</th>
+<th>Actual</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FIX Message Processing</td>
+<td>10,000 msg/sec</td>
+<td>✅ Achieved</td>
+</tr>
+<tr>
+<td>Database Query Response</td>
+<td>&lt; 100ms</td>
+<td>✅ ~50ms</td>
+</tr>
+<tr>
+<td>UI Initial Load</td>
+<td>&lt; 3 sec</td>
+<td>✅ ~2 sec</td>
+</tr>
+<tr>
+<td>Export 100K Rows</td>
+<td>&lt; 10 sec</td>
+<td>✅ ~5 sec</td>
+</tr>
+<tr>
+<td>System Uptime</td>
+<td>99.9%</td>
+<td>✅ Achieved</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="multi-site-deployment">🌐 Multi-Site Deployment</h2>
+<pre class="codehilite"><code class="language-mermaid">flowchart LR
+    subgraph &quot;New York (Primary)&quot;
+        NY2[NY2 Server]
+        NYVPN[WireGuard VPN]
+    end
+
+    subgraph &quot;Hong Kong (Secondary)&quot;
+        HK[HK Server]
+        HKVPN[WireGuard VPN]
+    end
+
+    subgraph &quot;VPN1 Production&quot;
+        UBUNTU[Ubuntu VM]
+        DOCKER[Docker Services]
+    end
+
+    NY2 &lt;--&gt; |Secure VPN| NYVPN
+    NYVPN &lt;--&gt; UBUNTU
+    UBUNTU &lt;--&gt; HKVPN
+    HKVPN &lt;--&gt; |Secure VPN| HK
+
+    style NY2 fill:#dc2626,stroke:#b91c1c,color:#fff
+    style HK fill:#2563eb,stroke:#1d4ed8,color:#fff
+    style UBUNTU fill:#10b981,stroke:#059669,color:#fff
+</code></pre>
+
+<h3 id="deployment-features">Deployment Features</h3>
+<ul>
+<li><strong>NY Primary</strong> - Main trading operations, FIX capture</li>
+<li><strong>HK Secondary</strong> - Compliance viewing, audit access</li>
+<li><strong>Real-time Sync</strong> - ZeroMQ log streaming across sites</li>
+<li><strong>VPN Secured</strong> - WireGuard encrypted tunnels</li>
+<li><strong>Docker Native</strong> - Consistent deployment across environments</li>
+</ul>
+<hr />
+<h2 id="ideal-for">💼 Ideal For</h2>
+<table>
+<thead>
+<tr>
+<th>Organization Type</th>
+<th>Key Benefits</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Proprietary Trading Firms</strong></td>
+<td>SFC compliance, P&amp;L tracking, strategy analysis</td>
+</tr>
+<tr>
+<td><strong>Hedge Funds</strong></td>
+<td>Multi-strategy operations, risk monitoring</td>
+</tr>
+<tr>
+<td><strong>Family Offices</strong></td>
+<td>Audit-ready records, simple compliance</td>
+</tr>
+<tr>
+<td><strong>Broker-Dealers</strong></td>
+<td>Multi-account management, client segregation</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="key-differentiators">🚀 Key Differentiators</h2>
+<ol>
+<li><strong>Compliance-First Design</strong> - Built specifically for SFC HK requirements</li>
+<li><strong>Zero Data Loss</strong> - Every trade captured with microsecond precision</li>
+<li><strong>Instant Audit Response</strong> - Export any date range in seconds</li>
+<li><strong>Role-Based Security</strong> - Right access for the right people</li>
+<li><strong>Multi-Site Resilient</strong> - NY + HK synchronized operations</li>
+<li><strong>Real-Time Visibility</strong> - Know your positions instantly</li>
+<li><strong>Low Operational Overhead</strong> - Docker deployment, minimal maintenance</li>
+</ol>
+<hr />
+<h2 id="contact">📞 Contact</h2>
+<p>For demonstrations, pricing, or technical inquiries:</p>
+<ul>
+<li><strong>Product Owner</strong>: Mega Trading Operations</li>
+<li><strong>Technical Support</strong>: IT Infrastructure Team</li>
+</ul>
+<hr />
+<p><em>ATS Health Monitor - Compliance Made Simple, Operations Made Visible</em></p>
+<hr />
+<p><strong>Document Version</strong>: 2.3.1
+<strong>Classification</strong>: Internal / Sales
+<strong>Last Updated</strong>: December 2025</p>
+</body>
+</html>

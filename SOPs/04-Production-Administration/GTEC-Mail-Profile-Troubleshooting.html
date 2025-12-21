@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>GTEC Mail Profile Troubleshooting</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 { border-bottom: 2px solid #3498db; padding-bottom: 0.3em; }
+        h2 { border-bottom: 1px solid #ecf0f1; padding-bottom: 0.2em; }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1em;
+            overflow-x: auto;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 1em 0;
+            padding-left: 1em;
+            color: #666;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 2em 0;
+            padding: 1em;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .pdf-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 8px 16px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .pdf-link:hover {
+            background-color: #c0392b;
+        }
+    </style>
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <p><a href="GTEC-Mail-Profile-Troubleshooting.pdf" class="pdf-link">📄 Download PDF Version</a></p>
+    <h1 id="gtec-database-mail-profile-troubleshooting">GTEC Database Mail Profile Troubleshooting</h1>
+<h2 id="metadata">Metadata</h2>
+<p><strong>Category:</strong> Production Administration
+<strong>Last Updated:</strong> 2024-01-15
+<strong>Author:</strong> System Administrator
+<strong>Version:</strong> 1.0
+<strong>Review Date:</strong> 2024-04-15
+<strong>Status:</strong> Active</p>
+<hr />
+<h2 id="purpose">Purpose</h2>
+<p>This procedure covers troubleshooting and fixing GTEC database mail profile issues in SQL Server, including temporary workarounds when GTEC is not working.</p>
+<p><strong>When to Use:</strong>
+- GTEC mail profile errors preventing code execution
+- Database mail not sending emails
+- Need to temporarily bypass GTEC dependency
+- Mail profile configuration issues</p>
+<hr />
+<h2 id="prerequisites">Prerequisites</h2>
+<h3 id="required-access">Required Access</h3>
+<ul>
+<li>[x] SQL Server sysadmin or dbmail_admin role</li>
+<li>[x] Access to msdb database</li>
+<li>[x] PowerShell execution permissions</li>
+</ul>
+<h3 id="required-tools">Required Tools</h3>
+<ul>
+<li>[x] SQL Server Management Studio (SSMS) or sqlcmd</li>
+<li>[x] PowerShell</li>
+<li>[x] Script: <code>Scripts\04-Production-Administration\Fix-GTEC-Mail-Profile.sql</code></li>
+<li>[x] Script: <code>Scripts\04-Production-Administration\Bypass-GTEC-Mail.ps1</code></li>
+</ul>
+<hr />
+<h2 id="quick-solutions">Quick Solutions</h2>
+<h3 id="option-1-use-default-profile-quickest-fix">Option 1: Use Default Profile (Quickest Fix)</h3>
+<p><strong>Problem:</strong> Code fails because GTEC profile doesn't exist or is misconfigured.</p>
+<p><strong>Solution:</strong> Remove <code>@profile_name</code> parameter to use default profile.</p>
+<p><strong>Original Code:</strong></p>
+<pre class="codehilite"><code class="language-sql">EXEC msdb.dbo.sp_send_dbmail
+    @profile_name='GTEC',
+    @recipients='tonyng.tonyng@gmail.com',
+    @subject=@subjectstr,
+    @body=@bodystr
+</code></pre>
+
+<p><strong>Fixed Code:</strong></p>
+<pre class="codehilite"><code class="language-sql">EXEC msdb.dbo.sp_send_dbmail
+    @recipients='tonyng.tonyng@gmail.com',
+    @subject=@subjectstr,
+    @body=@bodystr
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- Email sent using default mail profile
+- No GTEC dependency</p>
+<hr />
+<h3 id="option-2-try-catch-bypass-safest">Option 2: Try-Catch Bypass (Safest)</h3>
+<p><strong>Problem:</strong> Need to continue execution even if email fails.</p>
+<p><strong>Solution:</strong> Wrap email code in try-catch block.</p>
+<p><strong>Code:</strong></p>
+<pre class="codehilite"><code class="language-sql">BEGIN TRY
+    EXEC msdb.dbo.sp_send_dbmail
+        @profile_name='GTEC',
+        @recipients='tonyng.tonyng@gmail.com',
+        @subject=@subjectstr,
+        @body=@bodystr
+END TRY
+BEGIN CATCH
+    -- Log error but continue execution
+    PRINT 'Warning: Could not send email via GTEC: ' + ERROR_MESSAGE();
+    -- Execution continues normally
+END CATCH
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- Code continues even if email fails
+- Error logged for troubleshooting</p>
+<hr />
+<h3 id="option-3-conditional-email-recommended">Option 3: Conditional Email (Recommended)</h3>
+<p><strong>Problem:</strong> Want to send email only if GTEC is available.</p>
+<p><strong>Solution:</strong> Check if profile exists before attempting to send.</p>
+<p><strong>Code:</strong></p>
+<pre class="codehilite"><code class="language-sql">IF EXISTS (SELECT 1 FROM msdb.dbo.sysmail_profile WHERE name = 'GTEC')
+BEGIN
+    BEGIN TRY
+        EXEC msdb.dbo.sp_send_dbmail
+            @profile_name='GTEC',
+            @recipients='tonyng.tonyng@gmail.com',
+            @subject=@subjectstr,
+            @body=@bodystr
+    END TRY
+    BEGIN CATCH
+        PRINT 'Email notification skipped: ' + ERROR_MESSAGE();
+    END CATCH
+END
+ELSE
+BEGIN
+    PRINT 'GTEC profile not found. Email notification skipped.';
+END
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- Email sent only if GTEC exists
+- Graceful handling if profile missing</p>
+<hr />
+<h2 id="diagnostic-steps">Diagnostic Steps</h2>
+<h3 id="step-1-check-gtec-profile-status">Step 1: Check GTEC Profile Status</h3>
+<p><strong>Action:</strong>
+Run the diagnostic script:</p>
+<pre class="codehilite"><code class="language-powershell">.\Scripts\04-Production-Administration\Bypass-GTEC-Mail.ps1 -Action Check
+</code></pre>
+
+<p>Or run SQL directly:</p>
+<pre class="codehilite"><code class="language-sql">USE msdb;
+GO
+
+-- Check if profile exists
+SELECT
+    name AS ProfileName,
+    description,
+    profile_id
+FROM sysmail_profile
+WHERE name = 'GTEC';
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- Profile exists: Shows profile details
+- Profile missing: No rows returned</p>
+<hr />
+<h3 id="step-2-check-profile-configuration">Step 2: Check Profile Configuration</h3>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-sql">SELECT
+    p.name AS ProfileName,
+    a.account_name AS AccountName,
+    a.email_address AS EmailAddress,
+    a.display_name AS DisplayName,
+    a.mailserver_name AS MailServer
+FROM msdb.dbo.sysmail_profile p
+LEFT JOIN msdb.dbo.sysmail_profileaccount pa ON p.profile_id = pa.profile_id
+LEFT JOIN msdb.dbo.sysmail_account a ON pa.account_id = a.account_id
+WHERE p.name = 'GTEC';
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- Shows account configuration
+- Identifies missing accounts or misconfiguration</p>
+<hr />
+<h3 id="step-3-check-mail-queue">Step 3: Check Mail Queue</h3>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-sql">SELECT TOP 10
+    mailitem_id,
+    sent_status,
+    sent_date,
+    subject,
+    recipients,
+    error_description
+FROM msdb.dbo.sysmail_mailitems
+WHERE sent_date &gt; DATEADD(hour, -24, GETDATE())
+ORDER BY sent_date DESC;
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- Shows recent mail attempts
+- Error descriptions indicate problems</p>
+<hr />
+<h2 id="fixing-gtec-profile">Fixing GTEC Profile</h2>
+<h3 id="option-a-recreate-gtec-profile">Option A: Recreate GTEC Profile</h3>
+<p><strong>Action:</strong>
+1. Open <code>Scripts\04-Production-Administration\Fix-GTEC-Mail-Profile.sql</code>
+2. Uncomment and modify the "OPTION 2" section
+3. Update email settings:
+   - Email address
+   - SMTP server
+   - Username/password
+4. Execute the script</p>
+<p><strong>Expected Result:</strong>
+- GTEC profile created
+- Account configured
+- Profile ready to use</p>
+<hr />
+<h3 id="option-b-use-existing-default-profile">Option B: Use Existing Default Profile</h3>
+<p><strong>Action:</strong>
+1. Check default profile:</p>
+<pre class="codehilite"><code class="language-sql">SELECT
+    p.name AS DefaultProfile
+FROM msdb.dbo.sysmail_profile p
+INNER JOIN msdb.dbo.sysmail_principalprofile pp ON p.profile_id = pp.profile_id
+WHERE pp.is_default = 1 AND pp.principal_id = 0;
+</code></pre>
+
+<ol>
+<li>If default exists, use it instead of GTEC (see Option 1 above)</li>
+</ol>
+<hr />
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="issue-1-profile-exists-but-emails-fail">Issue 1: Profile Exists But Emails Fail</h3>
+<p><strong>Symptoms:</strong>
+- GTEC profile exists in sysmail_profile
+- Emails fail with authentication errors
+- Mail queue shows failed items</p>
+<p><strong>Solution:</strong>
+1. Check account credentials:</p>
+<pre class="codehilite"><code class="language-sql">SELECT
+    name,
+    email_address,
+    mailserver_name,
+    port,
+    username
+FROM msdb.dbo.sysmail_account
+WHERE account_id IN (
+    SELECT account_id
+    FROM msdb.dbo.sysmail_profileaccount
+    WHERE profile_id = (SELECT profile_id FROM msdb.dbo.sysmail_profile WHERE name = 'GTEC')
+);
+</code></pre>
+
+<ol>
+<li>Update credentials if needed</li>
+<li>Test with: <code>sp_send_dbmail</code> test query</li>
+</ol>
+<hr />
+<h3 id="issue-2-database-mail-not-enabled">Issue 2: Database Mail Not Enabled</h3>
+<p><strong>Symptoms:</strong>
+- All mail attempts fail
+- Error: "Database Mail is not enabled"</p>
+<p><strong>Solution:</strong></p>
+<pre class="codehilite"><code class="language-sql">-- Enable Database Mail
+EXEC sp_configure 'show advanced options', 1;
+RECONFIGURE;
+EXEC sp_configure 'Database Mail XPs', 1;
+RECONFIGURE;
+</code></pre>
+
+<hr />
+<h3 id="issue-3-smtp-server-issues">Issue 3: SMTP Server Issues</h3>
+<p><strong>Symptoms:</strong>
+- Timeout errors
+- Connection refused
+- Authentication failures</p>
+<p><strong>Solution:</strong>
+1. Verify SMTP server is accessible
+2. Check firewall rules
+3. Test SMTP connection:</p>
+<pre class="codehilite"><code class="language-powershell">Test-NetConnection -ComputerName smtp.gmail.com -Port 587
+</code></pre>
+
+<ol>
+<li>For Gmail, use App Password instead of regular password</li>
+</ol>
+<hr />
+<h2 id="related-scripts">Related Scripts</h2>
+<ul>
+<li><a href="../../Scripts/04-Production-Administration/Fix-GTEC-Mail-Profile.sql">Fix-GTEC-Mail-Profile.sql</a> - Diagnostic and fix script</li>
+<li><a href="../../Scripts/04-Production-Administration/Bypass-GTEC-Mail.ps1">Bypass-GTEC-Mail.ps1</a> - PowerShell diagnostic tool</li>
+</ul>
+<hr />
+<h2 id="best-practices">Best Practices</h2>
+<ol>
+<li><strong>Always use Try-Catch</strong> around email code to prevent failures</li>
+<li><strong>Check profile existence</strong> before using specific profiles</li>
+<li><strong>Have a fallback</strong> to default profile</li>
+<li><strong>Log email failures</strong> for troubleshooting</li>
+<li><strong>Test mail configuration</strong> after changes</li>
+</ol>
+<hr />
+<h2 id="notes">Notes</h2>
+<p><strong>⚠️ WARNING:</strong>
+- Removing <code>@profile_name</code> uses default profile - ensure default is configured
+- Email failures should not stop critical processes
+- Always test email configuration after changes</p>
+<p><strong>💡 TIP:</strong>
+- Use conditional email sending to avoid errors
+- Keep default profile configured as backup
+- Monitor mail queue regularly for issues</p>
+<p><strong>📝 NOTE:</strong>
+- GTEC is a custom profile name - your environment may use different names
+- Database Mail requires SQL Server Agent to be running
+- Some SMTP servers require specific ports (587 for TLS, 465 for SSL)</p>
+</body>
+</html>

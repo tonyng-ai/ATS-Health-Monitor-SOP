@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Production Firewall Best Practices</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 { border-bottom: 2px solid #3498db; padding-bottom: 0.3em; }
+        h2 { border-bottom: 1px solid #ecf0f1; padding-bottom: 0.2em; }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1em;
+            overflow-x: auto;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 1em 0;
+            padding-left: 1em;
+            color: #666;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 2em 0;
+            padding: 1em;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .pdf-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 8px 16px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .pdf-link:hover {
+            background-color: #c0392b;
+        }
+    </style>
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <p><a href="Production-Firewall-Best-Practices.pdf" class="pdf-link">📄 Download PDF Version</a></p>
+    <h1 id="production-firewall-configuration-best-practices-guide">Production Firewall Configuration - Best Practices Guide</h1>
+<h2 id="scenario-overview">Scenario Overview</h2>
+<p><strong>Network Configuration:</strong>
+- <strong>WireGuard VPN</strong> (NYVPNServer): Private profile, should have FULL access
+- <strong>RealVNC Server</strong>: Accessible to WireGuard users
+- <strong>RDP Port 2277</strong>: Only specific public IPs (backup access if WireGuard fails)
+- <strong>Private Switch</strong>: Only specific IPs allowed
+- <strong>Everything Else</strong>: Blocked (deny-by-default)</p>
+<h2 id="best-practices-implementation">Best Practices Implementation</h2>
+<h3 id="1-wireguard-full-access-primary-access-method">1. <strong>WireGuard Full Access (Primary Access Method)</strong></h3>
+<p><strong>Why Full Access:</strong>
+- WireGuard is your primary secure access method
+- Users need to access all services through VPN
+- VPN is already encrypted and authenticated
+- Simplifies management (one rule instead of many)</p>
+<p><strong>Implementation:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Allow all TCP from WireGuard
+PROD_WireGuard_FullAccess_TCP: All TCP ports from WireGuard IP range
+
+# Allow all UDP from WireGuard  
+PROD_WireGuard_FullAccess_UDP: All UDP ports from WireGuard IP range
+</code></pre>
+
+<p><strong>Best Practice:</strong>
+- ✅ Use Private profile (WireGuard should be Private)
+- ✅ Monitor WireGuard adapter profile (use Fix-WireGuard-NetworkProfile.ps1)
+- ✅ Use CIDR notation for IP range (e.g., 10.10.0.0/24)
+- ✅ Log all access for auditing</p>
+<h3 id="2-realvnc-access-wireguard-users-only">2. <strong>RealVNC Access (WireGuard Users Only)</strong></h3>
+<p><strong>Why WireGuard Only:</strong>
+- RealVNC should not be exposed to public internet
+- VPN provides encryption and authentication
+- Reduces attack surface</p>
+<p><strong>Implementation:</strong></p>
+<pre class="codehilite"><code class="language-powershell">PROD_RealVNC_From_WireGuard: Port 5900 (or your VNC port) from WireGuard IP range
+</code></pre>
+
+<p><strong>Best Practice:</strong>
+- ✅ Only allow from WireGuard (Private profile)
+- ✅ Use non-standard port if possible
+- ✅ Consider adding Private Switch IPs if needed for local access
+- ✅ Monitor VNC connection attempts</p>
+<h3 id="3-rdp-backup-access-public-ips-only">3. <strong>RDP Backup Access (Public IPs Only)</strong></h3>
+<p><strong>Why Limited Public IPs:</strong>
+- Emergency access if WireGuard fails
+- Only specific trusted IPs
+- Last resort access method
+- Minimizes exposure</p>
+<p><strong>Implementation:</strong></p>
+<pre class="codehilite"><code class="language-powershell">PROD_RDP_Backup_PublicIPs: Port 2277 from specific public IPs only (Public profile)
+</code></pre>
+
+<p><strong>Best Practice:</strong>
+- ✅ Use non-standard RDP port (2277, not 3389)
+- ✅ Only allow specific public IPs (not ranges)
+- ✅ Document all allowed public IPs
+- ✅ Review and remove unused IPs regularly
+- ✅ Consider using IP whitelist service for dynamic IPs
+- ✅ Monitor failed connection attempts</p>
+<h3 id="4-private-switch-access-specific-ips-only">4. <strong>Private Switch Access (Specific IPs Only)</strong></h3>
+<p><strong>Why Specific IPs:</strong>
+- Internal network but still needs restriction
+- Only trusted management IPs
+- Prevents lateral movement if compromised</p>
+<p><strong>Implementation:</strong></p>
+<pre class="codehilite"><code class="language-powershell">PROD_RDP_From_PrivateSwitch: Port 2277 from specific private switch IPs
+PROD_RealVNC_From_PrivateSwitch: Port 5900 from specific private switch IPs
+PROD_SMB_From_PrivateSwitch: Port 445 from specific private switch IPs
+</code></pre>
+
+<p><strong>Best Practice:</strong>
+- ✅ Use Private profile
+- ✅ Only allow specific IPs (not entire subnet)
+- ✅ Document purpose of each IP
+- ✅ Regular review of allowed IPs</p>
+<h3 id="5-deny-by-default-everything-else-blocked">5. <strong>Deny-by-Default (Everything Else Blocked)</strong></h3>
+<p><strong>Why Deny-by-Default:</strong>
+- Security best practice
+- Only explicitly allowed traffic passes
+- Reduces attack surface
+- Compliance requirement</p>
+<p><strong>Implementation:</strong></p>
+<pre class="codehilite"><code class="language-powershell">Set-NetFirewallProfile -DefaultInboundAction Block
+</code></pre>
+
+<p><strong>Best Practice:</strong>
+- ✅ Enable firewall logging
+- ✅ Review logs regularly
+- ✅ Monitor blocked connection attempts
+- ✅ Adjust rules based on legitimate needs</p>
+<h2 id="complete-configuration-example">Complete Configuration Example</h2>
+<h3 id="step-1-ensure-wireguard-profile-is-private">Step 1: Ensure WireGuard Profile is Private</h3>
+<pre class="codehilite"><code class="language-powershell"># Fix WireGuard profile if needed
+.\Fix-WireGuard-NetworkProfile.ps1 -AdapterName &quot;NYVPNServer&quot; -FixOnce
+</code></pre>
+
+<h3 id="step-2-apply-production-firewall-rules">Step 2: Apply Production Firewall Rules</h3>
+<pre class="codehilite"><code class="language-powershell">.\Configure-Production-Firewall.ps1 `
+    -Action Apply `
+    -WireGuardAdapterName &quot;NYVPNServer&quot; `
+    -WireGuardIPRange &quot;10.10.0.0/24&quot; `
+    -PrivateSwitchIPs @(&quot;192.168.168.5&quot;, &quot;192.168.168.10&quot;) `
+    -PublicRDPIPs @(&quot;203.0.113.10&quot;, &quot;198.51.100.25&quot;) `
+    -RDPPort 2277 `
+    -RealVNCPort 5900
+</code></pre>
+
+<h3 id="step-3-verify-configuration">Step 3: Verify Configuration</h3>
+<pre class="codehilite"><code class="language-powershell"># Audit current rules
+.\Configure-Production-Firewall.ps1 -Action Audit
+
+# Check WireGuard profile
+Get-NetAdapter | Where-Object { $_.Name -like &quot;*NYVPNServer*&quot; } | 
+    ForEach-Object { Get-NetConnectionProfile -InterfaceIndex $_.InterfaceIndex }
+</code></pre>
+
+<h2 id="security-checklist">Security Checklist</h2>
+<h3 id="pre-deployment">Pre-Deployment</h3>
+<ul>
+<li>[ ] WireGuard adapter is set to Private profile</li>
+<li>[ ] WireGuard IP range is correct</li>
+<li>[ ] All public IPs are documented and verified</li>
+<li>[ ] Private switch IPs are documented</li>
+<li>[ ] RealVNC port is confirmed</li>
+<li>[ ] RDP port is non-standard (2277)</li>
+<li>[ ] Backup access method available (IPMI/physical)</li>
+<li>[ ] Firewall logging enabled</li>
+</ul>
+<h3 id="post-deployment">Post-Deployment</h3>
+<ul>
+<li>[ ] Test WireGuard full access</li>
+<li>[ ] Test RealVNC from WireGuard</li>
+<li>[ ] Test RDP from public IPs</li>
+<li>[ ] Test private switch access</li>
+<li>[ ] Verify all other access is blocked</li>
+<li>[ ] Review firewall logs</li>
+<li>[ ] Document all rules</li>
+<li>[ ] Schedule regular audits</li>
+</ul>
+<h2 id="monitoring-and-maintenance">Monitoring and Maintenance</h2>
+<h3 id="daily">Daily</h3>
+<ul>
+<li>Check WireGuard adapter profile (automated via scheduled task)</li>
+<li>Review firewall logs for blocked connections</li>
+</ul>
+<h3 id="weekly">Weekly</h3>
+<ul>
+<li>Review allowed IPs list</li>
+<li>Check for unauthorized access attempts</li>
+<li>Verify all rules are still needed</li>
+</ul>
+<h3 id="monthly">Monthly</h3>
+<ul>
+<li>Full firewall audit</li>
+<li>Update documentation</li>
+<li>Review and remove unused IPs</li>
+<li>Test backup access methods</li>
+</ul>
+<h3 id="quarterly">Quarterly</h3>
+<ul>
+<li>Security review</li>
+<li>Compliance check</li>
+<li>Rule optimization</li>
+<li>Documentation update</li>
+</ul>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="issue-cant-access-via-wireguard">Issue: Can't access via WireGuard</h3>
+<p><strong>Check:</strong>
+1. WireGuard adapter profile (should be Private)
+   <code>powershell
+   Get-NetAdapter | Where-Object { $_.Name -like "*NYVPNServer*" } | 
+       ForEach-Object { Get-NetConnectionProfile -InterfaceIndex $_.InterfaceIndex }</code></p>
+<ol>
+<li>
+<p>WireGuard IP range matches rule
+   <code>powershell
+   Get-NetFirewallRule -DisplayName "*WireGuard*" | Get-NetFirewallAddressFilter</code></p>
+</li>
+<li>
+<p>Firewall rule is enabled
+   <code>powershell
+   Get-NetFirewallRule -DisplayName "*WireGuard*" | Select-Object DisplayName, Enabled</code></p>
+</li>
+</ol>
+<h3 id="issue-cant-access-realvnc">Issue: Can't access RealVNC</h3>
+<p><strong>Check:</strong>
+1. RealVNC port is correct
+2. Accessing from WireGuard IP range
+3. Rule exists and is enabled
+   <code>powershell
+   Get-NetFirewallRule -DisplayName "*RealVNC*"</code></p>
+<h3 id="issue-cant-access-rdp-from-public-ip">Issue: Can't access RDP from public IP</h3>
+<p><strong>Check:</strong>
+1. Your public IP is in allowed list
+2. Using correct port (2277)
+3. Network profile is Public (not Private)
+4. Rule exists and is enabled</p>
+<h3 id="issue-locked-out-completely">Issue: Locked out completely</h3>
+<p><strong>Emergency Access:</strong>
+1. Use IPMI to access server
+2. Run: <code>.\Configure-Production-Firewall.ps1 -Action Remove</code>
+3. Or manually add emergency rule:
+   <code>powershell
+   New-NetFirewallRule -DisplayName "EMERGENCY" -Direction Inbound -LocalPort 2277 -Protocol TCP -RemoteAddress "YOUR_IP" -Action Allow</code></p>
+<h2 id="integration-with-other-scripts">Integration with Other Scripts</h2>
+<h3 id="automated-workflow">Automated Workflow</h3>
+<p>Create a maintenance script that runs all checks:</p>
+<pre class="codehilite"><code class="language-powershell"># maintenance.ps1
+# Fix WireGuard profile
+.\Fix-WireGuard-NetworkProfile.ps1 -AdapterName &quot;NYVPNServer&quot; -FixOnce
+
+# Audit firewall
+.\Configure-Production-Firewall.ps1 -Action Audit
+
+# Check for issues and alert if needed
+</code></pre>
+
+<h3 id="scheduled-tasks">Scheduled Tasks</h3>
+<ol>
+<li>
+<p><strong>WireGuard Profile Monitor</strong> (every 2 minutes):
+   <code>powershell
+   .\Install-WireGuard-Profile-Monitor.ps1 -IntervalMinutes 2</code></p>
+</li>
+<li>
+<p><strong>Firewall Audit</strong> (daily):
+   <code>powershell
+   # Create scheduled task to run audit daily</code></p>
+</li>
+</ol>
+<h2 id="advanced-configuration">Advanced Configuration</h2>
+<h3 id="adding-additional-services">Adding Additional Services</h3>
+<p>If you need to add more services accessible from WireGuard:</p>
+<pre class="codehilite"><code class="language-powershell"># Example: Allow SQL Server from WireGuard
+New-NetFirewallRule `
+    -DisplayName &quot;PROD_SQL_From_WireGuard&quot; `
+    -Direction Inbound `
+    -LocalPort 1433 `
+    -Protocol TCP `
+    -RemoteAddress &quot;10.10.0.0/24&quot; `
+    -Action Allow `
+    -Profile Private `
+    -Enabled True
+</code></pre>
+
+<h3 id="dynamic-public-ip-handling">Dynamic Public IP Handling</h3>
+<p>If your public IP changes:</p>
+<pre class="codehilite"><code class="language-powershell"># Get current public IP
+$currentIP = (Invoke-WebRequest -Uri &quot;https://api.ipify.org&quot;).Content
+
+# Update rule (requires removing and recreating)
+.\Configure-Production-Firewall.ps1 `
+    -Action Apply `
+    -PublicRDPIPs @($currentIP, &quot;203.0.113.10&quot;) `
+    ...
+</code></pre>
+
+<h2 id="compliance-notes">Compliance Notes</h2>
+<p>This configuration aligns with:
+- ✅ <strong>CIS Benchmarks</strong>: Windows Server 2022
+- ✅ <strong>NIST SP 800-53</strong>: Network access controls
+- ✅ <strong>PCI DSS</strong>: Requirement 1.1.1 (firewall configuration)
+- ✅ <strong>HIPAA</strong>: Network access controls
+- ✅ <strong>ISO 27001</strong>: Access control requirements</p>
+<h2 id="summary">Summary</h2>
+<p><strong>Key Principles:</strong>
+1. WireGuard = Full access (primary method)
+2. RealVNC = WireGuard users only
+3. RDP = Public IPs only (backup)
+4. Private Switch = Specific IPs only
+5. Everything else = Blocked</p>
+<p><strong>Best Practices:</strong>
+- ✅ Deny-by-default
+- ✅ Explicit allow rules
+- ✅ Network profile separation
+- ✅ Comprehensive logging
+- ✅ Regular audits
+- ✅ Documentation</p>
+<p>This configuration provides maximum security while maintaining necessary access methods.</p>
+</body>
+</html>

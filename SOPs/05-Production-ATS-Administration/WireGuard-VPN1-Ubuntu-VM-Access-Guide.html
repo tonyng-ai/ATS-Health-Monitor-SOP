@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>WireGuard VPN1 Ubuntu VM Access Guide</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 { border-bottom: 2px solid #3498db; padding-bottom: 0.3em; }
+        h2 { border-bottom: 1px solid #ecf0f1; padding-bottom: 0.2em; }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1em;
+            overflow-x: auto;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 1em 0;
+            padding-left: 1em;
+            color: #666;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 2em 0;
+            padding: 1em;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .pdf-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 8px 16px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .pdf-link:hover {
+            background-color: #c0392b;
+        }
+    </style>
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <p><a href="WireGuard-VPN1-Ubuntu-VM-Access-Guide.pdf" class="pdf-link">📄 Download PDF Version</a></p>
+    <h1 id="wireguard-vpn-access-to-vpn1-ubuntu-vm-admin-guide">WireGuard VPN Access to VPN1 Ubuntu VM - Admin Guide</h1>
+<blockquote>
+<p><strong>Version</strong>: 1.1.0
+<strong>Last Updated</strong>: December 10, 2025
+<strong>Classification</strong>: Internal - IT Operations
+<strong>Purpose</strong>: Step-by-step guide for accessing ATS Health Monitor on VPN1 Ubuntu VM</p>
+</blockquote>
+<hr />
+<h2 id="overview">Overview</h2>
+<p>This guide explains how to access the <strong>ATS Health Monitor</strong> dashboard at <code>http://192.168.168.100:8080</code> through WireGuard VPN. The Ubuntu VM is on a private network (192.168.168.0/24) behind the VPN1 Windows Server, so proper routing must be configured at multiple points.</p>
+<hr />
+<h2 id="connection-flow">Connection Flow</h2>
+<pre class="codehilite"><code class="language-mermaid">flowchart LR
+    subgraph YOUR_PC[&quot;Your PC&quot;]
+        WG_CLIENT[WireGuard Client&lt;br/&gt;10.101.0.x]
+    end
+
+    subgraph VPN1[&quot;VPN1 Windows Server&quot;]
+        WG_SERVER[WireGuard Server&lt;br/&gt;10.101.0.1]
+        IP_FWD{IP Forwarding&lt;br/&gt;ENABLED}
+        VSWITCH[Private Switch&lt;br/&gt;192.168.168.14]
+    end
+
+    subgraph UBUNTU[&quot;Ubuntu VM&quot;]
+        DOCKER[Docker Host&lt;br/&gt;192.168.168.100]
+        DASH[Dashboard :8080]
+        SMTP[SMTP4Dev :8025]
+        PG[TimescaleDB :5432]
+    end
+
+    WG_CLIENT --&gt;|&quot;UDP 51820&lt;br/&gt;Encrypted&quot;| WG_SERVER
+    WG_SERVER --&gt; IP_FWD
+    IP_FWD --&gt; VSWITCH
+    VSWITCH --&gt; DOCKER
+    DOCKER --&gt; DASH
+    DOCKER --&gt; SMTP
+    DOCKER --&gt; PG
+
+    style WG_CLIENT fill:#4ade80,stroke:#22c55e,color:#000
+    style DOCKER fill:#60a5fa,stroke:#3b82f6,color:#000
+    style IP_FWD fill:#fbbf24,stroke:#f59e0b,color:#000
+</code></pre>
+
+<hr />
+<h2 id="connection-checklist-flowchart">Connection Checklist Flowchart</h2>
+<pre class="codehilite"><code class="language-mermaid">flowchart TD
+    START([Start Connection Test]) --&gt; A{WireGuard&lt;br/&gt;Active?}
+
+    A --&gt;|No| A1[Open WireGuard App]
+    A1 --&gt; A2[Click Activate]
+    A2 --&gt; A
+
+    A --&gt;|Yes| B{Ping 10.101.0.1&lt;br/&gt;VPN1 Server?}
+
+    B --&gt;|Fail| B1[Check Internet Connection]
+    B1 --&gt; B2[Check Firewall UDP 51820]
+    B2 --&gt; B3[Verify Config File]
+    B3 --&gt; B
+
+    B --&gt;|OK| C{Ping 192.168.168.100&lt;br/&gt;Ubuntu VM?}
+
+    C --&gt;|Fail| C1[Check AllowedIPs in Config]
+    C1 --&gt; C2[&quot;Must include&lt;br/&gt;192.168.168.0/24&quot;]
+    C2 --&gt; C3[Check IP Forwarding on VPN1]
+    C3 --&gt; C
+
+    C --&gt;|OK| D{Access&lt;br/&gt;:8080 Dashboard?}
+
+    D --&gt;|Fail| D1[Check Docker Running]
+    D1 --&gt; D2[&quot;ssh atsadmin@192.168.168.100&quot;]
+    D2 --&gt; D3[docker compose ps]
+    D3 --&gt; D4[docker compose up -d]
+    D4 --&gt; D
+
+    D --&gt;|OK| SUCCESS([Connection Successful!])
+
+    style START fill:#4ade80,stroke:#22c55e,color:#000
+    style SUCCESS fill:#4ade80,stroke:#22c55e,color:#000
+    style B1 fill:#ef4444,stroke:#dc2626,color:#fff
+    style C1 fill:#ef4444,stroke:#dc2626,color:#fff
+    style D1 fill:#ef4444,stroke:#dc2626,color:#fff
+</code></pre>
+
+<hr />
+<h2 id="troubleshooting-decision-tree">Troubleshooting Decision Tree</h2>
+<pre class="codehilite"><code class="language-mermaid">flowchart TD
+    ISSUE([Connection Issue]) --&gt; Q1{What fails?}
+
+    Q1 --&gt;|&quot;Handshake: None&quot;| H1[VPN Not Connecting]
+    Q1 --&gt;|&quot;Can't ping 192.168.168.x&quot;| H2[Routing Issue]
+    Q1 --&gt;|&quot;Can ping but no web&quot;| H3[Service Issue]
+    Q1 --&gt;|&quot;Slow/Packet Loss&quot;| H4[Return Route Issue]
+
+    subgraph FIX_VPN[&quot;Fix: VPN Connection&quot;]
+        H1 --&gt; V1[Check Internet]
+        V1 --&gt; V2[Allow UDP 51820 Outbound]
+        V2 --&gt; V3[Verify Server Endpoint]
+    end
+
+    subgraph FIX_ROUTE[&quot;Fix: Routing&quot;]
+        H2 --&gt; R1[&quot;Check AllowedIPs includes&lt;br/&gt;192.168.168.0/24&quot;]
+        R1 --&gt; R2[Check VPN1 IP Forwarding]
+        R2 --&gt; R3[&quot;netsh int ipv4 set int&lt;br/&gt;'NYVPNServer' forwarding=enabled&quot;]
+    end
+
+    subgraph FIX_SVC[&quot;Fix: Service&quot;]
+        H3 --&gt; S1[SSH to Ubuntu VM]
+        S1 --&gt; S2[docker compose ps]
+        S2 --&gt; S3{Container&lt;br/&gt;Running?}
+        S3 --&gt;|No| S4[docker compose up -d]
+        S3 --&gt;|Yes| S5[Check logs:&lt;br/&gt;docker compose logs]
+    end
+
+    subgraph FIX_LOSS[&quot;Fix: Packet Loss&quot;]
+        H4 --&gt; L1[Ubuntu VM missing return route]
+        L1 --&gt; L2[&quot;sudo ip route add&lt;br/&gt;10.101.0.0/24 via 192.168.168.14&quot;]
+        L2 --&gt; L3[Make permanent in netplan]
+    end
+
+    style ISSUE fill:#ef4444,stroke:#dc2626,color:#fff
+    style H1 fill:#fbbf24,stroke:#f59e0b,color:#000
+    style H2 fill:#fbbf24,stroke:#f59e0b,color:#000
+    style H3 fill:#fbbf24,stroke:#f59e0b,color:#000
+    style H4 fill:#fbbf24,stroke:#f59e0b,color:#000
+</code></pre>
+
+<hr />
+<h2 id="network-topology">Network Topology</h2>
+<pre class="codehilite"><code>                        INTERNET
+                            |
+                            v
+    +-----------------------------------------------+
+    |           VPN1 WINDOWS SERVER                 |
+    |   Public IP: 209.127.118.182                  |
+    |   WireGuard: 10.101.0.1                       |
+    |   Private:   192.168.168.14                   |
+    |                                               |
+    |   [NYVPNServer]        [vEthernet(PrivateSwitch)]
+    |   WireGuard NIC        HyperV Internal NIC    |
+    |        |                      |               |
+    +--------|----------------------|---------------+
+             |                      |
+             |                      v
+             |          +------------------------+
+             |          |     PRIVATE SWITCH     |
+             |          |   (192.168.168.0/24)   |
+             |          +------------------------+
+             |                      |
+             |          +-----------+-----------+
+             |          |                       |
+             v          v                       v
+    +----------------+  +----------------+  +----------------+
+    | Your PC        |  | Ubuntu VM      |  | NY2 Server     |
+    | 10.101.0.x     |  | 192.168.168.100|  | 192.168.168.2  |
+    | (WireGuard)    |  | Docker Host    |  | MSSQL + Agent  |
+    +----------------+  +----------------+  +----------------+
+                              |
+                              v
+                    +------------------+
+                    | Docker Services  |
+                    | :8080 Dashboard  |
+                    | :8025 SMTP4Dev   |
+                    | :5432 TimescaleDB|
+                    +------------------+
+</code></pre>
+
+<hr />
+<h2 id="prerequisites">Prerequisites</h2>
+<table>
+<thead>
+<tr>
+<th>Requirement</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>WireGuard client</td>
+<td>Downloaded from https://www.wireguard.com/install/</td>
+</tr>
+<tr>
+<td>Config file</td>
+<td><code>*.conf</code> file provided by IT (contains your private key)</td>
+</tr>
+<tr>
+<td>Network access</td>
+<td>UDP port 51820 outbound allowed</td>
+</tr>
+<tr>
+<td>Admin rights</td>
+<td>For initial WireGuard installation</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="part-1-wireguard-client-setup-one-time">Part 1: WireGuard Client Setup (One-Time)</h2>
+<h3 id="step-11-install-wireguard">Step 1.1: Install WireGuard</h3>
+<ol>
+<li>Download from: https://www.wireguard.com/install/</li>
+<li>Run the installer</li>
+<li>Restart if prompted</li>
+</ol>
+<h3 id="step-12-import-your-configuration">Step 1.2: Import Your Configuration</h3>
+<ol>
+<li>Open <strong>WireGuard</strong> from Start Menu</li>
+<li>Click <strong>"Import tunnel(s) from file"</strong> (or press <code>Ctrl+I</code>)</li>
+<li>Select your <code>.conf</code> file (e.g., <code>tony-home.conf</code>)</li>
+<li>Click <strong>Open</strong></li>
+</ol>
+<h3 id="step-13-verify-configuration">Step 1.3: Verify Configuration</h3>
+<p>Your config should look similar to this:</p>
+<pre class="codehilite"><code class="language-ini">[Interface]
+PrivateKey = &lt;your-private-key&gt;
+Address = 10.101.0.2/32
+DNS = 1.1.1.1
+
+[Peer]
+PublicKey = &lt;server-public-key&gt;
+AllowedIPs = 10.101.0.0/24, 192.168.168.0/24
+Endpoint = 209.127.118.182:51820
+PersistentKeepalive = 25
+</code></pre>
+
+<p><strong>CRITICAL</strong>: The <code>AllowedIPs</code> MUST include <code>192.168.168.0/24</code> to route traffic to the Ubuntu VM.</p>
+<hr />
+<h2 id="part-2-connect-and-test">Part 2: Connect and Test</h2>
+<h3 id="step-21-activate-the-tunnel">Step 2.1: Activate the Tunnel</h3>
+<ol>
+<li>Select your tunnel in WireGuard</li>
+<li>Click <strong>"Activate"</strong></li>
+<li>Status should show <strong>"Active"</strong> with green indicator</li>
+</ol>
+<h3 id="step-22-verify-connection">Step 2.2: Verify Connection</h3>
+<p>Open PowerShell and run:</p>
+<pre class="codehilite"><code class="language-powershell"># Test WireGuard connection to VPN1
+ping 10.101.0.1
+
+# Test routing to Ubuntu VM
+ping 192.168.168.100
+
+# Test routing to NY2
+ping 192.168.168.2
+</code></pre>
+
+<p><strong>Expected Results</strong>:
+- All pings should succeed
+- Latency should be &lt;100ms (depends on your location)</p>
+<h3 id="step-23-access-services">Step 2.3: Access Services</h3>
+<table>
+<thead>
+<tr>
+<th>Service</th>
+<th>URL</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ATS Health Monitor</td>
+<td>http://192.168.168.100:8080</td>
+<td>Main dashboard</td>
+</tr>
+<tr>
+<td>SMTP4Dev</td>
+<td>http://192.168.168.100:8025</td>
+<td>Email capture</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="part-3-troubleshooting">Part 3: Troubleshooting</h2>
+<h3 id="issue-handshake-did-not-complete">Issue: "Handshake did not complete"</h3>
+<p><strong>Symptoms</strong>: WireGuard shows "Handshake: None"</p>
+<p><strong>Causes &amp; Solutions</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Check</th>
+<th>Command</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Internet connectivity</td>
+<td><code>ping 8.8.8.8</code></td>
+<td>Check network cable/WiFi</td>
+</tr>
+<tr>
+<td>DNS resolution</td>
+<td><code>nslookup 209.127.118.182</code></td>
+<td>Try direct IP</td>
+</tr>
+<tr>
+<td>Firewall blocking UDP</td>
+<td>Check Windows Firewall</td>
+<td>Allow UDP 51820 outbound</td>
+</tr>
+</tbody>
+</table>
+<h3 id="issue-can-ping-1010101-but-not-192168168100">Issue: Can ping 10.101.0.1 but NOT 192.168.168.100</h3>
+<p><strong>Symptoms</strong>: VPN connected but can't reach Ubuntu VM</p>
+<p><strong>Cause</strong>: Missing route in your WireGuard config OR IP forwarding disabled on VPN1</p>
+<p><strong>Check your config</strong>:</p>
+<pre class="codehilite"><code class="language-ini"># AllowedIPs MUST include the private network
+AllowedIPs = 10.101.0.0/24, 192.168.168.0/24
+</code></pre>
+
+<p><strong>If config is correct, check VPN1 host</strong> (requires server access):</p>
+<pre class="codehilite"><code class="language-powershell"># On VPN1 Windows Server - verify IP forwarding is enabled
+netsh int ipv4 show int
+
+# Should show &quot;Forwarding: enabled&quot; for both:
+# - NYVPNServer (WireGuard interface)
+# - vEthernet (PrivateSwitch) (HyperV internal switch)
+</code></pre>
+
+<h3 id="issue-can-ping-192168168100-but-cant-access-web-page">Issue: Can ping 192.168.168.100 but can't access web page</h3>
+<p><strong>Symptoms</strong>: Ping works but browser times out</p>
+<p><strong>Causes &amp; Solutions</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Check</th>
+<th>Command</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Port open?</td>
+<td><code>Test-NetConnection 192.168.168.100 -Port 8080</code></td>
+<td>Check Docker is running</td>
+</tr>
+<tr>
+<td>Firewall on Ubuntu?</td>
+<td>SSH to VM: <code>sudo ufw status</code></td>
+<td><code>sudo ufw allow 8080/tcp</code></td>
+</tr>
+<tr>
+<td>Docker running?</td>
+<td>SSH: <code>docker ps</code></td>
+<td><code>docker compose up -d</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="issue-80-packet-loss-to-ubuntu-vm">Issue: 80% packet loss to Ubuntu VM</h3>
+<p><strong>Symptoms</strong>: Intermittent connectivity, slow response</p>
+<p><strong>Cause</strong>: Ubuntu VM missing return route to WireGuard network</p>
+<p><strong>Fix</strong> (requires SSH to Ubuntu VM):</p>
+<pre class="codehilite"><code class="language-bash"># Temporary fix
+sudo ip route add 10.101.0.0/24 via 192.168.168.14
+
+# Permanent fix - edit netplan
+sudo nano /etc/netplan/00-installer-config.yaml
+</code></pre>
+
+<p>Add the route:</p>
+<pre class="codehilite"><code class="language-yaml">network:
+  ethernets:
+    eth0:
+      addresses:
+        - 192.168.168.100/24
+      routes:
+        - to: default
+          via: 192.168.168.14
+        - to: 10.101.0.0/24
+          via: 192.168.168.14
+      nameservers:
+        addresses: [8.8.8.8, 8.8.4.4]
+</code></pre>
+
+<p>Apply changes:</p>
+<pre class="codehilite"><code class="language-bash">sudo netplan apply
+</code></pre>
+
+<hr />
+<h2 id="part-4-server-side-configuration-reference">Part 4: Server-Side Configuration Reference</h2>
+<blockquote>
+<p><strong>Note</strong>: This section is for IT admins who need to configure the VPN1 server.</p>
+</blockquote>
+<h3 id="41-vpn1-windows-server-enable-ip-forwarding">4.1: VPN1 Windows Server - Enable IP Forwarding</h3>
+<pre class="codehilite"><code class="language-powershell"># Enable forwarding on WireGuard interface
+netsh int ipv4 set int &quot;NYVPNServer&quot; forwarding=enabled
+
+# Enable forwarding on HyperV internal switch
+netsh int ipv4 set int &quot;vEthernet (PrivateSwitch)&quot; forwarding=enabled
+
+# Verify
+netsh int ipv4 show int | findstr &quot;forwarding&quot;
+</code></pre>
+
+<p><strong>Make Persistent</strong>: Add these commands to WireGuard config PostUp:</p>
+<pre class="codehilite"><code class="language-ini">[Interface]
+...
+PostUp = netsh int ipv4 set int &quot;NYVPNServer&quot; forwarding=enabled &amp; netsh int ipv4 set int &quot;vEthernet (PrivateSwitch)&quot; forwarding=enabled
+</code></pre>
+
+<h3 id="42-ubuntu-vm-static-route-configuration">4.2: Ubuntu VM - Static Route Configuration</h3>
+<p>SSH to Ubuntu VM (<code>atsadmin@192.168.168.100</code>):</p>
+<pre class="codehilite"><code class="language-bash"># View current routes
+ip route
+
+# Expected output should include:
+# 10.101.0.0/24 via 192.168.168.14 dev eth0
+</code></pre>
+
+<p>If missing, add via netplan (see Part 3 fix above).</p>
+<h3 id="43-wireguard-server-client-peer-configuration">4.3: WireGuard Server - Client Peer Configuration</h3>
+<p>When adding a new client to the VPN1 WireGuard server:</p>
+<pre class="codehilite"><code class="language-ini"># Add to VPN1's wg0.conf
+[Peer]
+# New Admin - Description
+PublicKey = &lt;client-public-key&gt;
+AllowedIPs = 10.101.0.X/32
+PersistentKeepalive = 25
+</code></pre>
+
+<p>Generate client config:</p>
+<pre class="codehilite"><code class="language-ini">[Interface]
+PrivateKey = &lt;client-private-key&gt;
+Address = 10.101.0.X/32
+DNS = 1.1.1.1
+
+[Peer]
+PublicKey = &lt;server-public-key&gt;
+AllowedIPs = 10.101.0.0/24, 192.168.168.0/24
+Endpoint = 209.127.118.182:51820
+PersistentKeepalive = 25
+</code></pre>
+
+<hr />
+<h2 id="part-5-quick-reference-diagram">Part 5: Quick Reference Diagram</h2>
+<pre class="codehilite"><code>YOUR PC                  VPN1 HOST                    UBUNTU VM
+=========               ============                 ============
+
+[WireGuard]  --------&gt;  [WireGuard Server]
+10.101.0.2              10.101.0.1
+    |                        |
+    |                   IP Forwarding
+    |                   MUST be ENABLED
+    |                        |
+    +-----WireGuard--------&gt;-+
+         Tunnel              |
+                             v
+                       [PrivateSwitch]
+                       192.168.168.14
+                             |
+                             v
+                       192.168.168.100 --------&gt; [Docker]
+                             |                    :8080 Dashboard
+                       Return route               :8025 SMTP4Dev
+                       10.101.0.0/24              :5432 TimescaleDB
+                       via 192.168.168.14
+</code></pre>
+
+<hr />
+<h2 id="part-6-verification-checklist">Part 6: Verification Checklist</h2>
+<p>Run these commands to verify full connectivity:</p>
+<pre class="codehilite"><code class="language-powershell"># 1. WireGuard connected?
+wg show  # Or check WireGuard GUI
+
+# 2. Can reach VPN1?
+ping 10.101.0.1
+
+# 3. Can reach Ubuntu VM?
+ping 192.168.168.100
+
+# 4. Can reach services?
+Test-NetConnection 192.168.168.100 -Port 8080
+Test-NetConnection 192.168.168.100 -Port 8025
+
+# 5. Open dashboard
+Start-Process &quot;http://192.168.168.100:8080&quot;
+</code></pre>
+
+<p><strong>All checks should pass. If any fail, refer to Part 3: Troubleshooting.</strong></p>
+<hr />
+<h2 id="access-urls-summary">Access URLs Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Service</th>
+<th>URL</th>
+<th>Credentials</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ATS Health Monitor</td>
+<td>http://192.168.168.100:8080</td>
+<td>Use RBAC login</td>
+</tr>
+<tr>
+<td>SMTP4Dev Web</td>
+<td>http://192.168.168.100:8025</td>
+<td>No auth required</td>
+</tr>
+<tr>
+<td>TimescaleDB</td>
+<td>192.168.168.100:5432</td>
+<td><code>ats_health_user</code> / (see config)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="contact">Contact</h2>
+<table>
+<thead>
+<tr>
+<th>Issue Type</th>
+<th>Contact</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>WireGuard config file request</td>
+<td>IT Operations</td>
+</tr>
+<tr>
+<td>VPN1 server issues</td>
+<td>DevOps Team</td>
+</tr>
+<tr>
+<td>Ubuntu VM / Docker issues</td>
+<td>Platform Team</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="revision-history">Revision History</h2>
+<table>
+<thead>
+<tr>
+<th>Version</th>
+<th>Date</th>
+<th>Author</th>
+<th>Changes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1.0.0</td>
+<td>2025-12-10</td>
+<td>AI Agent</td>
+<td>Initial version</td>
+</tr>
+</tbody>
+</table>
+</body>
+</html>

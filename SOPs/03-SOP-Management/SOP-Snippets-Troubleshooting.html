@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>SOP Snippets Troubleshooting</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 { border-bottom: 2px solid #3498db; padding-bottom: 0.3em; }
+        h2 { border-bottom: 1px solid #ecf0f1; padding-bottom: 0.2em; }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1em;
+            overflow-x: auto;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 1em 0;
+            padding-left: 1em;
+            color: #666;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 2em 0;
+            padding: 1em;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .pdf-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 8px 16px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .pdf-link:hover {
+            background-color: #c0392b;
+        }
+    </style>
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <p><a href="SOP-Snippets-Troubleshooting.pdf" class="pdf-link">📄 Download PDF Version</a></p>
+    <h1 id="sop-snippets-troubleshooting-guide">SOP Snippets Troubleshooting Guide</h1>
+<h2 id="issue-snippets-not-working">Issue: Snippets Not Working</h2>
+<p>If typing <code>sop-procedure</code> doesn't show the snippet, try these solutions:</p>
+<h2 id="solution-1-check-vs-code-settings">Solution 1: Check VS Code Settings</h2>
+<h3 id="enable-snippet-suggestions">Enable Snippet Suggestions</h3>
+<ol>
+<li>Open VS Code Settings: <code>Ctrl+,</code></li>
+<li>Search for: <code>editor.snippetSuggestions</code></li>
+<li>Set to: <strong>"top"</strong> (snippets appear first)</li>
+</ol>
+<p>Or add to <code>.vscode/settings.json</code>:</p>
+<pre class="codehilite"><code class="language-json">{
+  &quot;editor.snippetSuggestions&quot;: &quot;top&quot;,
+  &quot;editor.tabCompletion&quot;: &quot;on&quot;,
+  &quot;editor.suggest.showSnippets&quot;: true,
+  &quot;[markdown]&quot;: {
+    &quot;editor.snippetSuggestions&quot;: &quot;top&quot;,
+    &quot;editor.tabCompletion&quot;: &quot;on&quot;
+  }
+}
+</code></pre>
+
+<h2 id="solution-2-manually-trigger-suggestions">Solution 2: Manually Trigger Suggestions</h2>
+<ol>
+<li>Type <code>sop-procedure</code></li>
+<li>Press <code>Ctrl+Space</code> to show suggestions</li>
+<li>Select the snippet from the list</li>
+</ol>
+<h2 id="solution-3-verify-workspace-is-open">Solution 3: Verify Workspace is Open</h2>
+<p><strong>Important:</strong> VS Code workspace snippets only work when:
+- You opened the <strong>folder</strong> (not just a file)
+- File &gt; Open Folder &gt; Select <code>I:\HyperV_PowerScript_Optimazation</code></p>
+<p><strong>Check:</strong>
+- Look at VS Code title bar - should show folder name
+- If it shows just filename, you opened a file, not the folder</p>
+<h2 id="solution-4-reload-vs-code">Solution 4: Reload VS Code</h2>
+<ol>
+<li>Press <code>Ctrl+Shift+P</code></li>
+<li>Type: "Reload Window"</li>
+<li>Press Enter</li>
+<li>Try snippet again</li>
+</ol>
+<h2 id="solution-5-check-snippet-file-location">Solution 5: Check Snippet File Location</h2>
+<p>Verify the file exists:</p>
+<pre class="codehilite"><code class="language-powershell">Test-Path .vscode\snippets\sop-snippets.code-snippets
+</code></pre>
+
+<p>Should return: <code>True</code></p>
+<h2 id="solution-6-check-file-language-mode">Solution 6: Check File Language Mode</h2>
+<ol>
+<li>Open your <code>.md</code> file</li>
+<li>Look at bottom-right of VS Code</li>
+<li>Should show: <strong>"Markdown"</strong></li>
+<li>If not, click it and select "Markdown"</li>
+</ol>
+<h2 id="solution-7-alternative-use-user-snippets">Solution 7: Alternative - Use User Snippets</h2>
+<p>If workspace snippets still don't work, copy to user snippets:</p>
+<ol>
+<li>Press <code>Ctrl+Shift+P</code></li>
+<li>Type: "Preferences: Configure User Snippets"</li>
+<li>Select: "markdown.json"</li>
+<li>Copy contents from <code>.vscode/snippets/sop-snippets.code-snippets</code></li>
+<li>Paste into user snippets file</li>
+</ol>
+<p><strong>User snippets location:</strong>
+- Windows: <code>%APPDATA%\Code\User\snippets\markdown.json</code></p>
+<h2 id="solution-8-check-for-conflicting-extensions">Solution 8: Check for Conflicting Extensions</h2>
+<p>Some extensions (like Vim) can interfere with snippets:
+1. Disable extensions temporarily
+2. Test snippets
+3. Re-enable one by one to find conflict</p>
+<h2 id="quick-test">Quick Test</h2>
+<ol>
+<li>Open <code>test.md</code></li>
+<li>Type: <code>sop-procedure</code></li>
+<li>Press <code>Ctrl+Space</code></li>
+<li>Do you see "SOP Procedure Template" in the list?</li>
+</ol>
+<p>If yes → Select it
+If no → Try solutions above</p>
+<h2 id="verify-snippets-are-loaded">Verify Snippets Are Loaded</h2>
+<ol>
+<li>Press <code>Ctrl+Shift+P</code></li>
+<li>Type: "Preferences: Open User Settings (JSON)"</li>
+<li>Check if snippets are mentioned in output</li>
+</ol>
+<p>Or check VS Code Output:
+1. View &gt; Output
+2. Select "Log (Window)"
+3. Look for snippet loading messages</p>
+<h2 id="still-not-working">Still Not Working?</h2>
+<p>Try this PowerShell command to verify everything:</p>
+<pre class="codehilite"><code class="language-powershell"># Check files exist
+Write-Host &quot;Snippets file exists: $(Test-Path .vscode\snippets\sop-snippets.code-snippets)&quot;
+Write-Host &quot;Settings file exists: $(Test-Path .vscode\settings.json)&quot;
+
+# Check file content
+Get-Content .vscode\snippets\sop-snippets.code-snippets | Select-Object -First 5
+</code></pre>
+
+<p>If all checks pass but snippets still don't work, the issue might be:
+- VS Code version (update to latest)
+- Extension conflict
+- Need to use user snippets instead</p>
+</body>
+</html>

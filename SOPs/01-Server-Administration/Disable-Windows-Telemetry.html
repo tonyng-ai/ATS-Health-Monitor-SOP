@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Disable Windows Telemetry</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 { border-bottom: 2px solid #3498db; padding-bottom: 0.3em; }
+        h2 { border-bottom: 1px solid #ecf0f1; padding-bottom: 0.2em; }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1em;
+            overflow-x: auto;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 1em 0;
+            padding-left: 1em;
+            color: #666;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 2em 0;
+            padding: 1em;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .pdf-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 8px 16px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .pdf-link:hover {
+            background-color: #c0392b;
+        }
+    </style>
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <p><a href="Disable-Windows-Telemetry.pdf" class="pdf-link">📄 Download PDF Version</a></p>
+    <h1 id="disable-windows-server-2022-telemetry-and-bloatware">Disable Windows Server 2022 Telemetry and Bloatware</h1>
+<h2 id="metadata">Metadata</h2>
+<p><strong>Category:</strong> Server Administration
+<strong>Last Updated:</strong> 2025-01-25
+<strong>Author:</strong> System Administrator
+<strong>Version:</strong> 1.0
+<strong>Review Date:</strong> 2025-04-25
+<strong>Status:</strong> Active
+<strong>Related Script:</strong> <code>Scripts\01-Server-Administration\Disable-Windows-Telemetry.ps1</code></p>
+<hr />
+<h2 id="purpose">Purpose</h2>
+<p>This procedure covers disabling Windows telemetry, diagnostic data collection, customer experience improvement programs, and bloatware services on Windows Server 2022 to improve privacy, reduce network bandwidth usage, and minimize unnecessary background processes.</p>
+<p><strong>When to Use:</strong>
+- Initial server setup and hardening
+- Reducing network bandwidth consumption
+- Improving privacy and data protection
+- Minimizing background processes and resource usage
+- Compliance with data privacy requirements
+- Reducing attack surface by disabling unnecessary services</p>
+<hr />
+<h2 id="prerequisites">Prerequisites</h2>
+<h3 id="required-access">Required Access</h3>
+<ul>
+<li>[x] Administrator privileges</li>
+<li>[x] Local or remote access to server</li>
+</ul>
+<h3 id="required-tools">Required Tools</h3>
+<ul>
+<li>[x] PowerShell (Administrator)</li>
+<li>[x] Script: <code>Scripts\01-Server-Administration\Disable-Windows-Telemetry.ps1</code></li>
+</ul>
+<h3 id="required-information">Required Information</h3>
+<ul>
+<li>[x] Backup location (optional, defaults to script directory)</li>
+<li>[x] Understanding of what telemetry services will be disabled</li>
+</ul>
+<hr />
+<h2 id="what-gets-disabled">What Gets Disabled</h2>
+<h3 id="services">Services</h3>
+<ul>
+<li><strong>DiagTrack</strong> - Connected User Experiences and Telemetry</li>
+<li><strong>dmwappushservice</strong> - WAP Push Message Routing Service</li>
+<li><strong>DcpSvc</strong> - Data Collection and Publishing Service</li>
+<li><strong>wisvc</strong> - Windows Insider Service</li>
+</ul>
+<h3 id="scheduled-tasks">Scheduled Tasks</h3>
+<ul>
+<li>Microsoft Compatibility Appraiser</li>
+<li>Program Data Updater</li>
+<li>Customer Experience Improvement Program tasks</li>
+<li>Windows Error Reporting tasks</li>
+<li>Feedback Hub tasks</li>
+<li>Diagnostic scheduled tasks</li>
+</ul>
+<h3 id="registry-settings">Registry Settings</h3>
+<ul>
+<li>Windows Telemetry (AllowTelemetry = 0)</li>
+<li>Diagnostic Data Collection</li>
+<li>Feedback Notifications</li>
+<li>Delivery Optimization</li>
+<li>Location Tracking</li>
+<li>Advertising ID</li>
+<li>Cortana (if present)</li>
+</ul>
+<h3 id="network-blocking">Network Blocking</h3>
+<ul>
+<li>Blocks 30+ telemetry domains via hosts file</li>
+<li>Prevents communication with Microsoft telemetry servers</li>
+</ul>
+<h3 id="bloatware-apps">Bloatware Apps</h3>
+<ul>
+<li>Removes Windows Store apps (if present on Server)</li>
+<li>Note: Windows Server 2022 typically doesn't have Store apps</li>
+</ul>
+<hr />
+<h2 id="procedure-steps">Procedure Steps</h2>
+<h3 id="step-1-navigate-to-script-location">Step 1: Navigate to Script Location</h3>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell">cd I:\SOP-Management\Scripts\01-Server-Administration
+</code></pre>
+
+<hr />
+<h3 id="step-2-audit-current-telemetry-status-optional">Step 2: Audit Current Telemetry Status (Optional)</h3>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell">.\Disable-Windows-Telemetry.ps1 -Action Audit
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- Shows current status of telemetry services
+- Displays registry settings
+- Shows number of blocked domains in hosts file
+- No changes are made</p>
+<p><strong>Use Case:</strong>
+- Check current telemetry status before making changes
+- Verify if telemetry is already disabled
+- Document baseline configuration</p>
+<hr />
+<h3 id="step-3-dry-run-recommended-first-step">Step 3: Dry Run (Recommended First Step)</h3>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell">.\Disable-Windows-Telemetry.ps1 -Action Disable -DryRun
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- Shows what would be changed without making actual changes
+- Lists services that would be disabled
+- Shows registry settings that would be modified
+- Displays domains that would be blocked
+- No actual changes are made</p>
+<p><strong>Use Case:</strong>
+- Review changes before applying
+- Understand impact of the script
+- Verify script behavior</p>
+<hr />
+<h3 id="step-4-disable-telemetry">Step 4: Disable Telemetry</h3>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell">.\Disable-Windows-Telemetry.ps1 -Action Disable
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- Backup created automatically in script directory
+- Telemetry services stopped and disabled
+- Scheduled tasks disabled
+- Registry settings configured
+- Telemetry domains blocked in hosts file
+- Bloatware apps removed (if present)
+- Success messages displayed</p>
+<p><strong>Backup Location:</strong>
+- Default: <code>Scripts\01-Server-Administration\telemetry_backup_YYYYMMDD_HHMMSS\</code>
+- Contains:
+  - Registry exports (.reg files)
+  - Hosts file backup</p>
+<hr />
+<h3 id="step-5-verify-changes">Step 5: Verify Changes</h3>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Check service status
+Get-Service DiagTrack, dmwappushservice, DcpSvc, wisvc | Format-Table Name, Status, StartType
+
+# Check registry setting
+Get-ItemProperty -Path &quot;HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\DataCollection&quot; -Name &quot;AllowTelemetry&quot;
+
+# Check hosts file blocks
+Get-Content &quot;$env:SystemRoot\System32\drivers\etc\hosts&quot; | Select-String &quot;0.0.0.0&quot;
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- Services show <code>StartType: Disabled</code>
+- Registry shows <code>AllowTelemetry: 0</code>
+- Hosts file contains blocked telemetry domains</p>
+<hr />
+<h2 id="advanced-usage">Advanced Usage</h2>
+<h3 id="custom-backup-location">Custom Backup Location</h3>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell">.\Disable-Windows-Telemetry.ps1 `
+    -Action Disable `
+    -BackupPath &quot;C:\Backups\TelemetryBackup_20250125&quot;
+</code></pre>
+
+<p><strong>Use Case:</strong>
+- Store backups in specific location
+- Centralized backup management
+- Compliance requirements</p>
+<hr />
+<h3 id="custom-log-location">Custom Log Location</h3>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell">.\Disable-Windows-Telemetry.ps1 `
+    -Action Disable `
+    -LogPath &quot;C:\Logs\TelemetryDisable.log&quot;
+</code></pre>
+
+<p><strong>Use Case:</strong>
+- Centralized logging
+- Log retention policies
+- Audit requirements</p>
+<hr />
+<h3 id="restore-from-backup">Restore from Backup</h3>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell">.\Disable-Windows-Telemetry.ps1 `
+    -Action Restore `
+    -BackupPath &quot;C:\Backups\TelemetryBackup_20250125&quot;
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- Registry settings restored
+- Hosts file restored
+- Services re-enabled
+- Telemetry functionality restored</p>
+<p><strong>Use Case:</strong>
+- Troubleshooting issues
+- Reverting changes
+- Testing scenarios</p>
+<hr />
+<h2 id="verification">Verification</h2>
+<h3 id="how-to-verify-success">How to Verify Success</h3>
+<p><strong>1. Check Services:</strong></p>
+<pre class="codehilite"><code class="language-powershell">Get-Service DiagTrack, dmwappushservice, DcpSvc, wisvc |
+    Select-Object Name, Status, StartType |
+    Format-Table -AutoSize
+</code></pre>
+
+<p><strong>Expected:</strong>
+- All services show <code>StartType: Disabled</code>
+- Services are not running</p>
+<p><strong>2. Check Registry:</strong></p>
+<pre class="codehilite"><code class="language-powershell">Get-ItemProperty -Path &quot;HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\DataCollection&quot; -Name &quot;AllowTelemetry&quot;
+</code></pre>
+
+<p><strong>Expected:</strong>
+- <code>AllowTelemetry: 0</code></p>
+<p><strong>3. Check Scheduled Tasks:</strong></p>
+<pre class="codehilite"><code class="language-powershell">Get-ScheduledTask | Where-Object {
+    $_.TaskPath -like &quot;*Customer Experience*&quot; -or
+    $_.TaskPath -like &quot;*Application Experience*&quot;
+} | Select-Object TaskName, State
+</code></pre>
+
+<p><strong>Expected:</strong>
+- Tasks show <code>State: Disabled</code></p>
+<p><strong>4. Check Hosts File:</strong></p>
+<pre class="codehilite"><code class="language-powershell">$hostsContent = Get-Content &quot;$env:SystemRoot\System32\drivers\etc\hosts&quot;
+$blockedCount = ($hostsContent | Where-Object { $_ -like &quot;0.0.0.0 *&quot; }).Count
+Write-Host &quot;Blocked domains: $blockedCount&quot;
+</code></pre>
+
+<p><strong>Expected:</strong>
+- 30+ blocked domains listed</p>
+<p><strong>5. Test Network Blocking:</strong></p>
+<pre class="codehilite"><code class="language-powershell">Test-NetConnection -ComputerName &quot;vortex.data.microsoft.com&quot; -Port 80
+</code></pre>
+
+<p><strong>Expected:</strong>
+- Connection should fail or timeout (blocked by hosts file)</p>
+<hr />
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="issue-services-wont-disable">Issue: Services Won't Disable</h3>
+<p><strong>Symptoms:</strong>
+- Error: "Cannot set service to Disabled"
+- Service keeps restarting</p>
+<p><strong>Solution:</strong>
+1. Stop the service first:
+   <code>powershell
+   Stop-Service -Name DiagTrack -Force</code>
+2. Set startup type:
+   <code>powershell
+   Set-Service -Name DiagTrack -StartupType Disabled</code>
+3. Verify:
+   <code>powershell
+   Get-Service DiagTrack | Select-Object StartType</code></p>
+<hr />
+<h3 id="issue-registry-changes-not-applied">Issue: Registry Changes Not Applied</h3>
+<p><strong>Symptoms:</strong>
+- Registry values not changed
+- Access denied errors</p>
+<p><strong>Solution:</strong>
+1. Verify running as Administrator:
+   <code>powershell
+   ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)</code>
+2. Check Group Policy:
+   - Group Policy may override registry settings
+   - Check: <code>gpedit.msc</code> &gt; Computer Configuration &gt; Administrative Templates &gt; Windows Components &gt; Data Collection and Preview Builds</p>
+<hr />
+<h3 id="issue-hosts-file-not-updating">Issue: Hosts File Not Updating</h3>
+<p><strong>Symptoms:</strong>
+- Domains not blocked
+- Hosts file changes reverted</p>
+<p><strong>Solution:</strong>
+1. Check file permissions:
+   <code>powershell
+   icacls "$env:SystemRoot\System32\drivers\etc\hosts"</code>
+2. Edit manually if needed:
+   <code>powershell
+   notepad "$env:SystemRoot\System32\drivers\etc\hosts"</code>
+3. Add entries manually:
+   <code>0.0.0.0 vortex.data.microsoft.com
+   0.0.0.0 telemetry.microsoft.com</code></p>
+<hr />
+<h3 id="issue-scheduled-tasks-re-enable-themselves">Issue: Scheduled Tasks Re-enable Themselves</h3>
+<p><strong>Symptoms:</strong>
+- Tasks become enabled after reboot
+- Windows Update re-enables tasks</p>
+<p><strong>Solution:</strong>
+1. Disable via Group Policy (if available):
+   - <code>gpedit.msc</code> &gt; Computer Configuration &gt; Administrative Templates &gt; Windows Components &gt; Data Collection
+2. Use Task Scheduler to disable:
+   <code>powershell
+   Get-ScheduledTask -TaskPath "\Microsoft\Windows\Customer Experience Improvement Program\" |
+       Disable-ScheduledTask</code></p>
+<hr />
+<h2 id="impact-and-considerations">Impact and Considerations</h2>
+<h3 id="positive-impacts">Positive Impacts</h3>
+<ul>
+<li>✅ Reduced network bandwidth usage</li>
+<li>✅ Improved privacy</li>
+<li>✅ Reduced background processes</li>
+<li>✅ Lower CPU and memory usage</li>
+<li>✅ Faster system performance</li>
+<li>✅ Compliance with privacy regulations</li>
+</ul>
+<h3 id="potential-issues">Potential Issues</h3>
+<ul>
+<li>⚠️ Windows Update may still collect some telemetry (can be further restricted via Group Policy)</li>
+<li>⚠️ Some diagnostic features may be limited</li>
+<li>⚠️ Error reporting to Microsoft may be disabled</li>
+<li>⚠️ Some Microsoft services may not function optimally</li>
+</ul>
+<h3 id="best-practices">Best Practices</h3>
+<ul>
+<li>✅ Always create backups before running</li>
+<li>✅ Test in non-production environment first</li>
+<li>✅ Document backup location</li>
+<li>✅ Verify changes after execution</li>
+<li>✅ Monitor system behavior after changes</li>
+<li>✅ Keep backups for at least 30 days</li>
+</ul>
+<hr />
+<h2 id="related-scripts">Related Scripts</h2>
+<ul>
+<li><a href="../../Scripts/01-Server-Administration/Disable-Windows-Telemetry.ps1">Disable-Windows-Telemetry.ps1</a> - Main script</li>
+<li><a href="../../Scripts/01-Server-Administration/Configure-Production-Firewall.ps1">Configure-Production-Firewall.ps1</a> - Firewall hardening</li>
+</ul>
+<h2 id="references">References</h2>
+<ul>
+<li><a href="https://privacy.microsoft.com/">Microsoft Privacy Statement</a></li>
+<li><a href="https://docs.microsoft.com/windows-server/">Windows Server 2022 Documentation</a></li>
+<li><a href="https://docs.microsoft.com/windows/privacy/configure-windows-diagnostic-data-in-your-organization">Windows Telemetry Settings</a></li>
+</ul>
+<hr />
+<h2 id="maintenance">Maintenance</h2>
+<h3 id="regular-tasks">Regular Tasks</h3>
+<ul>
+<li>Review telemetry status quarterly</li>
+<li>Verify services remain disabled after Windows Updates</li>
+<li>Check for new telemetry domains to block</li>
+<li>Update script if Windows Server version changes</li>
+</ul>
+<h3 id="after-windows-updates">After Windows Updates</h3>
+<ul>
+<li>Re-run audit after major Windows Updates:
+  <code>powershell
+  .\Disable-Windows-Telemetry.ps1 -Action Audit</code></li>
+<li>Re-apply if services are re-enabled:
+  <code>powershell
+  .\Disable-Windows-Telemetry.ps1 -Action Disable</code></li>
+</ul>
+<hr />
+<h2 id="security-notes">Security Notes</h2>
+<ul>
+<li>This script modifies system registry and system files</li>
+<li>Always run from trusted source</li>
+<li>Verify script integrity before execution</li>
+<li>Keep backups in secure location</li>
+<li>Document all changes for audit purposes</li>
+</ul>
+<hr />
+<h2 id="change-log">Change Log</h2>
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Version</th>
+<th>Changes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2025-01-25</td>
+<td>1.0</td>
+<td>Initial version</td>
+</tr>
+</tbody>
+</table>
+</body>
+</html>

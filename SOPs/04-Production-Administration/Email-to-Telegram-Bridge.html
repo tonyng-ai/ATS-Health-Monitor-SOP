@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Email to Telegram Bridge</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 { border-bottom: 2px solid #3498db; padding-bottom: 0.3em; }
+        h2 { border-bottom: 1px solid #ecf0f1; padding-bottom: 0.2em; }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1em;
+            overflow-x: auto;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 1em 0;
+            padding-left: 1em;
+            color: #666;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 2em 0;
+            padding: 1em;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .pdf-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 8px 16px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .pdf-link:hover {
+            background-color: #c0392b;
+        }
+    </style>
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <p><a href="Email-to-Telegram-Bridge.pdf" class="pdf-link">📄 Download PDF Version</a></p>
+    <h1 id="email-to-telegram-bridge-using-smtp4dev">Email-to-Telegram Bridge Using smtp4dev</h1>
+<h2 id="metadata">Metadata</h2>
+<p><strong>Category:</strong> Production Administration
+<strong>Last Updated:</strong> 2024-11-25
+<strong>Author:</strong> System Administrator
+<strong>Version:</strong> 2.0
+<strong>Review Date:</strong> 2025-05-25
+<strong>Status:</strong> Active</p>
+<hr />
+<h2 id="purpose">Purpose</h2>
+<p>This procedure documents how to use smtp4dev as a bridge to forward emails to Telegram (and optionally WhatsApp). This allows existing email-based code to send notifications to messaging platforms without code modifications.</p>
+<p><strong>When to Use:</strong>
+- Need to forward email notifications to Telegram/WhatsApp
+- Want to use messaging platforms without modifying existing code
+- Legacy systems that only support email notifications
+- Development/testing environments where real emails aren't needed
+- Dual delivery: keep email functionality but also send to messaging platforms</p>
+<p><strong>Key Benefits:</strong>
+- ✅ No code changes required - existing <code>sp_send_dbmail</code> calls work as-is
+- ✅ Automatic forwarding to Telegram/WhatsApp
+- ✅ Transparent bridge between email and messaging platforms
+- ✅ Can view captured emails in smtp4dev web interface
+- ✅ Works with existing SQL Server Database Mail infrastructure</p>
+<hr />
+<h2 id="architecture-overview">Architecture Overview</h2>
+<pre class="codehilite"><code>┌─────────────┐     ┌──────────────┐     ┌─────────────┐     ┌──────────────┐
+│   Your App  │────▶│ SQL Server   │────▶│  smtp4dev   │────▶│ Python       │
+│   (Code)    │     │ Database Mail│     │  (Dummy     │     │ Forwarder    │
+│             │     │ (GTEC Profile)│    │   SMTP)     │     │ Script       │
+└─────────────┘     └──────────────┘     └─────────────┘     └──────────────┘
+                                                                      │
+                                                                      ▼
+                                                              ┌──────────────┐
+                                                              │  Telegram    │
+                                                              │  / WhatsApp  │
+                                                              └──────────────┘
+</code></pre>
+
+<p><strong>Flow:</strong>
+1. Application code calls <code>sp_send_dbmail</code> with GTEC profile
+2. SQL Server sends email to smtp4dev (localhost:25)
+3. smtp4dev captures the email (viewable at http://localhost:5000)
+4. Python script monitors smtp4dev for new emails
+5. Python script forwards emails to Telegram (and/or WhatsApp)</p>
+<p><strong>Result:</strong> Emails are automatically converted to Telegram/WhatsApp messages without any code changes.</p>
+<hr />
+<h2 id="prerequisites">Prerequisites</h2>
+<h3 id="required-access">Required Access</h3>
+<ul>
+<li>[x] SQL Server sysadmin or dbmail_admin role</li>
+<li>[x] Administrator privileges (for installing smtp4dev service)</li>
+<li>[x] Access to msdb database</li>
+<li>[x] Python 3.7+ installed</li>
+<li>[x] Telegram account (for Telegram forwarding)</li>
+<li>[x] Twilio account (optional, for WhatsApp forwarding)</li>
+</ul>
+<h3 id="required-tools">Required Tools</h3>
+<ul>
+<li>[x] PowerShell (Administrator)</li>
+<li>[x] Go programming language (version 1.21 or later)</li>
+<li>[x] Script: <code>Scripts\04-Production-Administration\Setup-Dummy-Mail-Server.ps1</code> - Sets up smtp4dev and SQL mail profile</li>
+<li>[x] Program: <code>Scripts\04-Production-Administration\smtp4dev-forwarder\smtp4dev-forwarder.exe</code> - Go-based email forwarder</li>
+<li>[x] Script: <code>Scripts\04-Production-Administration\Create-Dummy-Mail-Profile.sql</code> - SQL mail profile configuration</li>
+</ul>
+<hr />
+<h2 id="quick-setup">Quick Setup</h2>
+<h3 id="step-1-set-up-smtp4dev-and-sql-mail-profile">Step 1: Set Up smtp4dev and SQL Mail Profile</h3>
+<p><strong>Action (Run PowerShell as Administrator):</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Can be run from any directory
+.\Scripts\04-Production-Administration\Setup-Dummy-Mail-Server.ps1 -ProfileName &quot;GTEC&quot; -SmtpPort 25
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- smtp4dev service installed and running
+- SQL Server mail profile "GTEC" created/updated
+- Profile points to localhost:25 (smtp4dev)
+- Test email sent successfully</p>
+<p><strong>Verify smtp4dev is running:</strong></p>
+<pre class="codehilite"><code class="language-powershell">Get-Service Smtp4dev
+# Should show Status: Running
+
+# Or check web interface:
+Start-Process &quot;http://localhost:5000&quot;
+</code></pre>
+
+<hr />
+<h3 id="step-2-set-up-telegram-bot">Step 2: Set Up Telegram Bot</h3>
+<p><strong>Action:</strong></p>
+<ol>
+<li><strong>Create Telegram Bot:</strong></li>
+<li>Open Telegram and search for <a href="https://t.me/BotFather">@BotFather</a></li>
+<li>Send <code>/newbot</code> and follow instructions</li>
+<li>Choose a name and username for your bot</li>
+<li>
+<p><strong>Save the bot token</strong> (looks like: <code>123456789:ABCdefGHIjklMNOpqrsTUVwxyz</code>)</p>
+</li>
+<li>
+<p><strong>Get Your Chat ID:</strong></p>
+</li>
+<li>Search for <a href="https://t.me/userinfobot">@userinfobot</a> on Telegram</li>
+<li>Start a chat - it will show your chat ID (a number like <code>123456789</code>)</li>
+<li>
+<p><strong>Save this chat ID</strong></p>
+</li>
+<li>
+<p><strong>Start Chat with Your Bot:</strong></p>
+</li>
+<li>Search for your bot by name in Telegram</li>
+<li>Send <code>/start</code> to initiate conversation</li>
+<li>This is required for the bot to send you messages</li>
+</ol>
+<hr />
+<h3 id="step-3-build-the-go-forwarder-program">Step 3: Build the Go Forwarder Program</h3>
+<p><strong>Action:</strong></p>
+<p>Navigate to the program directory and build the executable:</p>
+<pre class="codehilite"><code class="language-powershell">cd I:\SOP-Management\Scripts\04-Production-Administration\smtp4dev-forwarder
+
+# Build executable
+.\COMPILE-NOW.ps1
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- <code>smtp4dev-forwarder.exe</code> created in the program directory
+- No compilation errors
+- File size approximately 5-10 MB</p>
+<hr />
+<h3 id="step-4-configure-configtoml">Step 4: Configure config.toml</h3>
+<p><strong>Action:</strong></p>
+<ol>
+<li><strong>Copy the example configuration file:</strong></li>
+</ol>
+<p><code>powershell
+   Copy-Item config.toml.example config.toml</code></p>
+<ol>
+<li><strong>Edit <code>config.toml</code> with your settings:</strong></li>
+</ol>
+<p>```toml
+   [smtp4dev]
+   # smtp4dev web interface URL
+   url = "http://localhost:5000"</p>
+<p># Check for new emails every N seconds
+   poll_interval_seconds = 30</p>
+<p># Delete messages from smtp4dev after forwarding
+   delete_after_forward = false</p>
+<p>[telegram]
+   # Enable Telegram forwarding
+   enabled = true</p>
+<p># Telegram bot token (get from @BotFather)
+   token = "YOUR_BOT_TOKEN_HERE"</p>
+<p># Telegram chat ID (your user ID or group ID)
+   chat_id = "YOUR_CHAT_ID_HERE"
+   ```</p>
+<ol>
+<li><strong>Save the file</strong></li>
+</ol>
+<p><strong>Expected Result:</strong>
+- <code>config.toml</code> file created with all required settings
+- Telegram settings configured
+- smtp4dev URL configured</p>
+<hr />
+<h3 id="step-5-run-go-forwarder-program">Step 5: Run Go Forwarder Program</h3>
+<p><strong>Action:</strong></p>
+<p><strong>Option A: Run Manually (for testing):</strong></p>
+<pre class="codehilite"><code class="language-powershell">cd Scripts\04-Production-Administration\smtp4dev-forwarder
+.\smtp4dev-forwarder.exe
+</code></pre>
+
+<p><strong>Option B: Run as Windows Scheduled Task (recommended for production):</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Create scheduled task
+$action = New-ScheduledTaskAction -Execute &quot;I:\SOP-Management\Scripts\04-Production-Administration\smtp4dev-forwarder\smtp4dev-forwarder.exe&quot; -WorkingDirectory &quot;I:\SOP-Management\Scripts\04-Production-Administration\smtp4dev-forwarder&quot;
+$trigger = New-ScheduledTaskTrigger -AtStartup
+$settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -RunOnlyIfNetworkAvailable
+$principal = New-ScheduledTaskPrincipal -UserId &quot;$env:USERNAME&quot; -LogonType Interactive -RunLevel Highest
+
+Register-ScheduledTask -TaskName &quot;smtp4dev Email Forwarder&quot; -Action $action -Trigger $trigger -Settings $settings -Principal $principal -Description &quot;Forwards emails from smtp4dev to Telegram&quot;
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- Program connects to smtp4dev
+- Program starts monitoring for new emails
+- When emails arrive, they're forwarded to Telegram
+- Processed message IDs are tracked to avoid duplicates
+- State is saved to <code>.smtp4dev-forwarder.state</code> file</p>
+<hr />
+<h2 id="usage">Usage</h2>
+<h3 id="sending-emails-they-go-to-telegram">Sending Emails (They Go to Telegram)</h3>
+<p><strong>Your existing code works as-is:</strong></p>
+<pre class="codehilite"><code class="language-sql">EXEC msdb.dbo.sp_send_dbmail
+    @profile_name = 'GTEC',
+    @recipients = 'user@example.com',
+    @subject = 'Alert: System Status',
+    @body = 'The system is running normally.';
+</code></pre>
+
+<p><strong>What Happens:</strong>
+1. Email is sent to smtp4dev (captured, not delivered)
+2. Go program detects new email (polls every 30 seconds by default)
+3. Email is formatted and sent to your Telegram chat
+4. You receive notification in Telegram
+5. Message ID is tracked to avoid duplicate forwarding</p>
+<p><strong>No code changes needed!</strong> Your existing email code now sends to Telegram automatically.</p>
+<hr />
+<h3 id="message-format-in-telegram">Message Format in Telegram</h3>
+<p>Messages appear in Telegram like this:</p>
+<pre class="codehilite"><code>📧 New Email
+
+From: dummy@localhost
+To: user@example.com
+Subject: Alert: System Status
+
+Body:
+The system is running normally.
+</code></pre>
+
+<hr />
+<h2 id="configuration-options">Configuration Options</h2>
+<h3 id="go-program-configuration-configtoml">Go Program Configuration (config.toml)</h3>
+<p>Edit <code>config.toml</code>:</p>
+<pre class="codehilite"><code class="language-toml">[smtp4dev]
+# smtp4dev web interface URL
+url = &quot;http://localhost:5000&quot;
+
+# Check for new emails every N seconds
+poll_interval_seconds = 30
+
+# Delete messages from smtp4dev after forwarding
+delete_after_forward = false
+
+[telegram]
+# Enable Telegram forwarding
+enabled = true
+
+# Telegram bot token (get from @BotFather)
+token = &quot;your_token_here&quot;
+
+# Telegram chat ID (your user ID or group ID)
+chat_id = &quot;your_chat_id_here&quot;
+
+[whatsapp]
+# Enable WhatsApp forwarding (via Twilio)
+enabled = false
+
+# Twilio Account SID
+account_sid = &quot;&quot;
+
+# Twilio Auth Token
+auth_token = &quot;&quot;
+
+# Twilio WhatsApp from number (format: whatsapp:+14155238886)
+from_number = &quot;&quot;
+
+# Your WhatsApp number (format: whatsapp:+1234567890)
+to_number = &quot;&quot;
+</code></pre>
+
+<hr />
+<h2 id="whatsapp-forwarding-optional">WhatsApp Forwarding (Optional)</h2>
+<h3 id="setup-twilio-for-whatsapp">Setup Twilio for WhatsApp</h3>
+<ol>
+<li><strong>Create Twilio Account:</strong></li>
+<li>Go to <a href="https://www.twilio.com">twilio.com</a> and sign up</li>
+<li>
+<p>Get your Account SID and Auth Token from dashboard</p>
+</li>
+<li>
+<p><strong>Enable WhatsApp Sandbox:</strong></p>
+</li>
+<li>Go to Twilio Console → Messaging → Try it out → Send a WhatsApp message</li>
+<li>Follow instructions to join the sandbox</li>
+<li>
+<p>Get your WhatsApp number (format: <code>whatsapp:+14155238886</code>)</p>
+</li>
+<li>
+<p><strong>Configure in Python Script:</strong>
+   <code>python
+   TWILIO_ACCOUNT_SID = "your_account_sid"
+   TWILIO_AUTH_TOKEN = "your_auth_token"
+   TWILIO_WHATSAPP_FROM = "whatsapp:+14155238886"
+   TWILIO_WHATSAPP_TO = "whatsapp:+1234567890"
+   FORWARD_TO_WHATSAPP = True</code></p>
+</li>
+</ol>
+<hr />
+<h2 id="monitoring-and-logging">Monitoring and Logging</h2>
+<h3 id="view-logs">View Logs</h3>
+<p><strong>Log File Location:</strong></p>
+<pre class="codehilite"><code>Scripts\04-Production-Administration\smtp4dev_forwarder.log
+</code></pre>
+
+<p><strong>View Recent Logs:</strong></p>
+<pre class="codehilite"><code class="language-powershell">Get-Content Scripts\04-Production-Administration\smtp4dev_forwarder.log -Tail 50
+</code></pre>
+
+<p><strong>Log Levels:</strong>
+- <code>INFO</code>: Normal operation (new emails, forwarding success)
+- <code>ERROR</code>: Errors that need attention
+- <code>DEBUG</code>: Detailed debugging (change <code>LOG_LEVEL = logging.DEBUG</code>)</p>
+<h3 id="check-script-status">Check Script Status</h3>
+<p><strong>If running as service:</strong></p>
+<pre class="codehilite"><code class="language-powershell">Get-Service Smtp4devTelegramForwarder
+</code></pre>
+
+<p><strong>If running manually:</strong>
+- Check console output
+- Check log file for activity</p>
+<h3 id="view-captured-emails-in-smtp4dev">View Captured Emails in smtp4dev</h3>
+<p><strong>Web Interface:</strong></p>
+<pre class="codehilite"><code>http://localhost:5000
+</code></pre>
+
+<ul>
+<li>View all captured emails</li>
+<li>See email content, headers, attachments</li>
+<li>Useful for debugging</li>
+</ul>
+<hr />
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="issue-1-script-cant-connect-to-smtp4dev">Issue 1: Script Can't Connect to smtp4dev</h3>
+<p><strong>Symptoms:</strong>
+- Error: "Cannot connect to smtp4dev at http://localhost:5000"
+- Script fails to start</p>
+<p><strong>Solution:</strong>
+1. Verify smtp4dev is running:
+   <code>powershell
+   Get-Service Smtp4dev
+   # Should show Status: Running</code></p>
+<ol>
+<li>
+<p>If not running, start it:
+   <code>powershell
+   Start-Service Smtp4dev</code></p>
+</li>
+<li>
+<p>Check web interface:
+   <code>powershell
+   Start-Process "http://localhost:5000"</code></p>
+</li>
+<li>
+<p>Verify URL in script matches smtp4dev port</p>
+</li>
+</ol>
+<hr />
+<h3 id="issue-2-no-messages-forwarded-to-telegram">Issue 2: No Messages Forwarded to Telegram</h3>
+<p><strong>Symptoms:</strong>
+- Script running but no Telegram messages
+- Emails appear in smtp4dev but not in Telegram</p>
+<p><strong>Solution:</strong>
+1. <strong>Check Telegram credentials:</strong>
+   - Verify <code>TELEGRAM_BOT_TOKEN</code> is correct
+   - Verify <code>TELEGRAM_CHAT_ID</code> is correct
+   - Make sure you've sent <code>/start</code> to your bot</p>
+<ol>
+<li>
+<p><strong>Test Telegram bot manually:</strong>
+   <code>python
+   from telegram import Bot
+   bot = Bot(token="YOUR_TOKEN")
+   bot.send_message(chat_id="YOUR_CHAT_ID", text="Test message")</code></p>
+</li>
+<li>
+<p><strong>Check log file for errors:</strong>
+   <code>powershell
+   Get-Content smtp4dev_forwarder.log -Tail 20</code></p>
+</li>
+<li>
+<p><strong>Verify emails are being captured:</strong></p>
+</li>
+<li>Check smtp4dev web interface: http://localhost:5000</li>
+<li>Send a test email via SQL Server</li>
+</ol>
+<hr />
+<h3 id="issue-3-messages-forwarded-multiple-times">Issue 3: Messages Forwarded Multiple Times</h3>
+<p><strong>Symptoms:</strong>
+- Same email forwarded repeatedly
+- Duplicate messages in Telegram</p>
+<p><strong>Solution:</strong>
+1. <strong>Check if script is running multiple instances:</strong>
+   <code>powershell
+   Get-Process python | Where-Object {$_.Path -like "*Forward-smtp4dev*"}</code></p>
+<ol>
+<li>
+<p><strong>Stop duplicate instances:</strong>
+   <code>powershell
+   Stop-Process -Name python -Force  # Be careful - stops all Python processes</code></p>
+</li>
+<li>
+<p><strong>Enable DELETE_AFTER_FORWARD:</strong>
+   <code>python
+   DELETE_AFTER_FORWARD = True  # Delete from smtp4dev after forwarding</code></p>
+</li>
+<li>
+<p><strong>Check log file for deduplication issues</strong></p>
+</li>
+</ol>
+<hr />
+<h3 id="issue-4-sql-server-cant-send-emails">Issue 4: SQL Server Can't Send Emails</h3>
+<p><strong>Symptoms:</strong>
+- <code>sp_send_dbmail</code> fails
+- Error: "Cannot connect to mail server"</p>
+<p><strong>Solution:</strong>
+1. <strong>Verify GTEC profile exists:</strong>
+   <code>sql
+   SELECT name FROM msdb.dbo.sysmail_profile WHERE name = 'GTEC';</code></p>
+<ol>
+<li>
+<p><strong>Check profile configuration:</strong>
+   <code>sql
+   SELECT
+       p.name AS ProfileName,
+       a.mailserver_name AS MailServer,
+       a.port AS Port
+   FROM msdb.dbo.sysmail_profile p
+   INNER JOIN msdb.dbo.sysmail_profileaccount pa ON p.profile_id = pa.profile_id
+   INNER JOIN msdb.dbo.sysmail_account a ON pa.account_id = a.account_id
+   WHERE p.name = 'GTEC';</code>
+   Should show: <code>localhost:25</code></p>
+</li>
+<li>
+<p><strong>Re-run setup script if needed:</strong>
+   <code>powershell
+   .\Setup-Dummy-Mail-Server.ps1 -ProfileName "GTEC" -SmtpPort 25</code></p>
+</li>
+</ol>
+<hr />
+<h3 id="issue-5-python-dependencies-missing">Issue 5: Python Dependencies Missing</h3>
+<p><strong>Symptoms:</strong>
+- Import errors when running script
+- "Module not found" errors</p>
+<p><strong>Solution:</strong></p>
+<pre class="codehilite"><code class="language-powershell">cd Scripts\04-Production-Administration
+pip install -r requirements.txt
+</code></pre>
+
+<p><strong>Required packages:</strong>
+- <code>requests</code>
+- <code>python-telegram-bot</code>
+- <code>twilio</code> (optional, for WhatsApp)</p>
+<hr />
+<h2 id="advanced-configuration">Advanced Configuration</h2>
+<h3 id="custom-message-formatting">Custom Message Formatting</h3>
+<p>Edit <code>format_email_message()</code> function in <code>Forward-smtp4dev-to-Telegram.py</code>:</p>
+<pre class="codehilite"><code class="language-python">def format_email_message(message: Dict) -&gt; str:
+    # Customize formatting here
+    subject = message.get('subject', 'No Subject')
+    from_addr = message.get('from', 'Unknown')
+    body = message.get('htmlBody') or message.get('textBody', 'No body')
+
+    # Your custom format
+    formatted = f&quot;🚨 Alert: {subject}\n\n{body}&quot;
+    return formatted
+</code></pre>
+
+<h3 id="filtering-emails">Filtering Emails</h3>
+<p>Add filtering logic in the main loop:</p>
+<pre class="codehilite"><code class="language-python">for message in new_messages:
+    # Only forward emails matching certain criteria
+    subject = message.get('subject', '')
+    if 'ALERT' not in subject.upper():
+        continue  # Skip this email
+
+    # Forward the email
+    # ... rest of forwarding code
+</code></pre>
+
+<h3 id="rate-limiting">Rate Limiting</h3>
+<p>Telegram has rate limits (30 messages/second). The script handles this automatically, but you can add delays:</p>
+<pre class="codehilite"><code class="language-python">import time
+
+# Add delay between forwards
+time.sleep(1)  # 1 second delay
+forward_to_telegram(formatted_message, message_id)
+</code></pre>
+
+<hr />
+<h2 id="best-practices">Best Practices</h2>
+<ol>
+<li><strong>Security:</strong></li>
+<li>Use environment variables for sensitive credentials</li>
+<li>Don't commit bot tokens to Git</li>
+<li>
+<p>Restrict access to log files</p>
+</li>
+<li>
+<p><strong>Reliability:</strong></p>
+</li>
+<li>Run Python script as Windows service for 24/7 operation</li>
+<li>Monitor log files regularly</li>
+<li>
+<p>Set up alerts if script stops running</p>
+</li>
+<li>
+<p><strong>Performance:</strong></p>
+</li>
+<li>Adjust <code>POLL_INTERVAL</code> based on email volume</li>
+<li>Use <code>DELETE_AFTER_FORWARD = True</code> to prevent smtp4dev from filling up</li>
+<li>
+<p>Monitor smtp4dev database size</p>
+</li>
+<li>
+<p><strong>Testing:</strong></p>
+</li>
+<li>Test with small volume first</li>
+<li>Verify message formatting</li>
+<li>Check Telegram message limits (4096 characters)</li>
+</ol>
+<hr />
+<h2 id="related-scripts-and-documentation">Related Scripts and Documentation</h2>
+<ul>
+<li><a href="./Setup-Dummy-Mail-Server.md">Setup-Dummy-Mail-Server.md</a> - smtp4dev setup guide</li>
+<li><a href="./GTEC-Mail-Profile-Troubleshooting.md">GTEC-Mail-Profile-Troubleshooting.md</a> - Mail profile troubleshooting</li>
+<li><code>Scripts\04-Production-Administration\Setup-Dummy-Mail-Server.ps1</code> - Automated setup</li>
+<li><code>Scripts\04-Production-Administration\Forward-smtp4dev-to-Telegram.py</code> - Python forwarder</li>
+<li><code>Scripts\04-Production-Administration\Forward-smtp4dev-to-Telegram-README.md</code> - Detailed Python script documentation</li>
+</ul>
+<hr />
+<h2 id="notes">Notes</h2>
+<p><strong>⚠️ WARNING:</strong>
+- This setup is for development/testing or internal use
+- Don't use in production without proper security review
+- Telegram/WhatsApp APIs have rate limits
+- Monitor API usage to avoid costs (Twilio charges for WhatsApp)</p>
+<p><strong>💡 TIP:</strong>
+- Keep smtp4dev web interface open to monitor emails in real-time
+- Use Telegram groups for team notifications
+- Set up multiple bots for different notification types</p>
+<p><strong>📝 NOTE:</strong>
+- Messages are truncated to 3000 characters (Telegram limit is 4096)
+- HTML emails are converted to plain text
+- Attachments are not forwarded (only email body)
+- The bridge is transparent - your code doesn't know emails go to Telegram</p>
+<hr />
+<h2 id="summary">Summary</h2>
+<p>This setup provides a <strong>transparent bridge</strong> between email-based systems and modern messaging platforms:</p>
+<p>✅ <strong>No code changes</strong> - existing email code works as-is
+✅ <strong>Automatic forwarding</strong> - emails become Telegram/WhatsApp messages
+✅ <strong>Easy to set up</strong> - follow the steps above
+✅ <strong>Flexible</strong> - can enable/disable forwarding, customize formatting
+✅ <strong>Reliable</strong> - runs as service, logs all activity</p>
+<p>Your application code continues to use <code>sp_send_dbmail</code>, but notifications now appear in Telegram/WhatsApp automatically!</p>
+</body>
+</html>

@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>FIX Log Monitor   SFC Compliance Monitoring</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 { border-bottom: 2px solid #3498db; padding-bottom: 0.3em; }
+        h2 { border-bottom: 1px solid #ecf0f1; padding-bottom: 0.2em; }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1em;
+            overflow-x: auto;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 1em 0;
+            padding-left: 1em;
+            color: #666;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 2em 0;
+            padding: 1em;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .pdf-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 8px 16px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .pdf-link:hover {
+            background-color: #c0392b;
+        }
+    </style>
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <p><a href="FIX Log Monitor - SFC Compliance Monitoring.pdf" class="pdf-link">📄 Download PDF Version</a></p>
+    <h1 id="fix-log-monitor-sfc-compliance-monitoring">FIX Log Monitor - SFC Compliance Monitoring</h1>
+<h2 id="metadata">Metadata</h2>
+<p><strong>Category:</strong> Trading System Administration - FIX Protocol Monitoring
+<strong>Last Updated:</strong> 2024-12-26
+<strong>Author:</strong> ATS Production Team
+<strong>Version:</strong> 1.0
+<strong>Review Date:</strong> 2025-03-26
+<strong>Status:</strong> Active</p>
+<hr />
+<h2 id="purpose">Purpose</h2>
+<p>This procedure covers the deployment, configuration, and operation of the FIX Log Monitor, an extension of the ATS Health Monitor that monitors FIX protocol messages from QuickFixJ log files for SFC (Securities and Futures Commission) compliance violations, order rejections, and critical Ghost STP (Stop Order) detection.</p>
+<p><strong>Key Features:</strong>
+- Real-time FIX message monitoring from QuickFixJ log files
+- SFC compliance violation detection
+- Ghost STP order detection (revived cancelled stop orders)
+- Order rejection monitoring with SFC reporting
+- TOML-based detection rules (no JavaScript, pure Go)
+- Integration with ATS Health Monitor dashboard
+- Telegram alerting for critical events
+- 7-year data retention for SFC compliance</p>
+<p><strong>When to Use:</strong></p>
+<ul>
+<li>Monitoring FIX protocol messages for SFC compliance</li>
+<li>Detecting Ghost STP orders (critical priority)</li>
+<li>Tracking order rejections requiring SFC reporting</li>
+<li>Monitoring FIX session health and message integrity</li>
+<li>Generating SFC compliance reports on-demand</li>
+<li>Real-time alerting for compliance violations</li>
+</ul>
+<h3 id="procedure-overview">Procedure Overview</h3>
+<pre class="codehilite"><code class="language-mermaid">flowchart TD
+    Start([Start FIX Log Monitor Setup]) --&gt; CheckPrereq{Check Prerequisites}
+    CheckPrereq --&gt;|Missing| Install[Install Go &amp; Dependencies]
+    CheckPrereq --&gt;|Pass| Build[Build ATS Health Monitor with FIX Extension]
+    Install --&gt; Build
+    Build --&gt; Config[Configure config.toml with FIX Section]
+    Config --&gt; Validate[Validate Configuration]
+    Validate --&gt;|Errors| Config
+    Validate --&gt;|OK| CheckLog{Log File Exists?}
+    CheckLog --&gt;|No| SetupLog[Setup QuickFixJ Log File]
+    CheckLog --&gt;|Yes| Test[Test FIX Monitor]
+    SetupLog --&gt; Test
+    Test --&gt; Deploy{Deployment Type}
+    Deploy --&gt;|Manual| ManualRun[Run Manually]
+    Deploy --&gt;|Production| ScheduledTask[Create Scheduled Task]
+    ManualRun --&gt; Monitor[Monitor FIX Messages]
+    ScheduledTask --&gt; Monitor
+    Monitor --&gt; Detect{Detection Triggered?}
+    Detect --&gt;|Yes| Alert[Send Telegram Alert]
+    Detect --&gt;|No| Continue[Continue Monitoring]
+    Alert --&gt; Store[Store in Database]
+    Store --&gt; Continue
+    Continue --&gt; Monitor
+</code></pre>
+
+<hr />
+<h2 id="prerequisites">Prerequisites</h2>
+<h3 id="required-access">Required Access</h3>
+<ul>
+<li>[ ] Read access to QuickFixJ log file directory</li>
+<li>[ ] Read access to FIX message log file: <code>FIX.4.2-{session_id}-{target}.messages.log</code></li>
+<li>[ ] Write access to ATS Health Monitor database directory</li>
+<li>[ ] Network access to Telegram API (if using Telegram notifications)</li>
+<li>[ ] Administrator access (if creating scheduled task)</li>
+</ul>
+<h3 id="required-tools">Required Tools</h3>
+<ul>
+<li>[ ] Go programming language (version 1.21 or later)</li>
+<li>[ ] PowerShell (for Windows execution)</li>
+<li>[ ] ATS Health Monitor (base installation)</li>
+<li>[ ] Text editor (for configuration)</li>
+<li>[ ] Telegram account (if using Telegram notifications)</li>
+</ul>
+<h3 id="required-information">Required Information</h3>
+<ul>
+<li>[ ] QuickFixJ log file path: <code>C:\Apps\QuickFixJ\logs\FIX.4.2-gamlfix001-IB.messages.log</code></li>
+<li>[ ] FIX session ID: <code>FIX.4.2-gamlfix001-IB</code></li>
+<li>[ ] Sender Comp ID: <code>gamlfix001</code></li>
+<li>[ ] Target Comp ID: <code>IB</code></li>
+<li>[ ] Telegram bot token (if using Telegram - from @BotFather)</li>
+<li>[ ] Telegram chat ID (if using Telegram - user ID or group ID)</li>
+<li>[ ] SFC compliance requirements (7-year retention, reporting schedule)</li>
+</ul>
+<h3 id="pre-conditions">Pre-Conditions</h3>
+<ul>
+<li>[ ] ATS Health Monitor is installed and configured</li>
+<li>[ ] QuickFixJ is running and generating log files</li>
+<li>[ ] FIX message log file exists and is being written</li>
+<li>[ ] Go is installed and in PATH (verify with <code>go version</code>)</li>
+<li>[ ] Network connectivity to Telegram API (if using Telegram)</li>
+<li>[ ] Database directory is writable</li>
+</ul>
+<hr />
+<h2 id="procedure-steps">Procedure Steps</h2>
+<h3 id="step-1-verify-ats-health-monitor-installation">Step 1: Verify ATS Health Monitor Installation</h3>
+<p><strong>Action:</strong></p>
+<p>Verify that ATS Health Monitor is installed and working:</p>
+<pre class="codehilite"><code class="language-powershell">cd I:\SOP-Management\Scripts\05-Production-ATS-Administration\ATS-Health-Monitor
+
+# Check if executable exists
+Test-Path .\ATS-Health-Monitor.exe
+
+# Test run (should show help)
+.\ATS-Health-Monitor.exe -h
+</code></pre>
+
+<p><strong>Expected Result:</strong></p>
+<ul>
+<li><code>ATS-Health-Monitor.exe</code> exists</li>
+<li>Program runs and shows help or configuration</li>
+<li>No errors</li>
+</ul>
+<p><strong>Troubleshooting:</strong></p>
+<ul>
+<li>If executable not found, build ATS Health Monitor first (see ATS Health Monitor SOP)</li>
+<li>If errors occur, check Go installation and dependencies</li>
+</ul>
+<hr />
+<h3 id="step-2-locate-quickfixj-log-file">Step 2: Locate QuickFixJ Log File</h3>
+<p><strong>Action:</strong></p>
+<p>Find the FIX message log file:</p>
+<pre class="codehilite"><code class="language-powershell"># Default QuickFixJ log location
+$logPath = &quot;C:\Apps\QuickFixJ\logs\FIX.4.2-gamlfix001-IB.messages.log&quot;
+
+# Verify file exists
+Test-Path $logPath
+
+# Check file is being written (should have recent modification time)
+Get-Item $logPath | Select-Object LastWriteTime, Length
+</code></pre>
+
+<p><strong>Expected Result:</strong></p>
+<ul>
+<li>Log file exists</li>
+<li>File has recent modification time (within last few minutes)</li>
+<li>File size is increasing (if QuickFixJ is active)</li>
+</ul>
+<p><strong>Troubleshooting:</strong></p>
+<ul>
+<li>If file not found, check QuickFixJ configuration for log file path</li>
+<li>If file not updating, verify QuickFixJ is running and connected</li>
+<li>Check file permissions (must be readable)</li>
+</ul>
+<hr />
+<h3 id="step-3-configure-fix-monitoring-in-configtoml">Step 3: Configure FIX Monitoring in config.toml</h3>
+<p><strong>Action:</strong></p>
+<p>Edit the ATS Health Monitor <code>config.toml</code> file and add FIX monitoring section:</p>
+<pre class="codehilite"><code class="language-powershell"># Open config.toml for editing
+notepad .\config.toml
+</code></pre>
+
+<p><strong>Add FIX monitoring configuration:</strong></p>
+<pre class="codehilite"><code class="language-toml"># FIX Log Monitoring Configuration
+[fix_monitor]
+enabled = true
+log_file = &quot;C:\\Apps\\QuickFixJ\\logs\\FIX.4.2-gamlfix001-IB.messages.log&quot;
+session_id = &quot;FIX.4.2-gamlfix001-IB&quot;
+sender_comp_id = &quot;gamlfix001&quot;
+target_comp_id = &quot;IB&quot;
+
+# FIX Session Configuration
+[fix_monitor.session]
+begin_string = &quot;FIX.4.2&quot;
+delimiter_auto_detect = true  # Auto-detect SOH (0x01) or pipe (|)
+timezone = &quot;Asia/Hong_Kong&quot;
+date_format = &quot;20060102-15:04:05.000&quot;
+
+# Heartbeat Monitoring
+[fix_monitor.heartbeat]
+expected_interval_seconds = 30
+timeout_minutes = 5
+
+# Detection Rules
+[fix_monitor.detections]
+# Order Rejection Detection
+[[fix_monitor.detections.order_rejections]]
+enabled = true
+severity = &quot;high&quot;
+sfc_reportable = true
+
+[[fix_monitor.detections.order_rejections.rules]]
+name = &quot;price_out_of_range&quot;
+rule_type = &quot;order_rejection&quot;
+required_tags = [35, 39, 58]  # MsgType, OrdStatus, Text
+msg_types = [&quot;8&quot;]  # Execution Reports only
+ord_statuses = [&quot;8&quot;]  # Rejected only
+match_conditions = [
+    &quot;text_contains('price')&quot;,
+    &quot;text_contains('range')&quot;
+]
+reason_code = &quot;PRICE_OUT_OF_RANGE&quot;
+
+[[fix_monitor.detections.order_rejections.rules]]
+name = &quot;credit_margin_violation&quot;
+rule_type = &quot;order_rejection&quot;
+required_tags = [35, 39, 58]
+msg_types = [&quot;8&quot;]
+ord_statuses = [&quot;8&quot;]
+match_conditions = [
+    &quot;text_contains('margin')&quot;,
+    &quot;text_contains('credit')&quot;
+]
+reason_code = &quot;CREDIT_MARGIN_VIOLATION&quot;
+
+# Ghost STP Detection
+[[fix_monitor.detections.ghost_stp]]
+enabled = true
+severity = &quot;critical&quot;
+sfc_reportable = true
+max_cancellation_age_hours = 72
+match_confidence_threshold = 0.7
+price_variance_tolerance = 0.001
+quantity_variance_tolerance = 0.01
+
+[[fix_monitor.detections.ghost_stp.ib_specific]]
+weekend_monitoring_enabled = true
+friday_cancellation_window = &quot;15:00-17:00&quot;
+monday_revival_window = &quot;09:00-11:00&quot;
+
+# Compliance Violation Detection
+[[fix_monitor.detections.compliance_violations]]
+enabled = true
+severity = &quot;high&quot;
+sfc_reportable = true
+
+[[fix_monitor.detections.compliance_violations.rules]]
+name = &quot;missing_required_tag&quot;
+rule_type = &quot;compliance&quot;
+required_tags = [35, 11, 55, 54, 38, 44, 40, 59, 150, 39, 6, 14, 151, 60]
+sfc_required_tags = [35, 11, 55, 54, 38, 44, 40, 59, 150, 39, 6, 14, 151, 60]
+reason_code = &quot;MISSING_SFC_REQUIRED_TAG&quot;
+</code></pre>
+
+<p><strong>Expected Result:</strong></p>
+<ul>
+<li>Configuration file updated with FIX monitoring section</li>
+<li>All required fields specified</li>
+<li>Detection rules configured</li>
+</ul>
+<p><strong>Troubleshooting:</strong></p>
+<ul>
+<li>Validate configuration using <code>scripts/tools/Validate-Config.ps1</code> (see Step 4)</li>
+<li>Check file paths use double backslashes (<code>\\</code>) for Windows</li>
+<li>Verify TOML syntax is correct (no missing brackets or quotes)</li>
+</ul>
+<hr />
+<h3 id="step-4-validate-configuration">Step 4: Validate Configuration</h3>
+<p><strong>Action:</strong></p>
+<p>Run the configuration validation script:</p>
+<pre class="codehilite"><code class="language-powershell"># Run validation
+.\scripts\tools\Validate-Config.ps1 -ConfigPath .\config.toml
+</code></pre>
+
+<p><strong>Expected Result:</strong></p>
+<ul>
+<li>Configuration validation passes</li>
+<li>No errors or warnings</li>
+<li>All required fields present</li>
+<li>File paths exist and are accessible</li>
+</ul>
+<p><strong>Troubleshooting:</strong></p>
+<ul>
+<li>Fix any validation errors reported</li>
+<li>Check file paths are correct</li>
+<li>Verify TOML syntax</li>
+<li>Ensure all required fields are specified</li>
+</ul>
+<hr />
+<h3 id="step-5-build-ats-health-monitor-with-fix-extension">Step 5: Build ATS Health Monitor with FIX Extension</h3>
+<p><strong>Action:</strong></p>
+<p>Build the ATS Health Monitor executable with FIX monitoring support:</p>
+<pre class="codehilite"><code class="language-powershell"># Use unified build script
+.\build.ps1 -Install -Backend -Frontend
+
+# Or build manually
+go mod tidy
+go build -o ATS-Health-Monitor.exe .
+</code></pre>
+
+<p><strong>Expected Result:</strong></p>
+<ul>
+<li>Build completes successfully</li>
+<li><code>ATS-Health-Monitor.exe</code> created</li>
+<li>No compilation errors</li>
+<li>FIX monitoring code included</li>
+</ul>
+<p><strong>Troubleshooting:</strong></p>
+<ul>
+<li>If build fails, check Go version (requires 1.21+)</li>
+<li>Verify all dependencies are installed (<code>go mod tidy</code>)</li>
+<li>Check for syntax errors in Go code</li>
+</ul>
+<hr />
+<h3 id="step-6-test-fix-monitoring">Step 6: Test FIX Monitoring</h3>
+<p><strong>Action:</strong></p>
+<p>Test the FIX monitor in console mode first:</p>
+<pre class="codehilite"><code class="language-powershell"># Run in console mode (no web dashboard)
+.\ATS-Health-Monitor.exe -config config.toml
+
+# Or run with web dashboard
+.\ATS-Health-Monitor.exe -web -port 8080 -config config.toml
+</code></pre>
+
+<p><strong>Expected Result:</strong></p>
+<ul>
+<li>Program starts without errors</li>
+<li>Log file is being monitored</li>
+<li>Messages are being parsed (check console output)</li>
+<li>No errors in parsing or detection</li>
+</ul>
+<p><strong>Troubleshooting:</strong></p>
+<ul>
+<li>If log file not found, verify path in config.toml</li>
+<li>If parsing errors, check log file format (should be pipe or SOH delimited)</li>
+<li>If no messages detected, verify QuickFixJ is generating messages</li>
+<li>Check file permissions (must be readable)</li>
+</ul>
+<hr />
+<h3 id="step-7-configure-telegram-alerting-optional">Step 7: Configure Telegram Alerting (Optional)</h3>
+<p><strong>Action:</strong></p>
+<p>If using Telegram alerts, configure in <code>config.toml</code>:</p>
+<pre class="codehilite"><code class="language-toml">[telegram]
+enabled = true
+token = &quot;YOUR_BOT_TOKEN&quot;
+chat_id = &quot;YOUR_CHAT_ID&quot;
+show_on_dashboard = true
+</code></pre>
+
+<p><strong>Expected Result:</strong></p>
+<ul>
+<li>Telegram configuration added</li>
+<li>Bot token and chat ID specified</li>
+<li>Alerts will be sent to Telegram</li>
+</ul>
+<p><strong>Troubleshooting:</strong></p>
+<ul>
+<li>Verify bot token is correct (from @BotFather)</li>
+<li>Check chat ID is correct (user ID or group ID)</li>
+<li>Test Telegram connection separately</li>
+</ul>
+<hr />
+<h3 id="step-8-deploy-as-windows-service-production">Step 8: Deploy as Windows Service (Production)</h3>
+<p><strong>Action:</strong></p>
+<p>For production deployment, create a Windows Scheduled Task:</p>
+<pre class="codehilite"><code class="language-powershell"># Create scheduled task to run on startup
+$action = New-ScheduledTaskAction -Execute &quot;I:\SOP-Management\Scripts\05-Production-ATS-Administration\ATS-Health-Monitor\ATS-Health-Monitor.exe&quot; -Argument &quot;-web -port 8080 -config config.toml&quot; -WorkingDirectory &quot;I:\SOP-Management\Scripts\05-Production-ATS-Administration\ATS-Health-Monitor&quot;
+$trigger = New-ScheduledTaskTrigger -AtStartup
+$principal = New-ScheduledTaskPrincipal -UserId &quot;$env:USERDOMAIN\$env:USERNAME&quot; -LogonType ServiceAccount -RunLevel Highest
+Register-ScheduledTask -TaskName &quot;ATS Health Monitor with FIX&quot; -Action $action -Trigger $trigger -Principal $principal -Description &quot;ATS Health Monitor with FIX Log Monitoring&quot;
+</code></pre>
+
+<p><strong>Expected Result:</strong></p>
+<ul>
+<li>Scheduled task created</li>
+<li>Service starts automatically on system startup</li>
+<li>FIX monitoring runs continuously</li>
+</ul>
+<p><strong>Troubleshooting:</strong></p>
+<ul>
+<li>Verify task is running: <code>Get-ScheduledTask -TaskName "ATS Health Monitor with FIX"</code></li>
+<li>Check task history for errors</li>
+<li>Verify executable path is correct</li>
+</ul>
+<hr />
+<h3 id="step-9-access-dashboard">Step 9: Access Dashboard</h3>
+<p><strong>Action:</strong></p>
+<p>Access the web dashboard to view FIX monitoring data:</p>
+<pre class="codehilite"><code class="language-powershell"># Open browser to dashboard
+Start-Process &quot;http://localhost:8080&quot;
+</code></pre>
+
+<p><strong>Expected Result:</strong></p>
+<ul>
+<li>Dashboard loads successfully</li>
+<li>FIX monitoring section visible</li>
+<li>Recent FIX messages displayed</li>
+<li>Detection results shown</li>
+<li>Ghost STP matches displayed (if any)</li>
+</ul>
+<p><strong>Troubleshooting:</strong></p>
+<ul>
+<li>If dashboard not accessible, check web server is running</li>
+<li>Verify port 8080 is not blocked by firewall</li>
+<li>Check console output for web server errors</li>
+</ul>
+<hr />
+<h3 id="step-10-monitor-and-verify">Step 10: Monitor and Verify</h3>
+<p><strong>Action:</strong></p>
+<p>Monitor the system for a period to verify it's working:</p>
+<pre class="codehilite"><code class="language-powershell"># Check console output for:
+# - FIX messages being parsed
+# - Detections being triggered
+# - Alerts being sent
+
+# Check database for stored messages
+# (via dashboard or direct database query)
+</code></pre>
+
+<p><strong>Expected Result:</strong></p>
+<ul>
+<li>FIX messages are being parsed and stored</li>
+<li>Detection rules are evaluating correctly</li>
+<li>Alerts are being sent (if configured)</li>
+<li>Dashboard shows real-time data</li>
+</ul>
+<p><strong>Troubleshooting:</strong></p>
+<ul>
+<li>If no messages detected, verify log file is being written</li>
+<li>If detections not triggering, check rule configuration</li>
+<li>If alerts not sending, verify Telegram configuration</li>
+</ul>
+<hr />
+<h2 id="verification">Verification</h2>
+<h3 id="verify-fix-monitoring-is-working">Verify FIX Monitoring is Working</h3>
+<p><strong>Check 1: Log File Monitoring</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Verify log file is being read
+# Check console output for &quot;Processing FIX message&quot; or similar
+</code></pre>
+
+<p><strong>Check 2: Message Parsing</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Check dashboard for FIX messages
+# Navigate to: http://localhost:8080
+# Look for FIX monitoring section
+# Verify messages are being displayed
+</code></pre>
+
+<p><strong>Check 3: Detection Rules</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Trigger a test condition (if possible)
+# Or wait for natural occurrence
+# Verify detection is triggered and alert sent
+</code></pre>
+
+<p><strong>Check 4: Database Storage</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Check database contains FIX messages
+# Via dashboard: View FIX messages
+# Or direct database query (if accessible)
+</code></pre>
+
+<p><strong>Check 5: Telegram Alerts (if configured)</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Verify Telegram bot is receiving alerts
+# Check Telegram chat for alert messages
+# Verify alert format is correct
+</code></pre>
+
+<hr />
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="issue-log-file-not-found">Issue: Log File Not Found</h3>
+<p><strong>Symptoms:</strong>
+- Error: "Log file not found"
+- No messages being processed</p>
+<p><strong>Solutions:</strong>
+1. Verify log file path in <code>config.toml</code> is correct
+2. Check file exists: <code>Test-Path "C:\Apps\QuickFixJ\logs\FIX.4.2-gamlfix001-IB.messages.log"</code>
+3. Verify QuickFixJ is running and generating logs
+4. Check file permissions (must be readable)</p>
+<hr />
+<h3 id="issue-fix-messages-not-parsing">Issue: FIX Messages Not Parsing</h3>
+<p><strong>Symptoms:</strong>
+- No messages in database
+- Parsing errors in console</p>
+<p><strong>Solutions:</strong>
+1. Check log file format (should be pipe <code>|</code> or SOH <code>0x01</code> delimited)
+2. Verify delimiter auto-detection is enabled: <code>delimiter_auto_detect = true</code>
+3. Check console output for parsing errors
+4. Verify FIX message format matches expected structure</p>
+<hr />
+<h3 id="issue-detection-rules-not-triggering">Issue: Detection Rules Not Triggering</h3>
+<p><strong>Symptoms:</strong>
+- Messages are parsed but no detections
+- No alerts being sent</p>
+<p><strong>Solutions:</strong>
+1. Verify detection rules are enabled: <code>enabled = true</code>
+2. Check rule conditions match actual message content
+3. Verify required tags are present in messages
+4. Test with a known message that should trigger detection</p>
+<hr />
+<h3 id="issue-ghost-stp-not-detecting">Issue: Ghost STP Not Detecting</h3>
+<p><strong>Symptoms:</strong>
+- Stop orders executed but not detected as Ghost STP</p>
+<p><strong>Solutions:</strong>
+1. Verify Ghost STP detection is enabled
+2. Check cancelled orders are being stored in database
+3. Verify match confidence threshold (default 0.7 = 70%)
+4. Check time window (default 72 hours)
+5. Verify symbol, side, quantity, and price matching logic</p>
+<hr />
+<h3 id="issue-telegram-alerts-not-sending">Issue: Telegram Alerts Not Sending</h3>
+<p><strong>Symptoms:</strong>
+- Detections triggered but no Telegram messages</p>
+<p><strong>Solutions:</strong>
+1. Verify Telegram is enabled: <code>[telegram].enabled = true</code>
+2. Check bot token is correct
+3. Verify chat ID is correct
+4. Test Telegram connection separately
+5. Check console output for Telegram errors</p>
+<hr />
+<h3 id="issue-dashboard-not-showing-fix-data">Issue: Dashboard Not Showing FIX Data</h3>
+<p><strong>Symptoms:</strong>
+- Dashboard loads but no FIX section
+- FIX messages not displayed</p>
+<p><strong>Solutions:</strong>
+1. Verify web mode is enabled: <code>-web</code> flag
+2. Check FIX monitoring is enabled in config: <code>[fix_monitor].enabled = true</code>
+3. Verify database contains FIX messages
+4. Check browser console for JavaScript errors
+5. Refresh dashboard page</p>
+<hr />
+<h2 id="related-procedures">Related Procedures</h2>
+<ul>
+<li><a href="./ATS%20Health%20Monitor%20-%20Comprehensive%20Deployment%20and%20Configuration%20Guide.md">ATS Health Monitor - Comprehensive Deployment and Configuration Guide</a></li>
+<li><a href="./ATS%20Health%20Monitor%20-%20TOML%20Configuration%20Guide.md">ATS Health Monitor - TOML Configuration Guide</a></li>
+</ul>
+<h2 id="related-scripts">Related Scripts</h2>
+<ul>
+<li><a href="../../Scripts/05-Production-ATS-Administration/ATS-Health-Monitor/ATS-Health-Monitor.exe">ATS-Health-Monitor.exe</a></li>
+<li><a href="../../Scripts/05-Production-ATS-Administration/ATS-Health-Monitor/build.ps1">build.ps1</a></li>
+<li><a href="../../Scripts/05-Production-ATS-Administration/ATS-Health-Monitor/scripts/tools/Validate-Config.ps1">scripts/tools/Validate-Config.ps1</a></li>
+</ul>
+<hr />
+<h2 id="configuration-reference">Configuration Reference</h2>
+<h3 id="required-toml-sections">Required TOML Sections</h3>
+<pre class="codehilite"><code class="language-toml">[fix_monitor]
+enabled = true
+log_file = &quot;C:\\Apps\\QuickFixJ\\logs\\FIX.4.2-gamlfix001-IB.messages.log&quot;
+session_id = &quot;FIX.4.2-gamlfix001-IB&quot;
+sender_comp_id = &quot;gamlfix001&quot;
+target_comp_id = &quot;IB&quot;
+</code></pre>
+
+<h3 id="detection-rule-format">Detection Rule Format</h3>
+<pre class="codehilite"><code class="language-toml">[[fix_monitor.detections.order_rejections.rules]]
+name = &quot;rule_name&quot;
+rule_type = &quot;order_rejection&quot;
+required_tags = [35, 39, 58]
+msg_types = [&quot;8&quot;]
+ord_statuses = [&quot;8&quot;]
+match_conditions = [
+    &quot;text_contains('keyword')&quot;
+]
+reason_code = &quot;REASON_CODE&quot;
+</code></pre>
+
+<h3 id="ghost-stp-configuration">Ghost STP Configuration</h3>
+<pre class="codehilite"><code class="language-toml">[[fix_monitor.detections.ghost_stp]]
+enabled = true
+severity = &quot;critical&quot;
+max_cancellation_age_hours = 72
+match_confidence_threshold = 0.7
+price_variance_tolerance = 0.001
+quantity_variance_tolerance = 0.01
+</code></pre>
+
+<hr />
+<h2 id="sfc-compliance-notes">SFC Compliance Notes</h2>
+<h3 id="data-retention">Data Retention</h3>
+<ul>
+<li><strong>7-year retention</strong> required for SFC compliance</li>
+<li>All FIX messages, detections, and alerts stored in database</li>
+<li>Automatic retention policy enforcement</li>
+</ul>
+<h3 id="reporting-requirements">Reporting Requirements</h3>
+<ul>
+<li><strong>Immediate reporting</strong> (within 24 hours):</li>
+<li>Ghost STP incidents</li>
+<li>Critical compliance violations</li>
+<li>
+<p>Position limit breaches</p>
+</li>
+<li>
+<p><strong>Periodic reporting</strong> (monthly):</p>
+</li>
+<li>Summary of all compliance violations</li>
+<li>Order rejection analysis</li>
+<li>System health metrics</li>
+</ul>
+<h3 id="on-demand-reports">On-Demand Reports</h3>
+<ul>
+<li>Generate SFC compliance reports via dashboard</li>
+<li>Export data for regulatory submission</li>
+<li>Query historical data for audits</li>
+</ul>
+<hr />
+<h2 id="maintenance">Maintenance</h2>
+<h3 id="regular-tasks">Regular Tasks</h3>
+<ul>
+<li><strong>Daily</strong>: Monitor dashboard for critical alerts</li>
+<li><strong>Weekly</strong>: Review detection rules and adjust if needed</li>
+<li><strong>Monthly</strong>: Generate SFC compliance reports</li>
+<li><strong>Quarterly</strong>: Review and update detection rules</li>
+<li><strong>Annually</strong>: Audit data retention and compliance</li>
+</ul>
+<h3 id="database-maintenance">Database Maintenance</h3>
+<ul>
+<li>Monitor database size (7-year retention can grow large)</li>
+<li>Implement archival strategy for old data</li>
+<li>Regular backups of database</li>
+<li>Monitor database performance</li>
+</ul>
+<hr />
+<h2 id="last-updated">Last Updated</h2>
+<p><strong>Date:</strong> 2024-12-26
+<strong>Author:</strong> ATS Production Team
+<strong>Version:</strong> 1.0
+<strong>Next Review:</strong> 2025-03-26</p>
+</body>
+</html>

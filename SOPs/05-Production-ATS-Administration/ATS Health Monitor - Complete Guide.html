@@ -1,0 +1,3489 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>ATS Health Monitor   Complete Guide</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 { border-bottom: 2px solid #3498db; padding-bottom: 0.3em; }
+        h2 { border-bottom: 1px solid #ecf0f1; padding-bottom: 0.2em; }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1em;
+            overflow-x: auto;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 1em 0;
+            padding-left: 1em;
+            color: #666;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 2em 0;
+            padding: 1em;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .pdf-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 8px 16px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .pdf-link:hover {
+            background-color: #c0392b;
+        }
+    </style>
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <p><a href="ATS Health Monitor - Complete Guide.pdf" class="pdf-link">📄 Download PDF Version</a></p>
+    <h1 id="ats-health-monitor-complete-guide">ATS Health Monitor - Complete Guide</h1>
+<h2 id="metadata">Metadata</h2>
+<p><strong>Category:</strong> Trading System Administration - Monitoring
+<strong>Last Updated:</strong> 2025-12-17
+<strong>Author:</strong> ATS Production Team
+<strong>Version:</strong> 5.9
+<strong>Review Date:</strong> 2026-01-17
+<strong>Status:</strong> Active</p>
+<hr />
+<h2 id="purpose">Purpose</h2>
+<p>This comprehensive guide covers the complete deployment, configuration, operation, testing, and security of the ATS Health Monitor system (Version 5.2). It consolidates all documentation into a single reference, including:</p>
+<ul>
+<li><strong>Database Health Monitoring</strong> - SQL Server connection monitoring, custom queries, issue matrix</li>
+<li><strong>FIX Protocol Monitoring</strong> - QuickFixJ FIX 4.2 message parsing, order aggregation, STP detection</li>
+<li><strong>Log File Monitoring</strong> - ATS log pattern-based error detection</li>
+<li><strong>Email Monitoring</strong> - SMTP4Dev email capture and Telegram forwarding</li>
+<li><strong>Trading Positions Dashboard</strong> - IB FIX 4.2 position fields with decimal precision</li>
+<li><strong>Role-Based Access Control (RBAC)</strong> - Tab-level permissions and user authentication</li>
+<li><strong>Web Dashboard</strong> - React-based UI with real-time updates</li>
+<li><strong>REST API</strong> - Programmatic access to all monitoring data</li>
+</ul>
+<p><strong>Key Features (V5.3):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>🏠 <strong>System Overview Dashboard</strong></td>
+<td>Unified view of all monitoring areas with aggregated alerts</td>
+</tr>
+<tr>
+<td>📊 <strong>Three Issue Matrices</strong></td>
+<td>FIX Protocol, Database Health, and ATS Log detection</td>
+</tr>
+<tr>
+<td>🔐 <strong>RBAC Authentication</strong></td>
+<td>Role-based tab access with session management</td>
+</tr>
+<tr>
+<td>📈 <strong>IB FIX 4.2 Positions</strong></td>
+<td>Complete position fields with decimal precision</td>
+</tr>
+<tr>
+<td>🎯 <strong>Plane Integration</strong></td>
+<td>Automatic issue creation with routing rules</td>
+</tr>
+<tr>
+<td>💬 <strong>Telegram Integration</strong></td>
+<td>Multi-chat routing with email forwarding</td>
+</tr>
+<tr>
+<td>🌐 <strong>Modern Web Dashboard</strong></td>
+<td>React-based UI with Material-UI components</td>
+</tr>
+<tr>
+<td>✅ <strong>Hong Kong SFC Compliance</strong></td>
+<td>All critical issues flagged for regulatory reporting</td>
+</tr>
+<tr>
+<td>🗄️ <strong>Dual Database Architecture</strong></td>
+<td>ChaiSQL (performance) + TimescaleDB (compliance)</td>
+</tr>
+<tr>
+<td>📜 <strong>Historical Data Stitching</strong></td>
+<td>Combine historical positions with live data</td>
+</tr>
+<tr>
+<td>🔄 <strong>FIX History Sync</strong></td>
+<td>Load FIX messages from log files into TimescaleDB</td>
+</tr>
+<tr>
+<td>🛡️ <strong>Data Loss Prevention</strong></td>
+<td>Deduplication, audit logs, file tracking</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dashboard-overview-screenshot">Dashboard Overview Screenshot</h3>
+<p><img alt="ATS Health Monitor - Main Dashboard Overview" src="images/ats-health-monitor-overview.png" />
+<em>Figure 1: ATS Health Monitor main dashboard showing system status and navigation tabs</em></p>
+<hr />
+<h2 id="table-of-contents">Table of Contents</h2>
+<ol>
+<li><a href="#1-prerequisites">Prerequisites</a></li>
+<li><a href="#2-installation-and-build">Installation and Build</a></li>
+<li><a href="#3-configuration-guide">Configuration Guide</a></li>
+<li><a href="#31-database-configuration">Database Configuration</a></li>
+<li><a href="#32-monitor-configuration">Monitor Configuration</a></li>
+<li><a href="#33-custom-queries">Custom Queries</a></li>
+<li><a href="#34-telegram-configuration">Telegram Configuration</a></li>
+<li><a href="#35-dashboard-configuration">Dashboard Configuration</a></li>
+<li><a href="#36-trading-dashboard-positions">Trading Dashboard (Positions)</a></li>
+<li><a href="#37-fix-monitor-configuration">FIX Monitor Configuration</a></li>
+<li><a href="#38-database-issue-matrix">Database Issue Matrix</a></li>
+<li><a href="#39-ats-log-issue-matrix">ATS Log Issue Matrix</a></li>
+<li><a href="#310-smtp4dev-email-configuration">SMTP4Dev Email Configuration</a></li>
+<li><a href="#311-position-refresh-configuration">Position Refresh Configuration</a></li>
+<li><a href="#312-timezone-configuration">Timezone Configuration</a></li>
+<li><a href="#313-api-authentication">API Authentication</a></li>
+<li><a href="#314-rbac-configuration">RBAC Configuration</a></li>
+<li><a href="#315-plane-integration">Plane Integration</a></li>
+<li><a href="#316-password-encryption">Password Encryption</a></li>
+<li><a href="#317-dual-database-architecture-new-in-v53">Dual Database Architecture</a></li>
+<li><a href="#318-historical-data-stitching-new-in-v53">Historical Data Stitching</a></li>
+<li><a href="#319-dev-vs-production-log-configuration-new-in-v54">Dev vs Production Log Configuration</a></li>
+<li><a href="#321-fix-history-sync-new-in-v53">FIX History Sync</a></li>
+<li><a href="#322-data-loss-prevention-new-in-v53">Data Loss Prevention</a></li>
+<li><a href="#323-reliable-log-feed-new-in-v56">Reliable Log Feed</a></li>
+<li><a href="#4-order-aggregation--parent-child-grouping">Order Aggregation &amp; Parent-Child Grouping</a></li>
+<li><a href="#5-round-trips-dashboard-new-in-v54">Round Trips Dashboard (NEW in V5.4)</a></li>
+<li><a href="#6-ib-fix-42-position-fields">IB FIX 4.2 Position Fields</a></li>
+<li><a href="#7-rbac-role-based-access-control">RBAC (Role-Based Access Control)</a></li>
+<li><a href="#8-dashboard-features">Dashboard Features</a></li>
+<li><a href="#9-api-reference">API Reference</a></li>
+<li><a href="#10-testing-procedures">Testing Procedures</a></li>
+<li><a href="#11-deployment">Deployment</a></li>
+<li><a href="#12-troubleshooting">Troubleshooting</a></li>
+<li><a href="#13-maintenance">Maintenance</a></li>
+<li><a href="#14-related-documentation">Related Documentation</a></li>
+<li><a href="#15-change-log">Change Log</a></li>
+</ol>
+<hr />
+<h2 id="1-prerequisites">1. Prerequisites</h2>
+<h3 id="required-access">Required Access</h3>
+<ul>
+<li>[ ] Read access to SQL Server database (<code>fund2</code>)</li>
+<li>[ ] Network access to SQL Server (<code>gfprod</code>)</li>
+<li>[ ] Network access to Telegram API (if using Telegram notifications)</li>
+<li>[ ] Administrator access (if creating scheduled task)</li>
+<li>[ ] Write access to program directory (for logs and ChaiSQL)</li>
+<li>[ ] Read access to QuickFixJ log files (if using FIX monitoring)</li>
+<li>[ ] Read access to application log files (if using log monitoring)</li>
+<li>[ ] Network access to TimescaleDB/PostgreSQL (if using historical data)</li>
+</ul>
+<h3 id="required-tools">Required Tools</h3>
+<ul>
+<li>[ ] Go programming language (version 1.21 or later)</li>
+<li>[ ] Node.js 18+ and npm (for dashboard frontend)</li>
+<li>[ ] PowerShell (for Windows execution)</li>
+<li>[ ] SQL Server Management Studio (for testing queries)</li>
+<li>[ ] Text editor (for configuration)</li>
+<li>[ ] Web browser (for dashboard access)</li>
+<li>[ ] Docker (optional, for TimescaleDB - or native PostgreSQL installation)</li>
+</ul>
+<h3 id="required-information">Required Information</h3>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SQL Server name</td>
+<td><code>gfprod</code></td>
+</tr>
+<tr>
+<td>Database name</td>
+<td><code>fund2</code></td>
+</tr>
+<tr>
+<td>Database credentials</td>
+<td><code>ver2user</code> / <code>atsats</code></td>
+</tr>
+<tr>
+<td>SQL Server port</td>
+<td><code>1433</code> (default)</td>
+</tr>
+<tr>
+<td>QuickFixJ log file path</td>
+<td>(if using FIX monitoring)</td>
+</tr>
+<tr>
+<td>Telegram bot token</td>
+<td>(from @BotFather)</td>
+</tr>
+<tr>
+<td>Telegram chat ID</td>
+<td>(user ID or group ID)</td>
+</tr>
+<tr>
+<td>TimescaleDB host</td>
+<td><code>localhost</code> (default)</td>
+</tr>
+<tr>
+<td>TimescaleDB port</td>
+<td><code>5432</code> (default)</td>
+</tr>
+<tr>
+<td>TimescaleDB database</td>
+<td><code>timeseries_data</code></td>
+</tr>
+<tr>
+<td>TimescaleDB credentials</td>
+<td>(your PostgreSQL credentials)</td>
+</tr>
+<tr>
+<td>ATS history folder</td>
+<td>(path to rotated log files)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="2-installation-and-build">2. Installation and Build</h2>
+<h3 id="step-1-build-the-executable">Step 1: Build the Executable</h3>
+<pre class="codehilite"><code class="language-powershell">cd I:\SOP-Management\Scripts\05-Production-ATS-Administration\ATS-Health-Monitor
+
+# Use the unified build script (recommended)
+.\build.ps1 -Install -Backend -Frontend
+
+# Or build manually
+go mod tidy
+go build -o ATS-Health-Monitor.exe .
+cd frontend
+npm install
+npm run build
+cd ..
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- <code>ATS-Health-Monitor.exe</code> created (5-10 MB)
+- Frontend built at <code>frontend/build/</code>
+- No compilation errors</p>
+<h3 id="step-2-create-configuration">Step 2: Create Configuration</h3>
+<pre class="codehilite"><code class="language-powershell">Copy-Item config.toml.example config.toml
+.\scripts\tools\Validate-Config.ps1
+</code></pre>
+
+<h3 id="step-3-start-the-monitor">Step 3: Start the Monitor</h3>
+<pre class="codehilite"><code class="language-powershell"># Web Dashboard Mode (recommended)
+.\ATS-Health-Monitor.exe -web -port 8080 -config config.toml
+
+# Console Mode (for debugging)
+.\ATS-Health-Monitor.exe -config config.toml
+</code></pre>
+
+<p><img alt="ATS Health Monitor - Console Startup" src="images/ats-health-monitor-console-startup.png" />
+<em>Figure 2: Console output showing successful startup with database connection and web server initialization</em></p>
+<hr />
+<h2 id="3-configuration-guide">3. Configuration Guide</h2>
+<h3 id="configuration-file-location">Configuration File Location</h3>
+<p><strong>⚠️ IMPORTANT (Version 1.1+): PostgreSQL is the Source of Truth</strong></p>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Purpose</th>
+<th>When Used</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>PostgreSQL</strong> (<code>system_config</code> table)</td>
+<td><strong>Runtime configuration</strong> - All settings loaded from here</td>
+<td>Every startup, survives restarts</td>
+</tr>
+<tr>
+<td><strong>TOML File</strong> (<code>config.toml</code>)</td>
+<td>Backup, import/export, initial seed</td>
+<td>First startup of new database, manual import</td>
+</tr>
+</tbody>
+</table>
+<p><strong>What This Means:</strong>
+- ✅ Configuration changes via <strong>Setup</strong> tab GUI are saved to PostgreSQL
+- ✅ PostgreSQL config persists across container restarts (named volume)
+- ❌ Editing <code>config.toml</code> in production <strong>has no effect</strong> unless imported via GUI
+- 📤 Use <strong>Export</strong> button to backup current PostgreSQL config to TOML
+- 📥 Use <strong>Import</strong> button to restore TOML config to PostgreSQL</p>
+<p><strong>File Locations:</strong>
+- <strong>Default Location</strong>: <code>config.toml</code> in the ATS Health Monitor installation directory
+- <strong>Example File</strong>: <code>config.toml.example</code>
+- <strong>Validation Script</strong>: <code>scripts/tools/Validate-Config.ps1</code>
+- <strong>Production Deployment</strong>: See <a href="ATS%20Health%20Monitor%20-%20Production%20Deployment%20Guide.md">Production Deployment Guide</a></p>
+<h3 id="31-database-configuration">3.1 Database Configuration</h3>
+<p><strong>Section</strong>: <code>[database]</code></p>
+<pre class="codehilite"><code class="language-toml">[database]
+server = &quot;gfprod&quot;
+port = 1433
+database = &quot;fund2&quot;
+username = &quot;ver2user&quot;
+password = &quot;your_secure_password&quot;
+</code></pre>
+
+<p><strong>Tips:</strong>
+- ✅ Use strong passwords (avoid defaults)
+- ✅ Test connection before enabling monitoring
+- ❌ Don't use default passwords in production</p>
+<h3 id="32-monitor-configuration">3.2 Monitor Configuration</h3>
+<p><strong>Section</strong>: <code>[monitor]</code></p>
+<pre class="codehilite"><code class="language-toml">[monitor]
+check_interval_seconds = 300  # 5 minutes (recommended)
+idle_threshold_minutes = 5
+min_ats_connections = 1
+max_ats_connections = 100
+enable_console = true
+</code></pre>
+
+<p><strong>Interval Guidelines:</strong>
+- <strong>Production</strong>: 300 seconds (5 minutes)
+- <strong>Development</strong>: 60 seconds (1 minute)
+- <strong>High-load systems</strong>: 600 seconds (10 minutes)</p>
+<h3 id="33-custom-queries">3.3 Custom Queries</h3>
+<p><strong>Section</strong>: <code>[[custom_queries]]</code></p>
+<p><strong>Key Principle:</strong> Empty results = good, rows returned = issue detected</p>
+<pre class="codehilite"><code class="language-toml">[[custom_queries]]
+name = &quot;Check SQL Server Configuration&quot;
+description = &quot;Monitor SQL Server configuration settings&quot;
+query = &quot;&quot;&quot;
+SELECT name, value_in_use, [description]
+FROM sys.configurations
+WHERE name IN ('remote query timeout', 'remote login timeout')
+AND value_in_use = 0
+&quot;&quot;&quot;
+severity = &quot;WARNING&quot;
+enabled = true
+</code></pre>
+
+<h3 id="34-telegram-configuration">3.4 Telegram Configuration</h3>
+<p><strong>Section</strong>: <code>[telegram]</code></p>
+<pre class="codehilite"><code class="language-toml">[telegram]
+enabled = true
+token = &quot;123456789:ABCdefGHIjklMNOpqrsTUVwxyz&quot;
+chat_id = &quot;123456789&quot;
+show_on_dashboard = true
+</code></pre>
+
+<p><strong>Getting Bot Token:</strong>
+1. Message @BotFather on Telegram
+2. Send <code>/newbot</code> command
+3. Copy the token provided</p>
+<p><strong>Getting Chat ID:</strong>
+- Message @userinfobot for personal chat ID
+- Add @userinfobot to group for group ID</p>
+<p><img alt="ATS Health Monitor - Telegram Alert" src="images/ats-health-monitor-telegram-alert.png" />
+<em>Figure 18: Example Telegram alert notification for critical issue detection</em></p>
+<h3 id="35-dashboard-configuration">3.5 Dashboard Configuration</h3>
+<p><strong>Section</strong>: <code>[dashboard]</code></p>
+<pre class="codehilite"><code class="language-toml">[dashboard]
+health_refresh_interval_ms = 30000
+trading_refresh_interval_ms = 5000
+data_refresh_interval_ms = 30000
+trigger_check_delay_ms = 2000
+
+recent_issues_limit = 20
+issues_list_limit = 50
+metrics_chart_limit = 100
+
+main_grid_layout = &quot;2fr 1fr&quot;
+summary_cards_per_row = 4
+auto_refresh_enabled = true
+</code></pre>
+
+<h3 id="36-trading-dashboard-positions">3.6 Trading Dashboard (Positions)</h3>
+<p><strong>Section</strong>: <code>[trading_dashboard]</code></p>
+<p>The Positions dashboard displays trading positions from IB/Trading System in <strong>read-only mode</strong>. It uses IB FIX 4.2 PositionReport (MsgType=AP) fields.</p>
+<pre class="codehilite"><code class="language-toml">[trading_dashboard]
+enabled = true
+auto_refresh_enabled = true
+refresh_interval_ms = 5000
+show_underlying_type = true
+show_ask_quan = true
+show_ask_price = true
+show_filled_quan = true
+show_filled_price = true
+show_stp_price = true
+show_stp_quan = true
+show_exit_price = true
+show_exit_quan = true
+</code></pre>
+
+<p>See <a href="#5-ib-fix-42-position-fields">Section 5: IB FIX 4.2 Position Fields</a> for detailed field mapping.</p>
+<h3 id="37-fix-monitor-configuration">3.7 FIX Monitor Configuration</h3>
+<p><strong>Section</strong>: <code>[fix_monitor]</code></p>
+<pre class="codehilite"><code class="language-toml">[fix_monitor]
+enabled = true
+log_file = &quot;C:\\Apps\\QuickFixJ\\logs\\FIX.4.2-gamlfix001-IB.messages.log&quot;
+session_id = &quot;FIX.4.2-gamlfix001-IB&quot;
+sender_comp_id = &quot;gamlfix001&quot;
+target_comp_id = &quot;IB&quot;
+follow = true
+poll_interval_seconds = 5
+
+[fix_monitor.order_aggregation]
+enabled = true
+store_raw = false
+
+[fix_monitor.issue_matrix]
+enabled = true
+price_slippage_threshold = 0.2
+latency_threshold_ms = 1000
+duplicate_window_seconds = 900
+ghost_new_timeout_seconds = 30
+pending_cancel_timeout_seconds = 10
+orphan_no_ack_timeout_seconds = 5
+</code></pre>
+
+<p><strong>FIX Issue Matrix Scenarios (9 Required):</strong></p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Reason Code</th>
+<th>Severity</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>REJECTION_99</code></td>
+<td>Critical</td>
+<td>Order rejection with reject code 99</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>GHOST_ORDER</code></td>
+<td>Critical</td>
+<td>Execution report missing OrderID</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>ORPHAN_ORDER</code></td>
+<td>High</td>
+<td>Partially filled with remaining qty</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>OVERFILL</code></td>
+<td>Critical</td>
+<td>Cumulative qty exceeds order qty</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>PRICE_SLIPPAGE</code></td>
+<td>Medium</td>
+<td>Execution price differs from order</td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>LATENCY_BREACH</code></td>
+<td>Medium</td>
+<td>Transaction time vs capture time</td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>ORPHAN_NO_ACK</code></td>
+<td>Critical</td>
+<td>New order sent, no acknowledgment</td>
+</tr>
+<tr>
+<td>8</td>
+<td><code>GHOST_STALLED_NEW</code></td>
+<td>High</td>
+<td>Order stuck in NEW state</td>
+</tr>
+<tr>
+<td>9</td>
+<td><code>PENDING_CANCEL_TIMEOUT</code></td>
+<td>High</td>
+<td>Cancel request pending too long</td>
+</tr>
+</tbody>
+</table>
+<h3 id="38-database-issue-matrix">3.8 Database Issue Matrix</h3>
+<p><strong>Section</strong>: <code>[database_issue_matrix]</code></p>
+<pre class="codehilite"><code class="language-toml">[database_issue_matrix]
+enabled = true
+connection_pool_threshold = 0.8
+connection_timeout_ms = 5000
+slow_query_threshold_ms = 5000
+cpu_threshold_percent = 80.0
+memory_threshold_percent = 80.0
+log_space_threshold_percent = 90.0
+duplicate_window_seconds = 300
+</code></pre>
+
+<h3 id="39-ats-log-issue-matrix">3.9 ATS Log Issue Matrix</h3>
+<p><strong>Section</strong>: <code>[ats_log_issue_matrix]</code></p>
+<p>The ATS Log Issue Matrix provides comprehensive pattern-based detection of errors in ATS log files.</p>
+<pre class="codehilite"><code class="language-toml">[ats_log_issue_matrix]
+enabled = true
+duplicate_window_seconds = 300
+</code></pre>
+
+<h4 id="ats-lifecycle-events">ATS Lifecycle Events</h4>
+<p>These patterns detect ATS startup and shutdown events:</p>
+<table>
+<thead>
+<tr>
+<th>Reason Code</th>
+<th>Severity</th>
+<th>Pattern</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ATS_STARTED</code></td>
+<td>Info</td>
+<td><code>ATS started</code></td>
+<td>ATS application started (includes DEBUG mode)</td>
+</tr>
+<tr>
+<td><code>ATS_SHUTDOWN</code></td>
+<td>Warning</td>
+<td><code>ATS shutdown</code></td>
+<td>ATS application shutdown</td>
+</tr>
+<tr>
+<td><code>ATS_ERROR</code></td>
+<td>High</td>
+<td><code>ERROR ATS -</code> (excluding started/shutdown)</td>
+<td>Generic ATS errors</td>
+</tr>
+</tbody>
+</table>
+<pre class="codehilite"><code class="language-toml"># ATS Lifecycle Events
+[[ats_log_issue_matrix.application_error_patterns]]
+name = &quot;ATS Started&quot;
+pattern = &quot;ATS started&quot;
+reason_code = &quot;ATS_STARTED&quot;
+severity = &quot;info&quot;
+category = &quot;application&quot;
+
+[[ats_log_issue_matrix.application_error_patterns]]
+name = &quot;ATS Shutdown&quot;
+pattern = &quot;ATS shutdown&quot;
+reason_code = &quot;ATS_SHUTDOWN&quot;
+severity = &quot;warning&quot;
+category = &quot;application&quot;
+
+# Generic ATS Error (excludes started/shutdown)
+[[ats_log_issue_matrix.application_error_patterns]]
+name = &quot;ATS Error&quot;
+pattern = &quot;ERROR ATS -(?!.*ATS started)(?!.*ATS shutdown)&quot;
+reason_code = &quot;ATS_ERROR&quot;
+severity = &quot;high&quot;
+category = &quot;application&quot;
+</code></pre>
+
+<h4 id="jdbc-error-patterns-12-rules">JDBC Error Patterns (12 Rules)</h4>
+<p>Comprehensive database error detection:</p>
+<table>
+<thead>
+<tr>
+<th>Reason Code</th>
+<th>Severity</th>
+<th>Detects</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>JDBC_TIMEOUT</code></td>
+<td>Critical</td>
+<td>Connection timeout, query timeout</td>
+</tr>
+<tr>
+<td><code>JDBC_CONNECTION_REFUSED</code></td>
+<td>Critical</td>
+<td>Connection refused, unable to connect</td>
+</tr>
+<tr>
+<td><code>JDBC_CONNECTION_CLOSED</code></td>
+<td>Critical</td>
+<td>Connection lost, reset, broken pipe</td>
+</tr>
+<tr>
+<td><code>JDBC_POOL_EXHAUSTED</code></td>
+<td>Critical</td>
+<td>Pool exhausted, no available connections</td>
+</tr>
+<tr>
+<td><code>JDBC_SYNTAX_ERROR</code></td>
+<td>High</td>
+<td>SQL syntax errors, malformed queries</td>
+</tr>
+<tr>
+<td><code>JDBC_QUERY_FAILED</code></td>
+<td>High</td>
+<td>Query/statement execution failures</td>
+</tr>
+<tr>
+<td><code>JDBC_DEADLOCK</code></td>
+<td>Critical</td>
+<td>Deadlock detected, lock timeout</td>
+</tr>
+<tr>
+<td><code>JDBC_ROLLBACK</code></td>
+<td>High</td>
+<td>Transaction rollback</td>
+</tr>
+<tr>
+<td><code>JDBC_CONSTRAINT_VIOLATION</code></td>
+<td>High</td>
+<td>Duplicate key, foreign key violations</td>
+</tr>
+<tr>
+<td><code>JDBC_DATA_TRUNCATION</code></td>
+<td>Warning</td>
+<td>Data too long, value too large</td>
+</tr>
+<tr>
+<td><code>JDBC_AUTH_FAILED</code></td>
+<td>Critical</td>
+<td>Login failed, access denied</td>
+</tr>
+</tbody>
+</table>
+<pre class="codehilite"><code class="language-toml"># JDBC Connection Errors
+[[ats_log_issue_matrix.jdbc_error_patterns]]
+name = &quot;JDBC Connection Timeout&quot;
+pattern = &quot;(?i)(java\\.sql\\.SQLException.*timeout|connection.*timed?\\s*out)&quot;
+reason_code = &quot;JDBC_TIMEOUT&quot;
+severity = &quot;critical&quot;
+category = &quot;jdbc&quot;
+
+[[ats_log_issue_matrix.jdbc_error_patterns]]
+name = &quot;JDBC Connection Refused&quot;
+pattern = &quot;(?i)(connection refused|connect.*refused|unable to connect)&quot;
+reason_code = &quot;JDBC_CONNECTION_REFUSED&quot;
+severity = &quot;critical&quot;
+category = &quot;jdbc&quot;
+
+[[ats_log_issue_matrix.jdbc_error_patterns]]
+name = &quot;JDBC Connection Closed&quot;
+pattern = &quot;(?i)(connection.*closed|connection.*lost|connection.*reset|broken pipe)&quot;
+reason_code = &quot;JDBC_CONNECTION_CLOSED&quot;
+severity = &quot;critical&quot;
+category = &quot;jdbc&quot;
+
+# JDBC Query Errors
+[[ats_log_issue_matrix.jdbc_error_patterns]]
+name = &quot;SQL Query Failed&quot;
+pattern = &quot;(?i)(query.*failed|execute.*failed|statement.*failed|sql.*exception)&quot;
+reason_code = &quot;JDBC_QUERY_FAILED&quot;
+severity = &quot;high&quot;
+category = &quot;jdbc&quot;
+
+[[ats_log_issue_matrix.jdbc_error_patterns]]
+name = &quot;SQL Deadlock&quot;
+pattern = &quot;(?i)(deadlock|lock.*timeout|waiting for lock)&quot;
+reason_code = &quot;JDBC_DEADLOCK&quot;
+severity = &quot;critical&quot;
+category = &quot;jdbc&quot;
+</code></pre>
+
+<h4 id="fix-protocol-error-patterns-7-rules">FIX Protocol Error Patterns (7 Rules)</h4>
+<p>Trading session and heartbeat monitoring:</p>
+<table>
+<thead>
+<tr>
+<th>Reason Code</th>
+<th>Severity</th>
+<th>Detects</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>FIX_DISCONNECT</code></td>
+<td>Critical</td>
+<td>Session disconnect, socket closed</td>
+</tr>
+<tr>
+<td><code>FIX_LOGON_FAILED</code></td>
+<td>Critical</td>
+<td>Logon failed, authentication rejected</td>
+</tr>
+<tr>
+<td><code>FIX_HEARTBEAT_TIMEOUT</code></td>
+<td>Warning</td>
+<td>Heartbeat missed, no heartbeat</td>
+</tr>
+<tr>
+<td><code>FIX_HEARTBEAT_ERROR</code></td>
+<td>High</td>
+<td>Heartbeat error, test request timeout</td>
+</tr>
+<tr>
+<td><code>FIX_SEQUENCE_GAP</code></td>
+<td>Warning</td>
+<td>Message sequence gap, resend request</td>
+</tr>
+<tr>
+<td><code>FIX_MESSAGE_REJECTED</code></td>
+<td>High</td>
+<td>Order/message rejected</td>
+</tr>
+<tr>
+<td><code>FIX_SESSION_ERROR</code></td>
+<td>High</td>
+<td>Protocol/session errors</td>
+</tr>
+</tbody>
+</table>
+<pre class="codehilite"><code class="language-toml">[[ats_log_issue_matrix.fix_error_patterns]]
+name = &quot;FIX Session Disconnect&quot;
+pattern = &quot;(?i)(FIX.*disconnect|session.*disconnect|socket.*closed)&quot;
+reason_code = &quot;FIX_DISCONNECT&quot;
+severity = &quot;critical&quot;
+category = &quot;fix&quot;
+
+[[ats_log_issue_matrix.fix_error_patterns]]
+name = &quot;FIX Heartbeat Timeout&quot;
+pattern = &quot;(?i)(heartbeat.*timeout|heartbeat.*missed|no.*heartbeat)&quot;
+reason_code = &quot;FIX_HEARTBEAT_TIMEOUT&quot;
+severity = &quot;warning&quot;
+category = &quot;fix&quot;
+
+[[ats_log_issue_matrix.fix_error_patterns]]
+name = &quot;FIX Heartbeat Error&quot;
+pattern = &quot;(?i)(heartbeat.*error|heartbeat.*fail|test.*request.*timeout)&quot;
+reason_code = &quot;FIX_HEARTBEAT_ERROR&quot;
+severity = &quot;high&quot;
+category = &quot;fix&quot;
+</code></pre>
+
+<h4 id="network-error-patterns-4-rules">Network Error Patterns (4 Rules)</h4>
+<p>Network connectivity monitoring:</p>
+<table>
+<thead>
+<tr>
+<th>Reason Code</th>
+<th>Severity</th>
+<th>Detects</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>NETWORK_TIMEOUT</code></td>
+<td>High</td>
+<td>Socket timeout, read/write timeout</td>
+</tr>
+<tr>
+<td><code>NETWORK_UNREACHABLE</code></td>
+<td>Critical</td>
+<td>Network/host unreachable</td>
+</tr>
+<tr>
+<td><code>DNS_FAILED</code></td>
+<td>Critical</td>
+<td>DNS resolution failure</td>
+</tr>
+<tr>
+<td><code>SSL_ERROR</code></td>
+<td>Critical</td>
+<td>TLS/SSL certificate errors</td>
+</tr>
+</tbody>
+</table>
+<pre class="codehilite"><code class="language-toml">[[ats_log_issue_matrix.application_error_patterns]]
+name = &quot;Network Timeout&quot;
+pattern = &quot;(?i)(network.*timeout|socket.*timeout|read.*timeout|write.*timeout)&quot;
+reason_code = &quot;NETWORK_TIMEOUT&quot;
+severity = &quot;high&quot;
+category = &quot;network&quot;
+
+[[ats_log_issue_matrix.application_error_patterns]]
+name = &quot;SSL/TLS Error&quot;
+pattern = &quot;(?i)(ssl.*error|tls.*error|certificate.*error|handshake.*failed)&quot;
+reason_code = &quot;SSL_ERROR&quot;
+severity = &quot;critical&quot;
+category = &quot;network&quot;
+</code></pre>
+
+<h3 id="310-smtp4dev-email-configuration">3.10 SMTP4Dev Email Configuration</h3>
+<p><strong>Section</strong>: <code>[smtp4dev]</code></p>
+<pre class="codehilite"><code class="language-toml">[smtp4dev]
+enabled = true
+url = &quot;http://localhost:5000&quot;
+poll_interval_seconds = 30
+delete_after_forward = false
+
+[[smtp4dev.recipient_routes]]
+name = &quot;Position Reports&quot;
+description = &quot;Route position reports to trading chat&quot;
+recipients = [&quot;position-reports@ats.local&quot;]
+telegram_chat_id = &quot;-1001234567890&quot;
+</code></pre>
+
+<h3 id="311-position-refresh-configuration">3.11 Position Refresh Configuration</h3>
+<p><strong>Section</strong>: <code>[position_refresh]</code></p>
+<pre class="codehilite"><code class="language-toml">[position_refresh]
+enabled = true
+query = &quot;&quot;&quot;
+SELECT
+    symbol as underlying_type,
+    order_qty as ask_quan,
+    order_price as ask_price,
+    filled_qty as filled_quan,
+    filled_price,
+    stop_price as stp_price,
+    stop_qty as stp_quan,
+    exit_price,
+    exit_qty as exit_quan
+FROM trading_orders
+WHERE status = 'ACTIVE'
+&quot;&quot;&quot;
+refresh_interval_seconds = 30
+</code></pre>
+
+<h3 id="312-timezone-configuration">3.12 Timezone Configuration</h3>
+<p><strong>Section</strong>: <code>[timezone]</code></p>
+<pre class="codehilite"><code class="language-toml">[timezone]
+default_timezone = &quot;America/New_York&quot;
+
+[timezone.markets]
+NYSE = &quot;America/New_York&quot;
+NASDAQ = &quot;America/New_York&quot;
+CME = &quot;America/Chicago&quot;
+HKEX = &quot;Asia/Hong_Kong&quot;
+
+[timezone.aliases]
+EST = &quot;America/New_York&quot;
+HKT = &quot;Asia/Hong_Kong&quot;
+UTC = &quot;UTC&quot;
+</code></pre>
+
+<h3 id="313-api-authentication">3.13 API Authentication</h3>
+<p><strong>Section</strong>: <code>[api_auth]</code></p>
+<pre class="codehilite"><code class="language-toml">[api_auth]
+enabled = true
+require_auth = true
+rate_limit_rps = 100
+allowed_origins = [&quot;https://dashboard.example.com&quot;, &quot;http://localhost:3000&quot;]
+
+[[api_auth.api_keys]]
+name = &quot;Dashboard&quot;
+key = &quot;your_secure_api_key_dashboard_12345&quot;
+permissions = [&quot;read&quot;]
+enabled = true
+
+[[api_auth.api_keys]]
+name = &quot;Admin&quot;
+key = &quot;your_secure_api_key_admin_67890&quot;
+permissions = [&quot;read&quot;, &quot;write&quot;, &quot;admin&quot;]
+enabled = true
+</code></pre>
+
+<h3 id="314-rbac-configuration">3.14 RBAC Configuration</h3>
+<p><strong>Section</strong>: <code>[rbac]</code> (NEW in V5.2)</p>
+<p>Role-Based Access Control provides tab-level permissions and user authentication.</p>
+<pre class="codehilite"><code class="language-toml">[rbac]
+enabled = true
+default_role = &quot;viewer&quot;
+session_timeout_minutes = 480
+auth_method = &quot;basic&quot;
+
+# Role Definitions
+[rbac.roles.admin]
+description = &quot;Full administrative access&quot;
+permissions = [&quot;*&quot;]
+
+[rbac.roles.operator]
+description = &quot;Operations team - read and execute&quot;
+permissions = [
+    &quot;tab:overview&quot;, &quot;tab:pro&quot;, &quot;tab:email&quot;, &quot;tab:database&quot;,
+    &quot;tab:atslog&quot;, &quot;tab:fix&quot;, &quot;tab:positions&quot;, &quot;tab:stp_orders&quot;,
+    &quot;tab:history&quot;, &quot;tab:health&quot;,
+    &quot;action:trigger_check&quot;, &quot;action:refresh_positions&quot;,
+    &quot;api:read&quot;
+]
+
+[rbac.roles.analyst]
+description = &quot;Read-only access for analysis&quot;
+permissions = [
+    &quot;tab:overview&quot;, &quot;tab:pro&quot;, &quot;tab:database&quot;, &quot;tab:atslog&quot;,
+    &quot;tab:fix&quot;, &quot;tab:positions&quot;, &quot;tab:stp_orders&quot;, &quot;tab:history&quot;,
+    &quot;api:read&quot;
+]
+
+[rbac.roles.viewer]
+description = &quot;Limited read-only access&quot;
+permissions = [
+    &quot;tab:overview&quot;, &quot;tab:fix&quot;, &quot;tab:positions&quot;, &quot;tab:history&quot;,
+    &quot;api:read&quot;
+]
+
+# User Accounts
+[[rbac.users]]
+username = &quot;admin&quot;
+password_hash = &quot;$2a$10$...&quot;  # Use hashpassword.go to generate
+roles = [&quot;admin&quot;]
+enabled = true
+
+[[rbac.users]]
+username = &quot;operator&quot;
+password_hash = &quot;$2a$10$...&quot;
+roles = [&quot;operator&quot;]
+enabled = true
+</code></pre>
+
+<p><strong>Generating Password Hashes:</strong></p>
+<pre class="codehilite"><code class="language-powershell">cd Scripts\05-Production-ATS-Administration\ATS-Health-Monitor
+go run scripts/hashpassword.go YourSecurePassword123
+</code></pre>
+
+<p>See <a href="#6-rbac-role-based-access-control">Section 6: RBAC</a> for detailed documentation.</p>
+<h3 id="315-plane-integration">3.15 Plane Integration</h3>
+<p><strong>Section</strong>: <code>[plane]</code></p>
+<pre class="codehilite"><code class="language-toml">[plane]
+enabled = true
+base_url = &quot;https://plane.example.com&quot;
+api_token = &quot;your_plane_api_key&quot;
+workspace_slug = &quot;ats-monitoring&quot;
+project_id = &quot;ats-health-monitor&quot;
+auto_create = true
+
+[[plane.routes]]
+name = &quot;Critical Issues&quot;
+match_reason_codes = [&quot;REJECTION_99&quot;, &quot;GHOST_ORDER&quot;, &quot;JDBC_TIMEOUT&quot;]
+priority = &quot;urgent&quot;
+labels = [&quot;critical&quot;, &quot;sfc-reportable&quot;]
+</code></pre>
+
+<h3 id="316-password-encryption-new-in-v52">3.16 Password Encryption (NEW in V5.2)</h3>
+<p>ATS Health Monitor supports encrypted passwords for all sensitive fields using AES-256-GCM encryption. This allows you to store database passwords, API tokens, and other secrets securely in the TOML file.</p>
+<p><strong>Encryption vs Hashing:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Use Case</th>
+<th>Reversible</th>
+<th>Examples</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Bcrypt Hash</strong></td>
+<td>RBAC user authentication</td>
+<td>No</td>
+<td><code>password_hash</code> in <code>[[rbac.users]]</code></td>
+</tr>
+<tr>
+<td><strong>AES Encryption</strong></td>
+<td>Connection secrets</td>
+<td>Yes</td>
+<td><code>password</code>, <code>token</code>, <code>api_token</code>, <code>key</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Encrypted Value Format:</strong></p>
+<pre class="codehilite"><code>ENC:base64encodedencryptedvalue...
+</code></pre>
+
+<p><strong>Supported Fields:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Section</th>
+<th>Field</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>[database]</code></td>
+<td><code>password</code></td>
+<td>Encrypted</td>
+</tr>
+<tr>
+<td><code>[telegram]</code></td>
+<td><code>token</code></td>
+<td>Encrypted</td>
+</tr>
+<tr>
+<td><code>[plane]</code></td>
+<td><code>api_token</code></td>
+<td>Encrypted</td>
+</tr>
+<tr>
+<td><code>[[api_auth.api_keys]]</code></td>
+<td><code>key</code></td>
+<td>Encrypted</td>
+</tr>
+<tr>
+<td><code>[[rbac.users]]</code></td>
+<td><code>password_hash</code></td>
+<td>Bcrypt Hash</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Step 1: Generate a Master Key</strong></p>
+<pre class="codehilite"><code class="language-powershell">cd Scripts\05-Production-ATS-Administration\ATS-Health-Monitor
+go run scripts/hashpassword.go generate-key
+</code></pre>
+
+<p><strong>Output:</strong></p>
+<pre class="codehilite"><code>=== NEW MASTER ENCRYPTION KEY ===
+Key: YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXoxMjM0NTY=
+
+Option 1 - Environment variable (recommended for production):
+  set ATS_MONITOR_MASTER_KEY=YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXoxMjM0NTY=
+
+Option 2 - Key file (for development):
+  echo YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXoxMjM0NTY= &gt; master.key
+</code></pre>
+
+<p><strong>Step 2: Set the Master Key</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Option 1: Environment variable (recommended)
+$env:ATS_MONITOR_MASTER_KEY = &quot;YourMasterKeyHere&quot;
+
+# Option 2: Key file (development only)
+echo &quot;YourMasterKeyHere&quot; &gt; master.key
+</code></pre>
+
+<p><strong>Step 3: Encrypt a Password</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Encrypt database password
+go run scripts/hashpassword.go encrypt atsats
+
+# Output:
+# Encrypted: ENC:base64value...
+</code></pre>
+
+<p><strong>Step 4: Use in config.toml</strong></p>
+<pre class="codehilite"><code class="language-toml">[database]
+server = &quot;gfprod&quot;
+port = 1433
+database = &quot;fund2&quot;
+username = &quot;ver2user&quot;
+password = &quot;ENC:ABC123def456...&quot;  # Encrypted password
+
+[telegram]
+enabled = true
+token = &quot;ENC:XYZ789...&quot;  # Encrypted bot token
+chat_id = &quot;123456789&quot;
+
+[plane]
+enabled = true
+api_token = &quot;ENC:QRS456...&quot;  # Encrypted API token
+</code></pre>
+
+<p><strong>Verify Encryption:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Decrypt to verify
+go run scripts/hashpassword.go decrypt &quot;ENC:ABC123def456...&quot;
+</code></pre>
+
+<p><strong>Security Best Practices:</strong></p>
+<ul>
+<li>✅ Store master key in environment variable for production</li>
+<li>✅ Never commit <code>master.key</code> to version control</li>
+<li>✅ Use different master keys for different environments</li>
+<li>✅ Rotate encryption keys periodically</li>
+<li>❌ Don't share master keys between systems</li>
+<li>❌ Don't store master key in plain text files in production</li>
+</ul>
+<p><strong>Backwards Compatibility:</strong></p>
+<p>Plain text passwords still work. The system automatically detects encrypted values by the <code>ENC:</code> prefix:</p>
+<pre class="codehilite"><code class="language-toml"># Both formats work:
+password = &quot;plaintext_password&quot;      # Plain text (development)
+password = &quot;ENC:encryptedvalue...&quot;   # Encrypted (production)
+</code></pre>
+
+<h3 id="317-dual-database-architecture-new-in-v53">3.17 Dual Database Architecture (NEW in V5.3)</h3>
+<p>ATS Health Monitor uses a <strong>dual database architecture</strong> for optimal performance and SFC compliance:</p>
+<table>
+<thead>
+<tr>
+<th>Database</th>
+<th>Purpose</th>
+<th>Data Type</th>
+<th>Retention</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>ChaiSQL</strong></td>
+<td>Operational/Performance</td>
+<td>Live FIX messages, current positions</td>
+<td>Session-based (resets with ATS)</td>
+</tr>
+<tr>
+<td><strong>TimescaleDB</strong></td>
+<td>Compliance/Audit</td>
+<td>Complete FIX history, audit trail</td>
+<td>Permanent (SFC requirement)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Configuration:</strong></p>
+<pre class="codehilite"><code class="language-toml">[database.operational]
+enabled = true
+path = &quot;C:/ATS/monitor/operational.db&quot;
+
+[database.compliance]
+enabled = true
+host = &quot;localhost&quot;
+port = 5432
+database = &quot;timeseries_data&quot;
+username = &quot;timescale_user&quot;
+password_hash = &quot;ENC:encrypted_password...&quot;  # Or plain text
+ssl_mode = &quot;disable&quot;
+max_connections = 10
+min_connections = 2
+retention_days = 365  # SFC requires 7 years for audit
+write_queue_size = 1000
+retry_on_failure = true
+</code></pre>
+
+<p><strong>Key Features:</strong></p>
+<ul>
+<li><strong>ChaiSQL</strong> handles all real-time dashboard queries for sub-millisecond performance</li>
+<li><strong>TimescaleDB</strong> stores the master copy of all FIX messages for SFC Hong Kong audit compliance</li>
+<li>ChaiSQL data persists across ATS log rotations (when ATS resets the log file)</li>
+<li>Automatic background writes to TimescaleDB with queue buffering</li>
+<li>Hypertable compression for efficient long-term storage</li>
+</ul>
+<p><strong>Why Two Databases?</strong></p>
+<ol>
+<li><strong>Performance</strong>: ChaiSQL (embedded, pure Go) provides instant queries for the live dashboard</li>
+<li><strong>Durability</strong>: TimescaleDB ensures no FIX messages are lost during ATS restarts</li>
+<li><strong>Compliance</strong>: SFC requires complete historical FIX message audit trail</li>
+<li><strong>Scalability</strong>: TimescaleDB handles billions of records with automatic partitioning</li>
+</ol>
+<h3 id="318-historical-data-stitching-new-in-v53">3.18 Historical Data Stitching (NEW in V5.3)</h3>
+<p>The Positions dashboard supports <strong>stitching historical data</strong> from TimescaleDB with current live positions. This allows traders to see a complete picture of positions that span multiple ATS sessions.</p>
+<p><strong>How It Works:</strong></p>
+<ol>
+<li><strong>Load History</strong>: Select a date range and load historical positions from TimescaleDB</li>
+<li><strong>Stitch</strong>: Combine historical positions with current live positions</li>
+<li><strong>Source Indicator</strong>: Each position shows its source (⚡ Live or 📦 PostgreSQL)</li>
+<li><strong>Unstitch</strong>: Return to viewing only live positions</li>
+</ol>
+<p><strong>API Endpoints:</strong></p>
+<pre class="codehilite"><code>GET /api/v1/trading/positions/historical?days=30  - Load historical positions
+POST /api/v1/atslog/history/sync-fix              - Sync FIX history from log files
+GET /api/v1/atslog/history/sync-log               - Get sync audit log
+</code></pre>
+
+<p><strong>Dashboard Usage:</strong></p>
+<ol>
+<li>Open the <strong>Positions</strong> tab</li>
+<li>Click <strong>"Load History"</strong> button</li>
+<li>Select date range (start and end dates)</li>
+<li>Click <strong>"Load"</strong> to fetch from TimescaleDB</li>
+<li>Click <strong>"Stitch Data"</strong> to combine with live positions</li>
+<li>Use <strong>"Unstitch"</strong> to return to live-only view</li>
+</ol>
+<h3 id="319-dev-vs-production-log-configuration-new-in-v54">3.19 Dev vs Production Log Configuration (NEW in V5.4)</h3>
+<p>ATS Health Monitor uses different log source strategies for <strong>Development</strong> and <strong>Production</strong> environments:</p>
+<table>
+<thead>
+<tr>
+<th>Environment</th>
+<th style="text-align: center;">Live ATS.log</th>
+<th style="text-align: center;">ats_history</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Dev</strong></td>
+<td style="text-align: center;">❌ No</td>
+<td style="text-align: center;">✅ Yes</td>
+<td>Test with historical data only</td>
+</tr>
+<tr>
+<td><strong>Production</strong></td>
+<td style="text-align: center;">✅ Yes</td>
+<td style="text-align: center;">✅ Yes</td>
+<td>Real-time + historical analysis</td>
+</tr>
+</tbody>
+</table>
+<h4 id="development-mode-configtesttoml">Development Mode (<code>config.test.toml</code>)</h4>
+<p>In development, there's no live ATS running, so we use only the <code>ats_history</code> folder:</p>
+<pre class="codehilite"><code class="language-toml"># ==============================================================================
+# SECTION 8: LOG FILE MONITORING (DEV MODE)
+# ==============================================================================
+[log_monitor]
+enabled = true
+log_file = &quot;testdata/ats_history&quot;      # Historical folder only
+history_folder = &quot;testdata/ats_history&quot;
+follow = false                          # Don't tail (static files)
+
+# ==============================================================================
+# SECTION 11: FIX PROTOCOL MONITORING (DEV MODE)
+# ==============================================================================
+[fix_monitor]
+enabled = true
+log_file = &quot;testdata/ats_history&quot;      # Historical folder
+follow = false                          # Don't tail
+scan_existing = true                    # Load all historical files on startup
+</code></pre>
+
+<h4 id="production-mode-configtoml">Production Mode (<code>config.toml</code>)</h4>
+<p>In production, monitor the live ATS.log AND process historical files:</p>
+<pre class="codehilite"><code class="language-toml"># ==============================================================================
+# SECTION 8: LOG FILE MONITORING (PRODUCTION MODE)
+# ==============================================================================
+[log_monitor]
+enabled = true
+log_file = &quot;C:\\ATS\\ats900\\run\\ats.log&quot;    # Live log file
+history_folder = &quot;C:\\ATS\\ats900\\run\\atslog&quot; # Rotated logs
+follow = true                                   # Continuously tail
+
+# ==============================================================================
+# SECTION 11: FIX PROTOCOL MONITORING (PRODUCTION MODE)
+# ==============================================================================
+[fix_monitor]
+enabled = true
+log_file = &quot;C:\\ATS\\ats900\\run\\ats.log&quot;    # Live log file
+follow = true                                   # Continuously tail
+scan_existing = false                           # Don't slow startup
+</code></pre>
+
+<p><strong>Why This Architecture?</strong></p>
+<ol>
+<li><strong>Dev Environment</strong>: No live ATS means no live log to monitor. Using <code>ats_history</code> provides consistent test data.</li>
+<li><strong>Production Environment</strong>: Real-time alerts require tailing the live <code>ATS.log</code>, while <code>history_folder</code> provides access to rotated logs for compliance queries.</li>
+<li><strong>ATS.log is the Single Source of Truth</strong>: FIX messages are embedded with <code>@FIX@</code> marker and are preserved across ATS restarts (unlike <code>FIX.messages.log</code> which gets wiped).</li>
+</ol>
+<h3 id="320-resync-manager-new-in-v55">3.20 Resync Manager (NEW in V5.5)</h3>
+<p>The <strong>Resync Manager</strong> provides on-demand historical log import from ATS log files into the ATS Health Monitor. This is essential for:
+- Populating FIX Order History for trades that occurred before live monitoring started
+- Backfilling data after a new deployment
+- Importing specific date ranges for investigation</p>
+<h4 id="3201-architecture-overview">3.20.1 Architecture Overview</h4>
+<pre class="codehilite"><code class="language-mermaid">flowchart TB
+    subgraph NY2[&quot;NY2 Windows VM (192.168.168.2)&quot;]
+        RM[resync-manager.exe&lt;br/&gt;API: 8090&lt;br/&gt;ZMQ: 9001-9010]
+        ATS_LOG[ats.log&lt;br/&gt;Current Day]
+        HIST[ats_history/&lt;br/&gt;*.log.gz&lt;br/&gt;Historical]
+    end
+
+    subgraph UBUNTU[&quot;Ubuntu VM (192.168.168.100)&quot;]
+        DOCKER[ATS-Health-Monitor&lt;br/&gt;Docker Container]
+        TSDB[(TimescaleDB&lt;br/&gt;fix_messages)]
+    end
+
+    RM --&gt;|&quot;Read&quot;| ATS_LOG
+    RM --&gt;|&quot;Read + Decompress&quot;| HIST
+    RM --&gt;|&quot;ZMQ PUB&lt;br/&gt;Port 9001-9010&quot;| DOCKER
+    DOCKER --&gt;|&quot;Store FIX&quot;| TSDB
+
+    style NY2 fill:#1e3a5f,stroke:#3b82f6,color:#fff
+    style UBUNTU fill:#1e3a5f,stroke:#10b981,color:#fff
+    style RM fill:#3b82f6,stroke:#60a5fa,color:#fff
+    style DOCKER fill:#10b981,stroke:#34d399,color:#fff
+</code></pre>
+
+<h4 id="3202-resync-manager-configuration">3.20.2 Resync Manager Configuration</h4>
+<p><strong>Location:</strong> <code>cmd/resync-manager/config.toml</code> (on NY2)</p>
+<pre class="codehilite"><code class="language-toml"># =============================================================================
+# RESYNC MANAGER CONFIGURATION - Runs on NY2 (where ATS logs are)
+# =============================================================================
+
+[resync_manager]
+# API port for web interface and REST API
+api_port = 8090
+
+# Directory containing historical log files
+log_dir = &quot;C:\\ATS\\ats900\\run\\atslog&quot;
+
+# Temporary directory for decompressed files
+temp_dir = &quot;C:\\Temp\\resync&quot;
+
+[log_file]
+# Path to current (live) ats.log
+path = &quot;C:\\ATS\\ats900\\run\\ats.log&quot;
+
+# =============================================================================
+# HTTP TRANSFER - Files served via HTTP API (v1.1+)
+# =============================================================================
+# Files are downloaded directly from HTTP endpoint: /api/download/{filepath}
+# No FTP server needed. ZeroMQ removed in favor of HTTP direct download.
+</code></pre>
+
+<h4 id="3203-subscriber-configuration">3.20.3 Subscriber Configuration</h4>
+<p><strong>Location:</strong> <code>config.production.toml</code> (on Ubuntu VM)</p>
+<pre class="codehilite"><code class="language-toml"># =============================================================================
+# RESYNC CLIENT - Connects to Resync Manager on NY2
+# =============================================================================
+[resync]
+enabled = true
+
+# Resync Manager API URL (NY2 via port forwarding or direct)
+manager_url = &quot;http://192.168.168.2:8090&quot;
+
+# HTTP mode is always enabled (FTP mode removed in v1.1)
+# Files are downloaded directly from HTTP API endpoints
+</code></pre>
+
+<h4 id="3204-deployment-steps">3.20.4 Deployment Steps</h4>
+<p><strong>Step 1: Deploy Resync Manager on NY2</strong></p>
+<pre class="codehilite"><code class="language-powershell"># On NY2 Windows VM
+cd I:\SOP-Management\Scripts\05-Production-ATS-Administration\ATS-Health-Monitor\cmd\resync-manager
+
+# Build the resync manager
+go build -o resync-manager.exe .
+
+# Create config file
+Copy-Item config.toml.example config.toml
+
+# Edit paths in config.toml
+notepad config.toml
+
+# Run as a scheduled task or Windows service
+.\resync-manager.exe -config config.toml -port 8090
+</code></pre>
+
+<p><strong>Step 2: Configure Port Forwarding (if needed)</strong></p>
+<p>If NY2 and Ubuntu VM are on different networks:</p>
+<pre class="codehilite"><code class="language-powershell"># On NY2: Forward API and ZMQ ports
+netsh interface portproxy add v4tov4 listenport=8090 listenaddress=0.0.0.0 connectport=8090 connectaddress=192.168.168.2
+netsh interface portproxy add v4tov4 listenport=9001 listenaddress=0.0.0.0 connectport=9001 connectaddress=192.168.168.2
+# ... repeat for 9002-9010
+</code></pre>
+
+<p><strong>Step 3: Update Docker Compose (Ubuntu VM)</strong></p>
+<pre class="codehilite"><code class="language-yaml"># docker-compose.yml
+services:
+  ats-health-monitor:
+    image: ats-health-monitor:test
+    volumes:
+      - ./config:/app/config
+      - ats-data:/app/data
+    environment:
+      - RESYNC_MANAGER_URL=http://192.168.168.2:8090
+</code></pre>
+
+<h4 id="3205-dashboard-usage">3.20.5 Dashboard Usage</h4>
+<p>The Resync Manager panel is in the <strong>ATS Log Issue Matrix</strong> tab:</p>
+<ol>
+<li>Click <strong>"🔄 Resync Manager (Remote Log Import)"</strong> to expand</li>
+<li>Click <strong>"? Help"</strong> for detailed instructions and examples</li>
+<li>Select resync mode:</li>
+<li><strong>Current ats.log only</strong>: Import today's live log</li>
+<li><strong>Historical date range</strong>: Import archived logs by date</li>
+<li>Click <strong>"Start Resync"</strong> and wait for completion</li>
+<li><strong>Refresh the page</strong> to see imported data</li>
+</ol>
+<h4 id="3206-example-use-cases">3.20.6 Example Use Cases</h4>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th>Mode</th>
+<th>Date Range</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FIX History empty for today</td>
+<td>Current</td>
+<td>N/A</td>
+<td>Imports ~8,000 lines in 5-10 sec</td>
+</tr>
+<tr>
+<td>Missing data from last week</td>
+<td>Historical</td>
+<td>Dec 3-9</td>
+<td>Imports all .log.gz files</td>
+</tr>
+<tr>
+<td>New deployment backfill</td>
+<td>Historical</td>
+<td>Oct 1 - Today</td>
+<td>Full historical import</td>
+</tr>
+<tr>
+<td>Specific date investigation</td>
+<td>Historical</td>
+<td>Dec 5-5</td>
+<td>Single day import</td>
+</tr>
+</tbody>
+</table>
+<h4 id="3207-api-endpoints">3.20.7 API Endpoints</h4>
+<table>
+<thead>
+<tr>
+<th>Endpoint</th>
+<th>Method</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/api/v1/resync/status</code></td>
+<td>GET</td>
+<td>Get resync manager status</td>
+</tr>
+<tr>
+<td><code>/api/v1/resync/files</code></td>
+<td>GET</td>
+<td>List available log files</td>
+</tr>
+<tr>
+<td><code>/api/v1/resync/start</code></td>
+<td>POST</td>
+<td>Start a resync session</td>
+</tr>
+<tr>
+<td><code>/api/v1/resync/cancel</code></td>
+<td>POST</td>
+<td>Cancel active session</td>
+</tr>
+</tbody>
+</table>
+<h4 id="3208-troubleshooting">3.20.8 Troubleshooting</h4>
+<table>
+<thead>
+<tr>
+<th>Issue</th>
+<th>Cause</th>
+<th>Solution</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"Not configured"</td>
+<td><code>[resync]</code> missing in config.toml</td>
+<td>Add resync section to config</td>
+</tr>
+<tr>
+<td>"No files available"</td>
+<td>Resync Manager not running</td>
+<td>Start <code>resync-manager.exe</code> on ATS-VM</td>
+</tr>
+<tr>
+<td>"Connection failed"</td>
+<td>Network issue</td>
+<td>Check NY2 port forwarding</td>
+</tr>
+<tr>
+<td>"Session timeout"</td>
+<td>Large file processing</td>
+<td>Increase timeout or reduce date range</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3 id="323-reliable-log-feed-new-in-v56">3.23 Reliable Log Feed (NEW in V5.6)</h3>
+<p>The <strong>Reliable Log Feed</strong> provides guaranteed message delivery for multi-site deployments. Unlike the basic ZeroMQ PUB/SUB (which can drop messages), this system ensures <strong>no message loss</strong> even during:
+- Subscriber disconnects or restarts
+- Network interruptions
+- High message bursts</p>
+<h4 id="3231-why-reliable-delivery">3.23.1 Why Reliable Delivery?</h4>
+<p>Standard ZeroMQ PUB/SUB has a critical limitation:</p>
+<pre class="codehilite"><code>PROBLEM: Standard PUB/SUB
+┌──────────────┐         ┌──────────────┐
+│  Publisher   │ ──MSG──►│  Subscriber  │  ✓ Received
+│              │ ──MSG──►│  (offline)   │  ✗ LOST!
+│              │ ──MSG──►│  (online)    │  ✓ Received
+└──────────────┘         └──────────────┘
+</code></pre>
+
+<p>For SFC compliance, <strong>every FIX message must be recorded</strong>. Lost messages mean:
+- Missing trade records
+- Incomplete audit trail
+- Regulatory violations</p>
+<p>The Reliable Log Feed solves this:</p>
+<pre class="codehilite"><code>SOLUTION: Reliable PUB/SUB
+┌──────────────┐         ┌──────────────┐
+│  Publisher   │ ──MSG──►│  Subscriber  │  ✓ Received
+│  + WAL       │ ──MSG──►│  (offline)   │  ✓ Stored in WAL
+│  + Sequence  │ ──MSG──►│  (online)    │  ✓ Received
+│              │◄─REPLAY─│  Gap detect  │  ✓ REPLAYED!
+└──────────────┘         └──────────────┘
+</code></pre>
+
+<h4 id="3232-architecture">3.23.2 Architecture</h4>
+<pre class="codehilite"><code class="language-mermaid">flowchart LR
+    subgraph NY2[&quot;NY2 Log Agent (Publisher)&quot;]
+        TAIL[Log Tailer]
+        BATCH[Batch + Sequence]
+        WAL[(WAL&lt;br/&gt;24hr retention)]
+        PUB[ZMQ PUB&lt;br/&gt;:9000]
+        ROUTER[ZMQ ROUTER&lt;br/&gt;:9001]
+    end
+
+    subgraph NY_VM[&quot;NY Ubuntu VM&quot;]
+        SUB1[ZMQ SUB]
+        DEALER1[ZMQ DEALER]
+        PROC1[Processor]
+        DB1[(TimescaleDB)]
+    end
+
+    subgraph HK[&quot;HK Office&quot;]
+        SUB2[ZMQ SUB]
+        DEALER2[ZMQ DEALER]
+        PROC2[Processor]
+        DB2[(TimescaleDB)]
+    end
+
+    TAIL --&gt;|&quot;Lines&quot;| BATCH
+    BATCH --&gt;|&quot;Persist&quot;| WAL
+    BATCH --&gt;|&quot;Broadcast&quot;| PUB
+
+    PUB --&gt;|&quot;tcp://ny2:9000&quot;| SUB1
+    PUB --&gt;|&quot;tcp://ny2:9000&lt;br/&gt;via VPN&quot;| SUB2
+
+    SUB1 --&gt;|&quot;Gap?&quot;| DEALER1
+    SUB2 --&gt;|&quot;Gap?&quot;| DEALER2
+
+    DEALER1 --&gt;|&quot;Replay Req&quot;| ROUTER
+    DEALER2 --&gt;|&quot;Replay Req&quot;| ROUTER
+    ROUTER --&gt;|&quot;Replay&quot;| WAL
+
+    SUB1 --&gt; PROC1 --&gt; DB1
+    SUB2 --&gt; PROC2 --&gt; DB2
+
+    style NY2 fill:#1e3a5f,stroke:#f59e0b,color:#fff
+    style NY_VM fill:#1e3a5f,stroke:#10b981,color:#fff
+    style HK fill:#1e3a5f,stroke:#8b5cf6,color:#fff
+</code></pre>
+
+<h4 id="3233-key-features">3.23.3 Key Features</h4>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Sequence Numbers</strong></td>
+<td>Every batch has a monotonically increasing sequence for gap detection</td>
+</tr>
+<tr>
+<td><strong>Write-Ahead Log (WAL)</strong></td>
+<td>Messages persisted locally before sending (survives agent restart)</td>
+</tr>
+<tr>
+<td><strong>Gap Detection</strong></td>
+<td>Subscribers detect missing sequences automatically</td>
+</tr>
+<tr>
+<td><strong>Replay Requests</strong></td>
+<td>Subscribers request missed messages via ROUTER/DEALER pattern</td>
+</tr>
+<tr>
+<td><strong>Deduplication</strong></td>
+<td>Replays may overlap with live - duplicates are filtered</td>
+</tr>
+<tr>
+<td><strong>Multi-Site Support</strong></td>
+<td>Unlimited subscribers, each tracks its own state</td>
+</tr>
+<tr>
+<td><strong>State Persistence</strong></td>
+<td>Subscribers remember last sequence across restarts</td>
+</tr>
+</tbody>
+</table>
+<h4 id="3234-publisher-configuration-ny2-log-agent">3.23.4 Publisher Configuration (NY2 Log Agent)</h4>
+<p><strong>Location:</strong> <code>cmd/log-agent/config.reliable.toml</code></p>
+<pre class="codehilite"><code class="language-toml"># =============================================================================
+# RELIABLE LOG AGENT - Guaranteed Delivery Publisher
+# =============================================================================
+# Run on NY2 where ats.log is located
+# =============================================================================
+
+[agent]
+# ZeroMQ bind addresses (use * to listen on all interfaces)
+pub_bind_addr = &quot;*:9000&quot;      # PUB socket - broadcasts to all subscribers
+replay_bind_addr = &quot;*:9001&quot;   # ROUTER socket - handles replay requests
+
+# Hostname included in messages (for debugging multi-agent setups)
+hostname = &quot;NY2-ATS&quot;
+
+[log_file]
+# ATS log file to watch
+path = &quot;C:\\ATS\\ats900\\run\\ats.log&quot;
+
+[buffer]
+# Internal buffer settings
+size = 50000            # Lines to buffer (NOT drop!) before blocking
+batch_size = 100        # Lines per batch for network efficiency
+flush_interval_ms = 500 # Max delay before sending incomplete batch
+
+# ZeroMQ High-Water Mark
+# Set high to handle bursts without blocking publishers
+send_hwm = 100000
+
+[persistence]
+# Write-Ahead Log for replay capability
+dir = &quot;C:\\ATS\\wal&quot;          # WAL file directory
+max_wal_size_mb = 100         # Max size per WAL file before rotation
+retention_hours = 24          # Hours to keep old messages for replay
+
+# =============================================================================
+# EXPLANATION:
+# =============================================================================
+# 1. Log Tailer reads lines from ats.log
+# 2. Lines are batched (100 per batch) and assigned sequence number
+# 3. Batch is written to WAL FIRST (persistence)
+# 4. Batch is broadcast on PUB socket (all subscribers receive)
+# 5. If subscriber misses messages, it sends ReplayRequest to ROUTER
+# 6. Agent reads from WAL and sends ReplayResponse
+# =============================================================================
+</code></pre>
+
+<h4 id="3235-subscriber-configuration-each-site">3.23.5 Subscriber Configuration (Each Site)</h4>
+<p><strong>Location:</strong> <code>config.production.toml</code> (Ubuntu VM, HK Office, etc.)</p>
+<pre class="codehilite"><code class="language-toml"># =============================================================================
+# RELIABLE LOG RECEIVER - Guaranteed Delivery Subscriber
+# =============================================================================
+# Configure on EACH site that needs ATS log data
+# =============================================================================
+
+[reliable_log_receiver]
+enabled = true
+
+# UNIQUE subscriber ID - MUST be different for each installation!
+# This is used for state persistence and debugging
+subscriber_id = &quot;ny-production&quot;
+
+# State persistence directory (survives container restarts)
+state_dir = &quot;/app/data&quot;
+
+# Gap detection and replay settings
+max_gap_before_replay = 5     # Sequences to wait before requesting replay
+replay_timeout_seconds = 30   # Timeout for replay requests
+replay_retry_count = 3        # Retries before logging error
+gap_check_interval_sec = 5    # How often to scan for gaps
+
+# Processing buffer (handles message bursts)
+process_buffer_size = 10000
+
+# =============================================================================
+# PUBLISHERS (configure one or more for failover)
+# =============================================================================
+[[reliable_log_receiver.publishers]]
+name = &quot;NY2 Primary&quot;
+pub_addr = &quot;192.168.168.2:9000&quot;      # ZMQ PUB socket address
+replay_addr = &quot;192.168.168.2:9001&quot;   # ZMQ ROUTER for replay requests
+priority = 1                          # Lower = higher priority
+
+# Optional: Backup publisher for failover
+# [[reliable_log_receiver.publishers]]
+# name = &quot;NY2 Backup&quot;
+# pub_addr = &quot;10.2.0.5:9000&quot;
+# replay_addr = &quot;10.2.0.5:9001&quot;
+# priority = 2
+
+# =============================================================================
+# SITE-SPECIFIC EXAMPLES:
+# =============================================================================
+# NY Ubuntu VM (same network as NY2):
+#   subscriber_id = &quot;ny-production&quot;
+#   pub_addr = &quot;192.168.168.2:9000&quot;
+#
+# HK Office (via WireGuard VPN):
+#   subscriber_id = &quot;hk-office&quot;
+#   pub_addr = &quot;10.101.0.5:9000&quot;  # NY2 via VPN
+#
+# Developer Machine (remote debugging):
+#   subscriber_id = &quot;developer-tony&quot;
+#   pub_addr = &quot;10.101.0.5:9000&quot;  # NY2 via VPN
+# =============================================================================
+</code></pre>
+
+<h4 id="3236-deployment-steps">3.23.6 Deployment Steps</h4>
+<p><strong>Step 1: Build and Deploy Log Agent on NY2</strong></p>
+<pre class="codehilite"><code class="language-powershell"># On NY2 Windows VM
+cd I:\SOP-Management\Scripts\05-Production-ATS-Administration\ATS-Health-Monitor\cmd\log-agent
+
+# Build the reliable log agent
+go build -o log-agent.exe .
+
+# Create config file
+Copy-Item config.reliable.toml.example config.toml
+
+# Edit paths and verify settings
+notepad config.toml
+
+# Create WAL directory
+New-Item -ItemType Directory -Force -Path &quot;C:\ATS\wal&quot;
+
+# Run the agent (use Task Scheduler for production)
+.\log-agent.exe -config config.toml
+</code></pre>
+
+<p><strong>Step 2: Configure Firewall Rules on NY2</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Allow ZeroMQ ports
+New-NetFirewallRule -DisplayName &quot;ATS Log Agent PUB&quot; -Direction Inbound -Protocol TCP -LocalPort 9000 -Action Allow
+New-NetFirewallRule -DisplayName &quot;ATS Log Agent ROUTER&quot; -Direction Inbound -Protocol TCP -LocalPort 9001 -Action Allow
+</code></pre>
+
+<p><strong>Step 3: Update Ubuntu VM Configuration</strong></p>
+<pre class="codehilite"><code class="language-bash"># SSH to Ubuntu VM
+ssh atsadmin@192.168.168.100
+
+# Edit config.production.toml
+nano ~/ats-deploy/config/config.production.toml
+
+# Add/update the reliable_log_receiver section (see 3.23.5)
+</code></pre>
+
+<p><strong>Step 4: Restart Docker Container</strong></p>
+<pre class="codehilite"><code class="language-bash">cd ~/ats-deploy
+docker compose down ats-health-monitor
+docker compose up -d ats-health-monitor
+
+# Verify connection
+docker logs ats-health-monitor 2&gt;&amp;1 | grep -i &quot;reliable\|connected\|subscribed&quot;
+</code></pre>
+
+<h4 id="3237-message-flow-example">3.23.7 Message Flow Example</h4>
+<pre class="codehilite"><code class="language-mermaid">sequenceDiagram
+    participant T as Log Tailer
+    participant A as Agent (NY2)
+    participant W as WAL
+    participant S1 as Subscriber (NY)
+    participant S2 as Subscriber (HK)
+
+    Note over T,S2: Normal Operation
+    T-&gt;&gt;A: Line 1, Line 2, Line 3...
+    A-&gt;&gt;W: Write Batch(seq=100)
+    A-&gt;&gt;S1: PUB Batch(seq=100)
+    A-&gt;&gt;S2: PUB Batch(seq=100)
+    S1--&gt;&gt;S1: Process, store seq=100
+    S2--&gt;&gt;S2: Process, store seq=100
+
+    Note over T,S2: HK Disconnects
+    T-&gt;&gt;A: Line 4, Line 5...
+    A-&gt;&gt;W: Write Batch(seq=101)
+    A-&gt;&gt;S1: PUB Batch(seq=101)
+    A--xS2: [OFFLINE]
+    S1--&gt;&gt;S1: Process, store seq=101
+
+    A-&gt;&gt;W: Write Batch(seq=102)
+    A-&gt;&gt;S1: PUB Batch(seq=102)
+    A--xS2: [OFFLINE]
+
+    Note over T,S2: HK Reconnects
+    A-&gt;&gt;S2: PUB Batch(seq=103)
+    S2--&gt;&gt;S2: Gap detected! 100→103
+    S2-&gt;&gt;A: ReplayRequest(from=101, to=102)
+    A-&gt;&gt;W: Read seq 101-102
+    A-&gt;&gt;S2: ReplayResponse(batches)
+    S2--&gt;&gt;S2: Process 101, 102, 103 in order
+</code></pre>
+
+<h4 id="3238-monitoring-and-debugging">3.23.8 Monitoring and Debugging</h4>
+<p><strong>Check Agent Status:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># On NY2
+curl http://localhost:9000/status  # (if HTTP status endpoint enabled)
+</code></pre>
+
+<p><strong>Check Subscriber Status:</strong></p>
+<pre class="codehilite"><code class="language-bash"># On Ubuntu VM
+docker logs ats-health-monitor 2&gt;&amp;1 | grep -E &quot;sequence|gap|replay|connected&quot;
+</code></pre>
+
+<p><strong>Expected Startup Logs:</strong></p>
+<pre class="codehilite"><code>INF Reliable log receiver starting subscriber_id=ny-production
+INF Connected to publisher name=&quot;NY2 Primary&quot; addr=192.168.168.2:9000
+INF Restored last sequence from state file seq=12345
+INF Subscribed to all topics, waiting for messages...
+</code></pre>
+
+<p><strong>Gap Detection Logs:</strong></p>
+<pre class="codehilite"><code>WRN Gap detected! expected=12346 received=12350
+INF Requesting replay from=12346 to=12349
+INF Replay received batches=4 from=12346 to=12349
+INF Gap filled, resuming normal processing
+</code></pre>
+
+<h4 id="3239-troubleshooting">3.23.9 Troubleshooting</h4>
+<table>
+<thead>
+<tr>
+<th>Issue</th>
+<th>Symptom</th>
+<th>Solution</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>No messages</td>
+<td>"Waiting for messages..." forever</td>
+<td>Check firewall, verify agent is running</td>
+</tr>
+<tr>
+<td>Gaps not filling</td>
+<td>"Replay timeout" errors</td>
+<td>Check ROUTER port (9001) is open</td>
+</tr>
+<tr>
+<td>Duplicates</td>
+<td>Same FIX messages twice</td>
+<td>Normal during replay overlap, deduplicated by hash</td>
+</tr>
+<tr>
+<td>State lost</td>
+<td>Sequence resets to 0</td>
+<td>Check <code>state_dir</code> is a persistent volume</td>
+</tr>
+<tr>
+<td>High latency</td>
+<td>Messages delayed</td>
+<td>Reduce <code>flush_interval_ms</code>, check network</td>
+</tr>
+</tbody>
+</table>
+<h4 id="32310-multi-site-deployment-summary">3.23.10 Multi-Site Deployment Summary</h4>
+<pre class="codehilite"><code class="language-mermaid">flowchart TB
+    subgraph NY2[&quot;NY2 (Publisher)&quot;]
+        AGENT[log-agent.exe&lt;br/&gt;PUB:9000 ROUTER:9001]
+        WAL[(WAL Files)]
+    end
+
+    subgraph NY_VM[&quot;NY Ubuntu VM&quot;]
+        direction TB
+        NY_SUB[reliable_log_receiver]
+        NY_ID[&quot;subscriber_id = 'ny-production'&quot;]
+        NY_STATE[&quot;/app/data/state&quot;]
+    end
+
+    subgraph HK[&quot;HK Office&quot;]
+        direction TB
+        HK_SUB[reliable_log_receiver]
+        HK_ID[&quot;subscriber_id = 'hk-office'&quot;]
+        HK_STATE[&quot;/opt/ats/data/state&quot;]
+    end
+
+    subgraph DEV[&quot;Developer&quot;]
+        direction TB
+        DEV_SUB[reliable_log_receiver]
+        DEV_ID[&quot;subscriber_id = 'dev-tony'&quot;]
+        DEV_STATE[&quot;C:\\ATS\\data\\state&quot;]
+    end
+
+    AGENT --&gt;|&quot;Same messages&quot;| NY_SUB
+    AGENT --&gt;|&quot;Same messages&quot;| HK_SUB
+    AGENT --&gt;|&quot;Same messages&quot;| DEV_SUB
+
+    AGENT --- WAL
+
+    style NY2 fill:#f59e0b,stroke:#fbbf24,color:#000
+    style NY_VM fill:#10b981,stroke:#34d399,color:#fff
+    style HK fill:#8b5cf6,stroke:#a78bfa,color:#fff
+    style DEV fill:#3b82f6,stroke:#60a5fa,color:#fff
+</code></pre>
+
+<p><strong>Key Points:</strong>
+1. <strong>One Publisher</strong> (NY2) broadcasts to <strong>all subscribers</strong>
+2. Each subscriber has a <strong>unique <code>subscriber_id</code></strong>
+3. Each subscriber maintains its <strong>own state</strong> (last sequence)
+4. Gaps are detected and replayed <strong>independently per subscriber</strong>
+5. All sites receive the <strong>complete, identical data set</strong></p>
+<h3 id="321-fix-history-sync-new-in-v53">3.21 FIX History Sync (NEW in V5.3)</h3>
+<p>FIX messages from historical log files (e.g., <code>ats_history</code> folder) can be synced to TimescaleDB for audit compliance.</p>
+<p><strong>Configuration:</strong></p>
+<pre class="codehilite"><code class="language-toml">[log_monitor]
+# History folder for rotated log files
+history_folder = &quot;C:/ATS/logs/ats_history&quot;
+</code></pre>
+
+<p><strong>Sync Process:</strong></p>
+<ol>
+<li>The system scans the <code>history_folder</code> for log files (e.g., <code>ats - 12042025.log</code>)</li>
+<li>Each file is parsed for FIX messages (8=FIX.4.2|35=...)</li>
+<li>Messages are inserted into TimescaleDB with deduplication</li>
+<li>A sync audit log records each operation</li>
+</ol>
+<p><strong>Triggering Sync:</strong></p>
+<ul>
+<li><strong>Dashboard</strong>: Click "Sync FIX History" button in the Positions tab history panel</li>
+<li><strong>API</strong>: <code>POST /api/v1/atslog/history/sync-fix</code></li>
+<li><strong>Automatic</strong>: Can be scheduled via configuration (future feature)</li>
+</ul>
+<p><strong>Sync Audit Log:</strong></p>
+<p>Each sync operation records:
+- Source file name and modification time
+- Messages found, inserted, skipped
+- Errors and status
+- Timestamp</p>
+<p><strong>Example Sync Log:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Time</th>
+<th>File</th>
+<th>Found</th>
+<th>Inserted</th>
+<th>Skipped</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2025-12-06 08:49:03</td>
+<td>ats - 12042025.log</td>
+<td>461</td>
+<td>0</td>
+<td>461</td>
+<td>completed</td>
+</tr>
+<tr>
+<td>2025-12-06 08:49:02</td>
+<td>ats -12052025.log</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>completed</td>
+</tr>
+</tbody>
+</table>
+<h3 id="322-data-loss-prevention-new-in-v53">3.22 Data Loss Prevention (NEW in V5.3)</h3>
+<p>The system implements multiple layers of protection to prevent data loss:</p>
+<p><strong>1. Message Deduplication:</strong></p>
+<ul>
+<li>Each FIX message gets a SHA-256 hash (<code>message_hash</code> column)</li>
+<li>Unique index on <code>(time, cl_ord_id, order_id, msg_type, exec_type)</code></li>
+<li><code>ON CONFLICT DO NOTHING</code> prevents duplicate inserts</li>
+</ul>
+<p><strong>2. File-Level Tracking:</strong></p>
+<ul>
+<li><code>fix_sync_log</code> table tracks which files have been synced</li>
+<li>Records <code>file_mod_time</code> to detect if a file has been modified</li>
+<li>Skips files that have already been synced with the same modification time</li>
+</ul>
+<p><strong>3. Graceful Error Handling:</strong></p>
+<ul>
+<li>Schema initialization continues even if unique index creation fails</li>
+<li>Warning logged instead of fatal error for existing duplicate data</li>
+<li>Deduplication still works via <code>message_hash</code> fallback</li>
+</ul>
+<p><strong>4. Audit Trail:</strong></p>
+<p>Every sync operation is logged with:</p>
+<pre class="codehilite"><code class="language-sql">CREATE TABLE fix_sync_log (
+    id BIGSERIAL PRIMARY KEY,
+    sync_time TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    source_file TEXT NOT NULL,
+    file_size BIGINT,
+    file_mod_time TIMESTAMPTZ,
+    messages_found INT DEFAULT 0,
+    messages_inserted INT DEFAULT 0,
+    messages_skipped INT DEFAULT 0,
+    errors INT DEFAULT 0,
+    status TEXT DEFAULT 'completed',
+    error_message TEXT,
+    UNIQUE(source_file, file_mod_time)
+);
+</code></pre>
+
+<p><strong>Testing Data Loss Prevention:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Run unit tests for history sync functions
+go test -v -run &quot;History|Hash|Timestamp&quot; ./...
+</code></pre>
+
+<hr />
+<h2 id="4-order-aggregation-parent-child-grouping">4. Order Aggregation &amp; Parent-Child Grouping</h2>
+<p>The order aggregation system parses FIX 4.2 messages, builds hierarchical order relationships, calculates STP scores, and detects ghost orders.</p>
+<h3 id="41-fix-42-tag-reference">4.1 FIX 4.2 Tag Reference</h3>
+<p><strong>Core Identification Tags:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Tag</th>
+<th>Field Name</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>11</td>
+<td>ClOrdID</td>
+<td>Client Order ID (unique client identifier)</td>
+</tr>
+<tr>
+<td>37</td>
+<td>OrderID</td>
+<td>Broker Order ID (unique broker identifier)</td>
+</tr>
+<tr>
+<td>41</td>
+<td>OrigClOrdID</td>
+<td>Original ClOrdID (links to parent)</td>
+</tr>
+<tr>
+<td>17</td>
+<td>ExecID</td>
+<td>Execution ID (unique per fill)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Order Status Tags:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Tag</th>
+<th>Field Name</th>
+<th>Values</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>39</td>
+<td>OrdStatus</td>
+<td>0=New, 1=Partially Filled, 2=Filled, 4=Cancelled, 6=Pending Cancel, 8=Rejected</td>
+</tr>
+<tr>
+<td>150</td>
+<td>ExecType</td>
+<td>F=Fill, 2=Trade, 4=Cancelled, 8=Rejected</td>
+</tr>
+</tbody>
+</table>
+<h3 id="42-database-schema">4.2 Database Schema</h3>
+<p><strong>Core Tables:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Table</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>fix_order_links</code></td>
+<td>Order relationship graph with STP scores</td>
+</tr>
+<tr>
+<td><code>fix_order_events</code></td>
+<td>Append-only timeline of all FIX message events</td>
+</tr>
+<tr>
+<td><code>order_parent_groups</code></td>
+<td>Summary table with one row per root order</td>
+</tr>
+<tr>
+<td><code>order_child_orders</code></td>
+<td>Summary table with one row per ClOrdID</td>
+</tr>
+<tr>
+<td><code>order_executions</code></td>
+<td>Individual execution records (fills)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="43-stp-score-calculation">4.3 STP Score Calculation</h3>
+<p><strong>Formula:</strong></p>
+<pre class="codehilite"><code>STP Score = (Speed Factor × 0.4) + (Automation Factor × 0.4) + (Consistency Factor × 0.2)
+</code></pre>
+
+<p><strong>Speed Factor:</strong> Based on time from first NEW to first fill
+- &lt; 0.1 seconds: 100
+- &gt; 10 seconds: 0</p>
+<p><strong>Automation Factor:</strong>
+- 100 if no Cancel/Replace messages
+- 0 if any manual intervention</p>
+<p><strong>Consistency Factor:</strong> Based on price spread across fills
+- Spread ≤ 0.02: 100
+- Spread ≤ 0.05: 80
+- Spread ≤ 0.1: 60
+- Spread &gt; 0.1: 40</p>
+<p><strong>STP Qualification:</strong> Score ≥ 80</p>
+<h3 id="44-ghost-order-detection">4.4 Ghost Order Detection</h3>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Condition</th>
+<th>Timeout</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ghost Stalled NEW</td>
+<td>Order in NEW/PENDING_NEW with no update</td>
+<td>30 seconds</td>
+</tr>
+<tr>
+<td>Pending Cancel Timeout</td>
+<td>PENDING_CANCEL with no acknowledgment</td>
+<td>10 seconds</td>
+</tr>
+<tr>
+<td>Orphan No ACK</td>
+<td>New Order sent, no response</td>
+<td>5 seconds</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="5-round-trips-dashboard-new-in-v54">5. Round Trips Dashboard (NEW in V5.4)</h2>
+<p>The Round Trips Dashboard provides authoritative P&amp;L tracking using MSSQL as the source of truth, with drill-down capability to view underlying FIX messages.</p>
+<h3 id="51-the-golden-rule-brokeraccountid-strategyid">5.1 The Golden Rule: BrokerAccountID + StrategyID</h3>
+<p><strong>This is the most important concept for ATS round trip linking!</strong></p>
+<pre class="codehilite"><code>┌──────────────────────────────────────────────────────────────────────────┐
+│  KEY CONSTRAINT: For any given (BrokerAccountID, StrategyID) pair,      │
+│  there can be ONLY ONE active position at any moment in time.           │
+│                                                                          │
+│  This means ALL orders during a position's lifecycle belong to the      │
+│  SAME round trip!                                                        │
+└──────────────────────────────────────────────────────────────────────────┘
+</code></pre>
+
+<p><strong>Why This Matters:</strong>
+- MultiCharts can only have ONE active position per <code>(BrokerAccountID, StrategyID)</code> pair
+- All orders (Entry, STP modifications, Exit) share this compound key
+- This is the authoritative linking mechanism - more reliable than FIX ClOrdID patterns</p>
+<h3 id="52-safe-mssql-sync-architecture">5.2 Safe MSSQL Sync Architecture</h3>
+<p>To protect production MSSQL during trading hours, the Round Trips Dashboard uses a <strong>cached architecture</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>PostgreSQL Cache</strong></td>
+<td><code>mssql_round_trips</code> table stores synced data</td>
+</tr>
+<tr>
+<td><strong>Trading Hours Block</strong></td>
+<td>Sync disabled 9:30 AM - 4:00 PM EST</td>
+</tr>
+<tr>
+<td><strong>Admin-Only Sync</strong></td>
+<td>Manual sync requires <code>admin</code> role</td>
+</tr>
+<tr>
+<td><strong>EOD Auto-Sync</strong></td>
+<td>Automatic sync after market close</td>
+</tr>
+</tbody>
+</table>
+<h3 id="53-round-trip-data-flow">5.3 Round Trip Data Flow</h3>
+<pre class="codehilite"><code>MSSQL (Production)          PostgreSQL (Cache)           Dashboard
+┌─────────────────┐         ┌────────────────┐          ┌──────────┐
+│ fnd.vMegaStock  │ ──EOD─► │ mssql_round    │ ──Live─► │ Positions│
+│ RoundTripLv1    │  Sync   │ _trips         │   Read   │ Tab      │
+└─────────────────┘         └────────────────┘          └──────────┘
+</code></pre>
+
+<h3 id="54-drill-down-view">5.4 Drill-Down View</h3>
+<p>Clicking a round trip row opens a drill-down modal showing:</p>
+<ol>
+<li><strong>MSSQL Orders (Authoritative)</strong> - All orders linked by <code>BrokerAccountID + StrategyID</code>:</li>
+<li>Entry order</li>
+<li>STP orders (may have multiple modifications)</li>
+<li>Exit order</li>
+<li>
+<p>Sorted by DateTime (oldest first)</p>
+</li>
+<li>
+<p><strong>FIX Order History</strong> - Raw FIX message events grouped by Order ID:</p>
+</li>
+<li>Shows full lifecycle: New → Pending → Partial Fill → Fill</li>
+<li>Color-coded by execution type</li>
+</ol>
+<h3 id="55-export-functionality">5.5 Export Functionality</h3>
+<p>Export round trips to CSV or JSON with RBAC protection:</p>
+<table>
+<thead>
+<tr>
+<th>Permission</th>
+<th>Roles</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>export:daily</code></td>
+<td><code>operator</code>, <code>analyst</code>, <code>developer</code>, <code>admin</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Filter Options:</strong>
+- Date range (Start/End date pickers)
+- Quick presets: Today, Yesterday, Last 7 Days, Last 30 Days
+- Symbol filter (dropdown)</p>
+<h3 id="56-mssql-child-orders-query">5.6 MSSQL Child Orders Query</h3>
+<p>The authoritative query for retrieving all orders in a round trip:</p>
+<pre class="codehilite"><code class="language-sql">WITH EntryOrder AS (
+    SELECT
+        BrokerAccountID,
+        StrategyID,
+        SymbolID,
+        BaseMSTime AS EntryTime,
+        ATSStockOrderID AS EntryOrderID
+    FROM fnd.ATSStockOrder (NOLOCK)
+    WHERE tag37 = @entryTag37
+)
+SELECT
+    a.ATSStockOrderID,
+    a.tag37,
+    a.OrderName,
+    a.OrderType,
+    a.Quantity,
+    a.Price,
+    a.Status,
+    dbo.GetOrderStatusName(a.Status) AS StatusName,
+    a.BaseMSTime,
+    a.BuySellType,
+    dbo.GetBuySellTypeName(a.BuySellType) AS BuySellName
+FROM fnd.ATSStockOrder a (NOLOCK)
+JOIN EntryOrder e
+    ON a.BrokerAccountID = e.BrokerAccountID
+    AND a.StrategyID = e.StrategyID
+    AND a.SymbolID = e.SymbolID
+    AND a.BaseMSTime &gt;= e.EntryTime
+ORDER BY a.BaseMSTime ASC;
+</code></pre>
+
+<hr />
+<h2 id="6-ib-fix-42-position-fields">6. IB FIX 4.2 Position Fields</h2>
+<p>The Positions dashboard displays data from IB FIX 4.2 PositionReport (MsgType=AP) messages.</p>
+<h3 id="51-position-identification-tags">5.1 Position Identification Tags</h3>
+<table>
+<thead>
+<tr>
+<th>FIX Tag</th>
+<th>Field Name</th>
+<th>Description</th>
+<th>Database Column</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>55</td>
+<td>Symbol</td>
+<td>Ticker symbol (e.g., AAPL)</td>
+<td><code>symbol</code></td>
+</tr>
+<tr>
+<td>48</td>
+<td>SecurityID</td>
+<td>Unique identifier (ISIN, CUSIP)</td>
+<td><code>security_id</code></td>
+</tr>
+<tr>
+<td>22</td>
+<td>SecurityIDSource</td>
+<td>Source of ID (4=ISIN, 1=CUSIP)</td>
+<td><code>security_id_source</code></td>
+</tr>
+<tr>
+<td>54</td>
+<td>Side</td>
+<td>1=Buy/Long, 2=Sell/Short</td>
+<td><code>side</code></td>
+</tr>
+<tr>
+<td>15</td>
+<td>Currency</td>
+<td>Position currency (e.g., USD)</td>
+<td><code>currency</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="52-position-quantity-price-tags">5.2 Position Quantity &amp; Price Tags</h3>
+<table>
+<thead>
+<tr>
+<th>FIX Tag</th>
+<th>Field Name</th>
+<th>Description</th>
+<th>Database Column</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>703</td>
+<td>PosType</td>
+<td>DEL=Delivered (actual holdings)</td>
+<td><code>pos_type</code></td>
+</tr>
+<tr>
+<td>32</td>
+<td>LastQty</td>
+<td>Position quantity</td>
+<td><code>pos_qty</code></td>
+</tr>
+<tr>
+<td>14</td>
+<td>CumQty</td>
+<td>Cumulative quantity</td>
+<td><code>pos_qty</code></td>
+</tr>
+<tr>
+<td>6</td>
+<td>AvgPx</td>
+<td>Average price paid/received</td>
+<td><code>avg_px</code></td>
+</tr>
+<tr>
+<td>31</td>
+<td>LastPx</td>
+<td>Last traded/valuation price</td>
+<td><code>last_px</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="53-position-amount-tags-tag-730-with-tag-707">5.3 Position Amount Tags (Tag 730 with Tag 707)</h3>
+<table>
+<thead>
+<tr>
+<th>PosAmtType</th>
+<th>Description</th>
+<th>Database Column</th>
+<th>Customer Question</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CASH</td>
+<td>Total Cost Basis</td>
+<td><code>pos_amt_cash</code></td>
+<td>"What did I pay?"</td>
+</tr>
+<tr>
+<td>FMTM</td>
+<td>Final Mark-to-Market</td>
+<td><code>pos_amt_fmtm</code></td>
+<td>"What is it worth now?"</td>
+</tr>
+<tr>
+<td>UNRL</td>
+<td>Unrealized P&amp;L</td>
+<td><code>pos_amt_unrl</code></td>
+<td>"Am I up or down?"</td>
+</tr>
+</tbody>
+</table>
+<h3 id="54-decimal-precision">5.4 Decimal Precision</h3>
+<p>The system uses <code>shopspring/decimal</code> library for accurate financial calculations. FIX protocol requires <strong>6 decimal places</strong>.</p>
+<p><strong>Precision Rules:</strong>
+- <strong>FIX Output</strong>: 6 decimal places (e.g., <code>155.250000</code>)
+- <strong>Display Output</strong>: 2 decimal places (e.g., <code>$155.25</code>)
+- <strong>Internal Calculations</strong>: Full precision maintained</p>
+<h3 id="55-position-calculations">5.5 Position Calculations</h3>
+<p><strong>Total Position Cost:</strong></p>
+<pre class="codehilite"><code>Total Position Cost = Quantity × Average Price
+                    = Tag 32 × Tag 6
+                    = 100 × 155.250000
+                    = 15525.000000
+
+Or from IB: Tag 730 where Tag 707 = &quot;CASH&quot;
+</code></pre>
+
+<p><strong>Market Value:</strong></p>
+<pre class="codehilite"><code>Market Value = Quantity × Last Price
+             = Tag 32 × Tag 31
+             = 100 × 167.000000
+             = 16700.000000
+
+Or from IB: Tag 730 where Tag 707 = &quot;FMTM&quot;
+</code></pre>
+
+<p><strong>Unrealized P&amp;L:</strong></p>
+<pre class="codehilite"><code>Unrealized P&amp;L = Market Value - Cost Basis
+               = 16700.000000 - 15525.000000
+               = 1175.000000
+
+Or from IB: Tag 730 where Tag 707 = &quot;UNRL&quot;
+</code></pre>
+
+<p><strong>P&amp;L Percentage:</strong></p>
+<pre class="codehilite"><code>P&amp;L % = (Unrealized P&amp;L / Cost Basis) × 100
+      = (1175.00 / 15525.00) × 100
+      = 7.57%
+</code></pre>
+
+<h3 id="56-example-fix-positionreport">5.6 Example FIX PositionReport</h3>
+<pre class="codehilite"><code>8=FIX.4.2|35=AP|55=AAPL|48=US0378331005|22=4|54=1|15=USD|
+703=DEL|32=100|6=155.250000|31=167.000000|
+707=CASH|730=15525.000000|
+707=FMTM|730=16700.000000|
+707=UNRL|730=1175.000000|
+</code></pre>
+
+<p><strong>Interpretation:</strong>
+- <strong>Symbol</strong>: AAPL (100 shares, LONG)
+- <strong>Average Price</strong>: $155.25
+- <strong>Last Price</strong>: $167.00
+- <strong>Cost Basis</strong>: $15,525.00
+- <strong>Market Value</strong>: $16,700.00
+- <strong>Unrealized P&amp;L</strong>: +$1,175.00</p>
+<hr />
+<h2 id="7-rbac-role-based-access-control">7. RBAC (Role-Based Access Control)</h2>
+<p>RBAC provides tab-level permissions and user authentication for the dashboard.</p>
+<h3 id="71-permission-model">7.1 Permission Model</h3>
+<p><strong>Permission Types:</strong>
+- <code>tab:&lt;tab_id&gt;</code> - Access to specific dashboard tab
+- <code>action:&lt;action_name&gt;</code> - Execute specific actions
+- <code>api:read</code> / <code>api:write</code> - API access levels
+- <code>*</code> - Wildcard (all permissions)</p>
+<p><strong>Available Tab Permissions:</strong>
+- <code>tab:overview</code> - System Overview
+- <code>tab:pro</code> - Pro Dashboard
+- <code>tab:email</code> - Email Monitor
+- <code>tab:database</code> - Database Monitor
+- <code>tab:atslog</code> - ATS Log Monitor
+- <code>tab:fix</code> - FIX Protocol Monitor
+- <code>tab:positions</code> - Trading Positions
+- <code>tab:stp_orders</code> - STP Orders
+- <code>tab:history</code> - Order History
+- <code>tab:health</code> - System Health
+- <code>tab:debug</code> - Debug Dashboard
+- <code>tab:setup</code> - Setup/Configuration</p>
+<h3 id="72-default-roles">7.2 Default Roles</h3>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Description</th>
+<th>Permissions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>admin</code></td>
+<td>Full access</td>
+<td><code>*</code> (all)</td>
+</tr>
+<tr>
+<td><code>operator</code></td>
+<td>Operations team</td>
+<td>Most tabs + trigger actions</td>
+</tr>
+<tr>
+<td><code>analyst</code></td>
+<td>Analysis</td>
+<td>Read-only tabs</td>
+</tr>
+<tr>
+<td><code>viewer</code></td>
+<td>Limited access</td>
+<td>Overview, FIX, Positions, History</td>
+</tr>
+</tbody>
+</table>
+<h3 id="73-role-permissions-matrix">7.3 Role Permissions Matrix</h3>
+<table>
+<thead>
+<tr>
+<th>Tab</th>
+<th style="text-align: center;">Admin</th>
+<th style="text-align: center;">Operator</th>
+<th style="text-align: center;">Analyst</th>
+<th style="text-align: center;">Viewer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Overview</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td>Pro</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">❌</td>
+</tr>
+<tr>
+<td>Email</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+</tr>
+<tr>
+<td>Database</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">❌</td>
+</tr>
+<tr>
+<td>ATS Log</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">❌</td>
+</tr>
+<tr>
+<td>FIX Protocol</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td>Positions</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td>STP Orders</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">❌</td>
+</tr>
+<tr>
+<td>History</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+</tr>
+<tr>
+<td>Health</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+</tr>
+<tr>
+<td>Debug</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+</tr>
+<tr>
+<td>Setup</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+</tr>
+</tbody>
+</table>
+<h3 id="74-authentication-flow">7.4 Authentication Flow</h3>
+<ol>
+<li><strong>User visits dashboard</strong> → Login page shown (if RBAC enabled)</li>
+<li><strong>User submits credentials</strong> → Backend validates against bcrypt hash</li>
+<li><strong>Session created</strong> → Token stored in cookie + localStorage</li>
+<li><strong>Frontend loads permissions</strong> → Tabs filtered based on user roles</li>
+<li><strong>API requests authenticated</strong> → Session token or Basic Auth</li>
+<li><strong>Session expires</strong> → User redirected to login</li>
+</ol>
+<p><img alt="ATS Health Monitor - Login Page" src="images/ats-health-monitor-login-page.png" />
+<em>Figure 16: RBAC login page for user authentication</em></p>
+<p><img alt="ATS Health Monitor - User Session Info" src="images/ats-health-monitor-user-session.png" />
+<em>Figure 17: Logged-in user session showing username and role in navigation bar</em></p>
+<h3 id="75-generating-password-hashes">7.5 Generating Password Hashes</h3>
+<pre class="codehilite"><code class="language-powershell">cd Scripts\05-Production-ATS-Administration\ATS-Health-Monitor
+go run scripts/hashpassword.go YourSecurePassword123
+</code></pre>
+
+<p><strong>Output:</strong></p>
+<pre class="codehilite"><code>Password: YourSecurePassword123
+Hash: $2a$10$...
+
+Add this to your config.toml:
+
+[[rbac.users]]
+username = &quot;your_username&quot;
+password_hash = &quot;$2a$10$...&quot;
+roles = [&quot;admin&quot;]
+enabled = true
+</code></pre>
+
+<h3 id="76-disabling-rbac">7.6 Disabling RBAC</h3>
+<p>To allow anonymous access (no login required):</p>
+<pre class="codehilite"><code class="language-toml">[rbac]
+enabled = false
+</code></pre>
+
+<hr />
+<h2 id="8-dashboard-features">8. Dashboard Features</h2>
+<h3 id="81-dashboard-tabs">8.1 Dashboard Tabs</h3>
+<table>
+<thead>
+<tr>
+<th>Tab</th>
+<th>Icon</th>
+<th>Purpose</th>
+<th>Version</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Overview</td>
+<td>◈</td>
+<td>Unified system status and alerts</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Email</td>
+<td>✉</td>
+<td>Email captures and forwarding</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Database</td>
+<td>⬡</td>
+<td>Database issue detections</td>
+<td>-</td>
+</tr>
+<tr>
+<td>ATS Log</td>
+<td>📋</td>
+<td>ATS log issue detections</td>
+<td>V2</td>
+</tr>
+<tr>
+<td><strong>Order Flow</strong></td>
+<td><strong>⇆</strong></td>
+<td><strong>FIX message monitoring with V2 parser</strong></td>
+<td><strong>V2</strong></td>
+</tr>
+<tr>
+<td>↳ Ghost STP</td>
+<td>👻</td>
+<td>Detect cancelled STPs that execute</td>
+<td>V2</td>
+</tr>
+<tr>
+<td>↳ Multi-Venue</td>
+<td>🏛</td>
+<td>Multi-exchange routing analysis</td>
+<td>V2</td>
+</tr>
+<tr>
+<td>↳ Patterns</td>
+<td>📊</td>
+<td>Order pattern detection with heat maps</td>
+<td>V2</td>
+</tr>
+<tr>
+<td><strong>Pos History</strong></td>
+<td><strong>📜</strong></td>
+<td><strong>MSSQL round trips with V2 FIX drill-down</strong></td>
+<td><strong>V2</strong></td>
+</tr>
+<tr>
+<td><strong>OnHand Pos</strong></td>
+<td><strong>📦</strong></td>
+<td><strong>On-hand orders with V2 API</strong></td>
+<td><strong>V2</strong></td>
+</tr>
+<tr>
+<td>History</td>
+<td>📜</td>
+<td>Order history timeline</td>
+<td>V2</td>
+</tr>
+<tr>
+<td>Health</td>
+<td>♥</td>
+<td>System health and queries</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Debug</td>
+<td>🐛</td>
+<td>ChaiSQL debug queries</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Setup</td>
+<td>⚙</td>
+<td>Configuration editor</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Access Control</td>
+<td>🔐</td>
+<td>RBAC user and role management</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Help</td>
+<td>❓</td>
+<td>Interactive reference guide</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Key Changes (V2 Upgrade):</strong>
+- <strong>Pos History</strong> (was "Positions"): Now uses V2 API (<code>api.getV2Messages</code>) with <code>order_id</code> filter
+- <strong>OnHand Pos</strong> (was "On-Hand"): Upgraded to query <code>sfc_fix.messages_parsed</code> with millisecond precision
+- <strong>Order Flow</strong>: New V2 parser with sub-tabs for specialized monitoring
+- <strong>Legacy V1 tabs</strong> hidden by default (<code>configEnabled: false</code>)</p>
+<p><img alt="ATS Health Monitor - Navigation Tabs" src="images/ats-health-monitor-navigation-tabs.png" />
+<em>Figure 3: Dashboard navigation showing all available tabs</em></p>
+<h3 id="82-system-overview-dashboard">8.2 System Overview Dashboard</h3>
+<ul>
+<li><strong>Monitoring Area Status Cards</strong> - Real-time status for Email, Database, ATS Log, FIX</li>
+<li><strong>Overall System Status</strong> - Aggregated health indicator</li>
+<li><strong>System Metrics</strong> - 24-hour summary</li>
+<li><strong>Unified Alert Timeline</strong> - Recent alerts from all sources</li>
+</ul>
+<p><img alt="ATS Health Monitor - System Overview Tab" src="images/ats-health-monitor-tab-overview.png" />
+<em>Figure 4: System Overview dashboard showing monitoring area status cards and unified alert timeline</em></p>
+<h3 id="83-pos-history-dashboard-v2">8.3 Pos History Dashboard (V2)</h3>
+<ul>
+<li><strong>V2 API Integration</strong> - Queries <code>sfc_fix.messages_parsed</code> with <code>order_id</code> (Tag37) filter</li>
+<li><strong>MSSQL Source of Truth</strong> - Round trips from <code>vMegaStockRoundTripLv1</code></li>
+<li><strong>FIX Drill-Down</strong> - Click row to see complete order lifecycle with millisecond timestamps</li>
+<li><strong>Search and filter</strong> - By symbol, entry Tag37, date range</li>
+<li><strong>Millisecond Precision</strong> - Timestamps like <code>2025-12-16T20:40:01.116Z</code> for accurate sequencing</li>
+<li><strong>Complete Lifecycle</strong> - Shows New → Pending → Partial Fill → Fill with all events</li>
+</ul>
+<p><img alt="ATS Health Monitor - Pos History Tab" src="images/ats-health-monitor-tab-positions.png" />
+<em>Figure 5: Pos History dashboard showing MSSQL round trips with V2 FIX message drill-down</em></p>
+<h3 id="83a-onhand-pos-dashboard-v2">8.3a OnHand Pos Dashboard (V2)</h3>
+<ul>
+<li><strong>V2 API Upgrade</strong> - Replaced <code>api.getOrderHistory</code> with <code>api.getV2Messages</code></li>
+<li><strong>Parent-Child Structure</strong> - Entry orders with associated STP child orders</li>
+<li><strong>Real-Time Updates</strong> - 10-second auto-refresh</li>
+<li><strong>FIX Event Viewer</strong> - Drill-down shows full message lifecycle from <code>sfc_fix.messages_parsed</code></li>
+<li><strong>Tag37 Linking</strong> - Associates MSSQL orders with FIX messages via broker order ID</li>
+</ul>
+<h3 id="83b-order-flow-dashboard-v2">8.3b Order Flow Dashboard (V2)</h3>
+<ul>
+<li><strong>Real-Time Monitoring</strong> - Live FIX message stream with issue detection</li>
+<li><strong>Sub-Tabs:</strong></li>
+<li><strong>👻 Ghost STP:</strong> Detects cancelled STP orders that still execute</li>
+<li><strong>🏛 Multi-Venue:</strong> Multi-exchange routing (NASDAQ, NYSE, ARCA via Tag 30)</li>
+<li><strong>📊 Patterns:</strong> Order pattern heat maps and statistical analysis</li>
+<li><strong>Millisecond Precision</strong> - Event timestamps include <code>.ms</code> for accurate sequencing</li>
+<li><strong>Complete Message History</strong> - All FIX events stored in <code>sfc_fix.messages_parsed</code></li>
+</ul>
+<h3 id="84-additional-dashboard-screenshots">8.4 Additional Dashboard Screenshots</h3>
+<p><img alt="ATS Health Monitor - FIX Protocol Tab" src="images/ats-health-monitor-tab-fix.png" />
+<em>Figure 6: Order Flow dashboard showing V2 FIX message monitoring with issue detections</em></p>
+<h3 id="85-additional-dashboard-screenshots">8.5 Additional Dashboard Screenshots</h3>
+<p><strong>Pro Dashboard (MUI Enhanced):</strong></p>
+<p><img alt="ATS Health Monitor - Pro Tab" src="images/ats-health-monitor-tab-pro.png" />
+<em>Figure 7: Pro dashboard with Material-UI charts and enhanced visualizations</em></p>
+<p><strong>Email Monitor:</strong></p>
+<p><img alt="ATS Health Monitor - Email Tab" src="images/ats-health-monitor-tab-email.png" />
+<em>Figure 8: Email Monitor showing captured emails and forwarding routes</em></p>
+<p><strong>Database Monitor:</strong></p>
+<p><img alt="ATS Health Monitor - Database Tab" src="images/ats-health-monitor-tab-database.png" />
+<em>Figure 9: Database Issue Matrix showing detected database health issues</em></p>
+<p><strong>ATS Log Monitor:</strong></p>
+<p><img alt="ATS Health Monitor - ATS Log Tab" src="images/ats-health-monitor-tab-atslog.png" />
+<em>Figure 10: ATS Log Issue Matrix showing detected log pattern matches</em></p>
+<p><strong>STP Orders:</strong></p>
+<p><img alt="ATS Health Monitor - STP Orders Tab" src="images/ats-health-monitor-tab-stp-orders.png" />
+<em>Figure 11: STP Orders dashboard showing on-hand order aggregation with STP scores</em></p>
+<p><strong>Order History:</strong></p>
+<p><img alt="ATS Health Monitor - History Tab" src="images/ats-health-monitor-tab-history.png" />
+<em>Figure 12: Order History showing timeline of all orders with parent-child relationships</em></p>
+<p><strong>System Health:</strong></p>
+<p><img alt="ATS Health Monitor - Health Tab" src="images/ats-health-monitor-tab-health.png" />
+<em>Figure 13: System Health dashboard showing custom query results and metrics</em></p>
+<p><strong>Debug Dashboard:</strong></p>
+<p><img alt="ATS Health Monitor - Debug Tab" src="images/ats-health-monitor-tab-debug.png" />
+<em>Figure 14: Debug dashboard for ChaiSQL query execution and troubleshooting</em></p>
+<p><strong>Setup/Configuration:</strong></p>
+<p><img alt="ATS Health Monitor - Setup Tab" src="images/ats-health-monitor-tab-setup.png" />
+<em>Figure 15: Setup tab for viewing and editing TOML configuration</em></p>
+<hr />
+<h2 id="9-api-reference">9. API Reference</h2>
+<h3 id="91-authentication-endpoints">9.1 Authentication Endpoints</h3>
+<pre class="codehilite"><code>POST /api/v1/login          - User login
+POST /api/v1/logout         - User logout
+GET  /api/v1/user/permissions - Get current user permissions
+GET  /api/v1/rbac/config    - Get RBAC configuration (admin only)
+</code></pre>
+
+<h3 id="92-system-endpoints">9.2 System Endpoints</h3>
+<pre class="codehilite"><code>GET /api/v1/system/overview    - System overview
+GET /api/v1/dashboard/summary  - Dashboard summary
+GET /api/v1/config             - Configuration
+POST /api/v1/check/trigger     - Trigger health check
+</code></pre>
+
+<h3 id="93-monitoring-endpoints">9.3 Monitoring Endpoints</h3>
+<pre class="codehilite"><code>GET /api/v1/email/captures     - Email captures
+GET /api/v1/email/stats        - Email statistics
+GET /api/v1/database/detections - Database issue matrix
+GET /api/v1/atslog/detections  - ATS log issue matrix
+GET /api/v1/fix/messages       - FIX messages
+GET /api/v1/fix/detections     - FIX detections
+GET /api/v1/fix/ghost-stp      - Ghost STP matches
+</code></pre>
+
+<h3 id="94-trading-endpoints">9.4 Trading Endpoints</h3>
+<pre class="codehilite"><code>GET /api/v1/trading/positions            - All positions (read-only)
+GET /api/v1/trading/positions/:id        - Single position
+GET /api/v1/trading/positions/historical - Historical positions from TimescaleDB
+GET /api/v1/order-aggregation/onhand     - On-hand orders
+GET /api/v1/order-aggregation/history    - Order history
+GET /api/v1/order-aggregation/parents    - Parent group summary
+</code></pre>
+
+<h3 id="95-history-sync-endpoints-new-in-v53">9.5 History Sync Endpoints (NEW in V5.3)</h3>
+<pre class="codehilite"><code>POST /api/v1/atslog/history/sync-fix  - Trigger FIX history sync from log files
+GET  /api/v1/atslog/history/sync-log  - Get sync audit log
+</code></pre>
+
+<p><strong>Example: Trigger FIX History Sync</strong></p>
+<pre class="codehilite"><code class="language-powershell">Invoke-RestMethod -Method POST -Uri &quot;http://localhost:8080/api/v1/atslog/history/sync-fix&quot;
+</code></pre>
+
+<p><strong>Response:</strong></p>
+<pre class="codehilite"><code class="language-json">{
+  &quot;success&quot;: true,
+  &quot;data&quot;: &quot;FIX history sync started - loading messages into TimescaleDB&quot;
+}
+</code></pre>
+
+<p><strong>Example: Get Sync Audit Log</strong></p>
+<pre class="codehilite"><code class="language-powershell">Invoke-RestMethod -Uri &quot;http://localhost:8080/api/v1/atslog/history/sync-log&quot;
+</code></pre>
+
+<p><strong>Response:</strong></p>
+<pre class="codehilite"><code class="language-json">{
+  &quot;success&quot;: true,
+  &quot;data&quot;: {
+    &quot;connected&quot;: true,
+    &quot;history&quot;: [
+      {
+        &quot;id&quot;: 1,
+        &quot;sync_time&quot;: &quot;2025-12-06T08:49:03Z&quot;,
+        &quot;source_file&quot;: &quot;ats - 12042025.log&quot;,
+        &quot;file_size&quot;: 5526106,
+        &quot;messages_found&quot;: 461,
+        &quot;messages_inserted&quot;: 0,
+        &quot;messages_skipped&quot;: 461,
+        &quot;status&quot;: &quot;completed&quot;
+      }
+    ],
+    &quot;total_files&quot;: 2,
+    &quot;total_messages&quot;: 0
+  }
+}
+</code></pre>
+
+<h3 id="96-round-trips-endpoints-new-in-v54">9.6 Round Trips Endpoints (NEW in V5.4)</h3>
+<pre class="codehilite"><code>GET  /api/v1/roundtrips              - Get MSSQL round trips from PostgreSQL cache
+POST /api/v1/roundtrips/sync         - Sync round trips from MSSQL (admin only, after hours)
+GET  /api/v1/roundtrips/sync-status  - Get trading hours status and sync info
+GET  /api/v1/roundtrips/fix-messages - Get FIX messages for a round trip
+GET  /api/v1/roundtrips/child-orders - Get all orders in a round trip (BrokerAccountID+StrategyID)
+GET  /api/v1/roundtrips/export       - Export round trips to CSV/JSON (RBAC protected)
+</code></pre>
+
+<p><strong>Example: Get Child Orders for a Round Trip</strong></p>
+<pre class="codehilite"><code class="language-powershell">Invoke-RestMethod -Uri &quot;http://localhost:8080/api/v1/roundtrips/child-orders?entry_tag37=01b2e88e.00030c8f.692e77d3.0001&quot;
+</code></pre>
+
+<p><strong>Response:</strong></p>
+<pre class="codehilite"><code class="language-json">{
+  &quot;success&quot;: true,
+  &quot;data&quot;: {
+    &quot;entry_tag37&quot;: &quot;01b2e88e.00030c8f.692e77d3.0001&quot;,
+    &quot;all_orders&quot;: [
+      {
+        &quot;tag37&quot;: &quot;01b2e88e.00030c8f.692e77d3.0001&quot;,
+        &quot;order_type&quot;: &quot;MKT&quot;,
+        &quot;order_name&quot;: &quot;OPENBUY&quot;,
+        &quot;status_name&quot;: &quot;Executed&quot;,
+        &quot;quantity&quot;: 100,
+        &quot;price&quot;: 613.50,
+        &quot;base_ms_time&quot;: &quot;2025-12-04T10:15:23Z&quot;
+      },
+      {
+        &quot;tag37&quot;: &quot;01b2e88e.00030c8f.692e77d6.0002&quot;,
+        &quot;order_type&quot;: &quot;STP&quot;,
+        &quot;order_name&quot;: &quot;ENTRY STP&quot;,
+        &quot;status_name&quot;: &quot;Canceled&quot;,
+        &quot;quantity&quot;: 100,
+        &quot;price&quot;: 613.69,
+        &quot;base_ms_time&quot;: &quot;2025-12-04T10:15:24Z&quot;
+      }
+    ],
+    &quot;order_count&quot;: 4,
+    &quot;stp_count&quot;: 2,
+    &quot;linking_method&quot;: &quot;BrokerAccountID + StrategyID (MSSQL authoritative)&quot;
+  }
+}
+</code></pre>
+
+<h3 id="97-api-response-format">9.7 API Response Format</h3>
+<p><strong>Success Response:</strong></p>
+<pre class="codehilite"><code class="language-json">{
+  &quot;success&quot;: true,
+  &quot;data&quot;: { ... }
+}
+</code></pre>
+
+<p><strong>Error Response:</strong></p>
+<pre class="codehilite"><code class="language-json">{
+  &quot;success&quot;: false,
+  &quot;error&quot;: &quot;Error message&quot;
+}
+</code></pre>
+
+<p><img alt="ATS Health Monitor - API Response Example" src="images/ats-health-monitor-api-response.png" />
+<em>Figure 19: Example API response from /api/v1/system/overview endpoint (browser or Postman)</em></p>
+<hr />
+<h2 id="10-testing-procedures">10. Testing Procedures</h2>
+<h3 id="101-automated-test-harness">10.1 Automated Test Harness</h3>
+<p><strong>Test Script:</strong> <code>scripts/test/Run-ATSHealthMonitorTests.ps1</code></p>
+<pre class="codehilite"><code class="language-powershell">cd I:\SOP-Management\Scripts\05-Production-ATS-Administration\ATS-Health-Monitor
+
+# Run all tests
+.\scripts\test\Run-ATSHealthMonitorTests.ps1
+
+# With verbose API output
+.\scripts\test\Run-ATSHealthMonitorTests.ps1 -VerboseApi
+
+# Skip email seeding
+.\scripts\test\Run-ATSHealthMonitorTests.ps1 -SkipEmailSeeding
+</code></pre>
+
+<h3 id="102-go-unit-tests">10.2 Go Unit Tests</h3>
+<pre class="codehilite"><code class="language-powershell"># Run all Go tests
+go test ./...
+
+# Run with verbose output
+go test -v ./...
+
+# Run specific test
+go test -v -run TestIssueMatrixDetectionsFromLog
+
+# Run history sync tests (NEW in V5.3)
+go test -v -run &quot;History|Hash|Timestamp&quot; ./...
+</code></pre>
+
+<p><strong>History Sync Tests (V5.3):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Test</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TestGenerateMessageHash</code></td>
+<td>Verifies SHA-256 hash generation for deduplication</td>
+</tr>
+<tr>
+<td><code>TestExtractTimestampFromLine</code></td>
+<td>Validates timestamp parsing from log lines</td>
+</tr>
+<tr>
+<td><code>TestListHistoryFiles</code></td>
+<td>Tests discovery of log files in history folder</td>
+</tr>
+<tr>
+<td><code>TestHistorySyncStatus</code></td>
+<td>Verifies sync status tracking structure</td>
+</tr>
+<tr>
+<td><code>TestFileSyncResult</code></td>
+<td>Tests individual file sync result tracking</td>
+</tr>
+<tr>
+<td><code>TestClearHistoricalData</code></td>
+<td>Verifies clearing historical data from ChaiSQL</td>
+</tr>
+<tr>
+<td><code>TestGetHistoryStats</code></td>
+<td>Tests history statistics aggregation</td>
+</tr>
+</tbody>
+</table>
+<h3 id="103-dashboard-tab-testing">10.3 Dashboard Tab Testing</h3>
+<p>Use <code>Test-AllDashboardTabs.ps1</code> to verify all tabs show data:</p>
+<pre class="codehilite"><code class="language-powershell">.\scripts\test\Test-AllDashboardTabs.ps1 -BaseUrl &quot;http://localhost:8090&quot;
+</code></pre>
+
+<h3 id="104-pre-production-checklist">10.4 Pre-Production Checklist</h3>
+<ul>
+<li>[ ] All 9 FIX Issue Matrix scenarios detected</li>
+<li>[ ] System Overview API returns valid data</li>
+<li>[ ] Email Monitor APIs accessible</li>
+<li>[ ] Database Issue Matrix API accessible</li>
+<li>[ ] ATS Log Issue Matrix API accessible</li>
+<li>[ ] All Go unit tests pass</li>
+<li>[ ] SFC compliance test passes (100% reportable)</li>
+<li>[ ] RBAC login/logout works correctly</li>
+<li>[ ] All dashboard tabs load correctly</li>
+<li>[ ] TimescaleDB connection successful (V5.3)</li>
+<li>[ ] History sync tests pass: <code>go test -v -run "History|Hash" ./...</code></li>
+<li>[ ] FIX history sync from log files works</li>
+<li>[ ] Historical data stitching in Positions tab works</li>
+</ul>
+<p><img alt="ATS Health Monitor - Test Results" src="images/ats-health-monitor-test-results.png" />
+<em>Figure 20: PowerShell test script output showing all tests passed</em></p>
+<p><img alt="ATS Health Monitor - Go Test Output" src="images/ats-health-monitor-go-test.png" />
+<em>Figure 21: Go unit test results (go test ./...)</em></p>
+<hr />
+<h2 id="11-deployment">11. Deployment</h2>
+<h3 id="111-manual-run-testing">11.1 Manual Run (Testing)</h3>
+<pre class="codehilite"><code class="language-powershell"># Console Mode
+.\ATS-Health-Monitor.exe
+
+# Web Dashboard Mode
+.\ATS-Health-Monitor.exe -web -port 8080 -config config.toml
+</code></pre>
+
+<h3 id="112-production-deployment-scheduled-task">11.2 Production Deployment (Scheduled Task)</h3>
+<pre class="codehilite"><code class="language-powershell">$action = New-ScheduledTaskAction `
+    -Execute &quot;I:\SOP-Management\Scripts\05-Production-ATS-Administration\ATS-Health-Monitor\ATS-Health-Monitor.exe&quot; `
+    -Argument &quot;-web -port 8080&quot; `
+    -WorkingDirectory &quot;I:\SOP-Management\Scripts\05-Production-ATS-Administration\ATS-Health-Monitor&quot;
+
+$trigger = New-ScheduledTaskTrigger -AtStartup
+
+$settings = New-ScheduledTaskSettingsSet `
+    -AllowStartIfOnBatteries `
+    -DontStopIfGoingOnBatteries `
+    -StartWhenAvailable `
+    -RunOnlyIfNetworkAvailable
+
+$principal = New-ScheduledTaskPrincipal `
+    -UserId &quot;$env:USERNAME&quot; `
+    -LogonType Interactive `
+    -RunLevel Highest
+
+Register-ScheduledTask `
+    -TaskName &quot;ATS Health Monitor&quot; `
+    -Action $action `
+    -Trigger $trigger `
+    -Settings $settings `
+    -Principal $principal `
+    -Description &quot;ATS Health Monitor with web dashboard at http://localhost:8080&quot;
+</code></pre>
+
+<hr />
+<h2 id="12-troubleshooting">12. Troubleshooting</h2>
+<h3 id="issue-1-cannot-connect-to-database">Issue 1: Cannot Connect to Database</h3>
+<p><strong>Solution:</strong>
+1. Verify SQL Server is accessible: <code>Test-NetConnection gfprod -Port 1433</code>
+2. Check credentials in <code>config.toml</code>
+3. Test with SQL Server Management Studio</p>
+<h3 id="issue-2-no-telegram-alerts">Issue 2: No Telegram Alerts</h3>
+<p><strong>Solution:</strong>
+1. Verify <code>telegram.enabled = true</code>
+2. Test token: <code>https://api.telegram.org/bot&lt;TOKEN&gt;/getMe</code>
+3. Verify chat_id is correct</p>
+<h3 id="issue-3-dashboard-not-loading">Issue 3: Dashboard Not Loading</h3>
+<p><strong>Solution:</strong>
+1. Verify backend is running: <code>Get-Process ATS-Health-Monitor</code>
+2. Check port availability: <code>Test-NetConnection localhost -Port 8080</code>
+3. Check browser console for errors</p>
+<h3 id="issue-4-rbac-login-failing">Issue 4: RBAC Login Failing</h3>
+<p><strong>Solution:</strong>
+1. Verify <code>rbac.enabled = true</code>
+2. Check password hash is valid bcrypt
+3. Verify user is enabled: <code>enabled = true</code>
+4. Check session timeout hasn't expired</p>
+<h3 id="issue-5-no-fix-detections">Issue 5: No FIX Detections</h3>
+<p><strong>Solution:</strong>
+1. Verify <code>fix_monitor.enabled = true</code>
+2. Check log file path exists
+3. Verify detection rules are enabled
+4. Check console for parsing errors</p>
+<h3 id="issue-6-positions-not-showing">Issue 6: Positions Not Showing</h3>
+<p><strong>Solution:</strong>
+1. Verify <code>trading_dashboard.enabled = true</code>
+2. Check <code>position_refresh.enabled = true</code>
+3. Test query in SQL Server Management Studio
+4. Verify column names match expected values</p>
+<h3 id="issue-7-timescaledb-not-connected-new-in-v53">Issue 7: TimescaleDB Not Connected (NEW in V5.3)</h3>
+<p><strong>Solution:</strong>
+1. Verify TimescaleDB/PostgreSQL is running: <code>Test-NetConnection localhost -Port 5432</code>
+2. Check <code>[database.compliance]</code> section in config.toml
+3. Verify credentials match your Docker/PostgreSQL setup
+4. Check startup logs for connection errors:
+   <code>TimescaleDB (compliance database) connected successfully</code>
+5. If using encrypted password, ensure master key is set:
+   <code>powershell
+   $env:ATS_MONITOR_MASTER_KEY = "YourMasterKey"</code></p>
+<h3 id="issue-8-historical-data-not-loading-new-in-v53">Issue 8: Historical Data Not Loading (NEW in V5.3)</h3>
+<p><strong>Solution:</strong>
+1. Verify TimescaleDB is connected (see Issue 7)
+2. Check that <code>fix_messages</code> table has data:
+   <code>sql
+   SELECT COUNT(*) FROM fix_messages;</code>
+3. Sync FIX history from log files:
+   - Dashboard: Click "Sync FIX History" in Positions tab
+   - API: <code>POST /api/v1/atslog/history/sync-fix</code>
+4. Check sync log for errors:
+   - API: <code>GET /api/v1/atslog/history/sync-log</code>
+5. Verify <code>history_folder</code> path in config.toml exists and contains log files</p>
+<h3 id="issue-9-duplicate-data-warning-at-startup-new-in-v53">Issue 9: Duplicate Data Warning at Startup (NEW in V5.3)</h3>
+<p><strong>Symptom:</strong></p>
+<pre class="codehilite"><code>WRN Unique index creation failed (may have duplicate data)
+</code></pre>
+
+<p><strong>This is expected behavior</strong> if you have existing data with duplicates. The warning indicates:
+- The unique index couldn't be created due to existing duplicates
+- Deduplication still works via <code>message_hash</code> column
+- New inserts will use <code>ON CONFLICT DO NOTHING</code></p>
+<p><strong>Solution:</strong> No action needed - this is a graceful degradation, not a failure.</p>
+<hr />
+<h2 id="13-maintenance">13. Maintenance</h2>
+<h3 id="daily-operations">Daily Operations</h3>
+<ul>
+<li>[ ] Verify monitor is running</li>
+<li>[ ] Review Telegram alerts</li>
+<li>[ ] Check console for errors</li>
+<li>[ ] Verify database connectivity</li>
+<li>[ ] Check dashboard accessibility</li>
+</ul>
+<h3 id="weekly-maintenance">Weekly Maintenance</h3>
+<ul>
+<li>[ ] Review custom query results</li>
+<li>[ ] Check resource usage (CPU, memory)</li>
+<li>[ ] Verify Telegram notifications</li>
+<li>[ ] Review ChaiSQL database size</li>
+</ul>
+<h3 id="monthly-review">Monthly Review</h3>
+<ul>
+<li>[ ] Validate configuration</li>
+<li>[ ] Review and optimize queries</li>
+<li>[ ] Update documentation</li>
+<li>[ ] Test disaster recovery</li>
+<li>[ ] Rotate API keys and passwords</li>
+<li>[ ] Review RBAC user accounts</li>
+</ul>
+<hr />
+<h2 id="14-related-documentation">14. Related Documentation</h2>
+<h3 id="related-procedures">Related Procedures</h3>
+<ul>
+<li><strong><a href="ATS%20Health%20Monitor%20-%20Production%20Deployment%20Guide.md">ATS Health Monitor - Production Deployment Guide</a></strong> - <strong>SSH-based deployment, database migration, multi-site setup (HK)</strong></li>
+<li><a href="ATS%20Health%20Monitor%20-%20RBAC%20Guide.md">ATS Health Monitor - RBAC Guide</a> - User management and access control</li>
+<li><a href="ATS_Administration_SOP.md">ATS 900 Production Deployment</a></li>
+<li><a href="ATS%20Log%20Monitor%20-%20Real-Time%20Error%20Monitoring.md">ATS Log Monitor - Real-Time Error Monitoring</a></li>
+</ul>
+<h3 id="related-scripts">Related Scripts</h3>
+<ul>
+<li><a href="../../Scripts/05-Production-ATS-Administration/ATS-Health-Monitor/main.go">main.go</a> - Main Go program</li>
+<li><a href="../../Scripts/05-Production-ATS-Administration/ATS-Health-Monitor/rbac.go">rbac.go</a> - RBAC service</li>
+<li><a href="../../Scripts/05-Production-ATS-Administration/ATS-Health-Monitor/crypto.go">crypto.go</a> - Password encryption/decryption</li>
+<li><a href="../../Scripts/05-Production-ATS-Administration/ATS-Health-Monitor/db_manager.go">db_manager.go</a> - Dual database manager (ChaiSQL + TimescaleDB)</li>
+<li><a href="../../Scripts/05-Production-ATS-Administration/ATS-Health-Monitor/history_sync.go">history_sync.go</a> - FIX history sync and data loss prevention</li>
+<li><a href="../../Scripts/05-Production-ATS-Administration/ATS-Health-Monitor/history_sync_test.go">history_sync_test.go</a> - Unit tests for history sync</li>
+<li><a href="../../Scripts/05-Production-ATS-Administration/ATS-Health-Monitor/reliable_receiver.go">reliable_receiver.go</a> - Reliable log receiver with gap detection</li>
+<li><a href="../../Scripts/05-Production-ATS-Administration/ATS-Health-Monitor/cmd/log-agent/reliable_agent.go">cmd/log-agent/reliable_agent.go</a> - Reliable log publisher with WAL</li>
+<li><a href="../../Scripts/05-Production-ATS-Administration/ATS-Health-Monitor/cmd/resync-manager/main.go">cmd/resync-manager/main.go</a> - On-demand historical log resync</li>
+<li><a href="../../Scripts/05-Production-ATS-Administration/ATS-Health-Monitor/scripts/hashpassword.go">hashpassword.go</a> - Password hash &amp; encryption utility</li>
+<li><a href="../../Scripts/05-Production-ATS-Administration/ATS-Health-Monitor/config.toml.example">config.toml.example</a> - Configuration template</li>
+<li><a href="../../Scripts/05-Production-ATS-Administration/ATS-Health-Monitor/config.reliable-receiver.toml.example">config.reliable-receiver.toml.example</a> - Reliable receiver config example</li>
+<li><a href="../../Scripts/05-Production-ATS-Administration/ATS-Health-Monitor/cmd/log-agent/config.reliable.toml.example">cmd/log-agent/config.reliable.toml.example</a> - Reliable agent config example</li>
+<li><a href="../../Scripts/05-Production-ATS-Administration/ATS-Health-Monitor/config.test.toml">config.test.toml</a> - Test configuration with TimescaleDB</li>
+<li><a href="../../Scripts/05-Production-ATS-Administration/ATS-Health-Monitor/scripts/tools/Validate-Config.ps1">scripts/tools/Validate-Config.ps1</a> - Configuration validator</li>
+<li><a href="../../Scripts/05-Production-ATS-Administration/ATS-Health-Monitor/SECURITY-GUIDE.md">SECURITY-GUIDE.md</a> - Remote access security guide</li>
+</ul>
+<h3 id="references">References</h3>
+<ul>
+<li>Go Programming Language: <a href="https://go.dev/">https://go.dev/</a></li>
+<li>Gin Web Framework: <a href="https://gin-gonic.com/">https://gin-gonic.com/</a></li>
+<li>ChaiSQL: <a href="https://github.com/chaisql/chai">https://github.com/chaisql/chai</a></li>
+<li>TimescaleDB: <a href="https://www.timescale.com/">https://www.timescale.com/</a></li>
+<li>PostgreSQL: <a href="https://www.postgresql.org/">https://www.postgresql.org/</a></li>
+<li>React.js: <a href="https://react.dev/">https://react.dev/</a></li>
+<li>Material-UI (MUI): <a href="https://mui.com/">https://mui.com/</a></li>
+<li>FIX Protocol: <a href="https://www.fixtrading.org/">https://www.fixtrading.org/</a></li>
+<li>IB FIX 4.2: <a href="https://www.interactivebrokers.com/en/index.php?f=4988">https://www.interactivebrokers.com/en/index.php?f=4988</a></li>
+<li>Shopspring Decimal: <a href="https://github.com/shopspring/decimal">https://github.com/shopspring/decimal</a></li>
+<li>bcrypt: <a href="https://en.wikipedia.org/wiki/Bcrypt">https://en.wikipedia.org/wiki/Bcrypt</a></li>
+<li>pgx (PostgreSQL driver): <a href="https://github.com/jackc/pgx">https://github.com/jackc/pgx</a></li>
+</ul>
+<hr />
+<h2 id="15-change-log">15. Change Log</h2>
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Version</th>
+<th>Author</th>
+<th>Changes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2025-12-17</td>
+<td>5.9</td>
+<td>ATS Production Team</td>
+<td><strong>Resync HTTP-Only</strong>: Removed all FTP code from resync functionality. HTTP direct download is now the only transfer method. Updated configuration examples to remove <code>use_ftp</code>, <code>ftp_host</code>, <code>ftp_port</code>, <code>ftp_username</code>, <code>ftp_password</code> settings. <strong>PostgreSQL Config Source of Truth</strong>: Clarified that TOML is only for backup/import/export; runtime config is PostgreSQL-based. <strong>Production Deployment Guide</strong>: Created comprehensive deployment SOP with SSH commands, database migration safety, multi-site setup (HK office), common pitfalls, and rollback procedures.</td>
+</tr>
+<tr>
+<td>2025-12-16</td>
+<td>5.8</td>
+<td>ATS Production Team</td>
+<td><strong>V2 Dashboard Upgrade</strong>: Consolidated Help page with new Patterns and Multi-Venue sections. Upgraded "Positions" to "Pos History" with V2 API (<code>api.getV2Messages</code> queries <code>sfc_fix.messages_parsed</code> by <code>order_id</code>). Upgraded "On-Hand" to "OnHand Pos" with V2 API and millisecond precision. Added Order Flow sub-tabs: Ghost STP (cancelled STP detection), Multi-Venue (multi-exchange routing via Tag 30), Patterns (order pattern heat maps). Removed legacy V1 tabs. Updated all SOPs to reflect V2 enhancements.</td>
+</tr>
+<tr>
+<td>2025-12-10</td>
+<td>5.7</td>
+<td>ATS Production Team</td>
+<td><strong>Reliable Log Feed</strong>: Added guaranteed message delivery for multi-site deployments. Sequence numbers for gap detection, Write-Ahead Log (WAL) for replay capability, automatic gap detection and recovery. Supports unlimited subscribers (NY, HK, Developer) with independent state tracking. Added comprehensive documentation with Mermaid diagrams, configuration examples, and deployment steps. PostgreSQL-backed debug queries for accurate detection data. Exit date formatting fix for Positions dashboard.</td>
+</tr>
+<tr>
+<td>2025-12-10</td>
+<td>5.6</td>
+<td>ATS Production Team</td>
+<td><strong>Resync Manager</strong>: Added on-demand historical log import. New Resync Manager panel in ATS Log tab with Help button and examples. ZeroMQ PUB/SUB architecture for multi-subscriber support. Port pool (9001-9010) for concurrent sessions. Dashboard UI with mode selection, date range picker, progress display. API endpoints for programmatic access. Gzip file support (~8,500 lines/sec). Production deployment on ATS-VM with NY2 port forwarding.</td>
+</tr>
+<tr>
+<td>2025-12-07</td>
+<td>5.4</td>
+<td>ATS Production Team</td>
+<td><strong>Comprehensive Error Detection</strong>: Added ATS lifecycle events (ATS_STARTED, ATS_SHUTDOWN). Added 12 JDBC error patterns (timeout, connection, query, deadlock). Added 7 FIX patterns including heartbeat monitoring (FIX_HEARTBEAT_TIMEOUT, FIX_HEARTBEAT_ERROR). Added 4 network error patterns. Added Entry-10 pattern for FIX Entry→STP matching. Added Round Trips dashboard with safe MSSQL sync (trading hours protection). Added Roadmap tab for progress tracking.</td>
+</tr>
+<tr>
+<td>2025-12-06</td>
+<td>5.3</td>
+<td>ATS Production Team</td>
+<td><strong>Dual Database &amp; Historical Data</strong>: Added dual database architecture (ChaiSQL for performance, TimescaleDB for SFC compliance). Implemented historical data stitching in Positions dashboard. Added FIX history sync from log files to TimescaleDB. Implemented data loss prevention with message deduplication, file tracking, and sync audit logs. Added unit tests for history sync functions.</td>
+</tr>
+<tr>
+<td>2025-12-03</td>
+<td>5.2</td>
+<td>ATS Production Team</td>
+<td><strong>RBAC &amp; Password Encryption</strong>: Added Role-Based Access Control with tab-level permissions, session management, bcrypt password hashing. Added AES-256-GCM encryption for database passwords, API tokens, and other secrets. New <code>hashpassword.go</code> utility supports both hashing and encryption. Merged all SOPs into single comprehensive guide.</td>
+</tr>
+<tr>
+<td>2025-12-02</td>
+<td>5.1</td>
+<td>ATS Production Team</td>
+<td><strong>IB FIX 4.2 Position Fields</strong>: Added complete position field support with decimal precision. Renamed "Trading" tab to "Positions". Dashboard is now read-only.</td>
+</tr>
+<tr>
+<td>2025-12-01</td>
+<td>5.0</td>
+<td>ATS Production Team</td>
+<td><strong>Major Update</strong>: System Overview, Email Monitor, Database Issue Matrix, ATS Log Issue Matrix, Enhanced Plane Integration, WebAPI Access Controls.</td>
+</tr>
+<tr>
+<td>2025-11-25</td>
+<td>4.0</td>
+<td>ATS Production Team</td>
+<td>Consolidated SOPs. Added TOML configuration guide, order aggregation documentation.</td>
+</tr>
+<tr>
+<td>2025-10-15</td>
+<td>3.0</td>
+<td>ATS Production Team</td>
+<td>Web dashboard with React.js, REST API, ChaiSQL storage.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="notes">Notes</h2>
+<p><strong>WARNING:</strong>
+- Database credentials can be encrypted - use <code>ENC:</code> prefix format
+- RBAC password hashes use bcrypt (one-way) - generate with <code>hashpassword.go hash</code>
+- Connection passwords use AES encryption (two-way) - generate with <code>hashpassword.go encrypt</code>
+- Store master encryption key in environment variable for production
+- Custom queries execute with database user permissions
+- Monitor runs continuously - ensure adequate resources</p>
+<p><strong>TIP:</strong>
+- Use <code>rbac.enabled = false</code> for development without authentication
+- Always validate configuration: <code>.\scripts\tools\Validate-Config.ps1</code>
+- Test custom queries in SSMS before enabling
+- Run <code>go test ./...</code> before deploying changes
+- Use <code>hashpassword.go generate-key</code> to create a new master key
+- Use environment variable <code>ATS_MONITOR_MASTER_KEY</code> for the master key</p>
+<p><strong>TECHNICAL NOTES:</strong>
+- ChaiSQL is pure Go (no CGO required) - used for operational/performance data
+- TimescaleDB is PostgreSQL with time-series extensions - used for compliance/audit data
+- ChaiSQL database stored at <code>C:\ATS\monitor\ats-health-monitor.db</code>
+- TimescaleDB stores complete FIX message history for SFC Hong Kong audit
+- FIX messages support both SOH and pipe delimiters
+- Session tokens are 64-character hex strings
+- RBAC passwords use bcrypt with default cost (10)
+- Secrets use AES-256-GCM with SHA-256 key derivation
+- Encrypted values have <code>ENC:</code> prefix and base64 encoding
+- Plain text passwords still work for backwards compatibility
+- FIX message deduplication uses SHA-256 hash of raw message
+- Historical data stitching preserves live data priority for matching positions</p>
+<hr />
+<h2 id="appendix-a-list-of-figures">Appendix A: List of Figures</h2>
+<table>
+<thead>
+<tr>
+<th>Figure</th>
+<th>Description</th>
+<th>File</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Main Dashboard Overview</td>
+<td><code>images/ats-health-monitor-overview.png</code></td>
+</tr>
+<tr>
+<td>2</td>
+<td>Console Startup Output</td>
+<td><code>images/ats-health-monitor-console-startup.png</code></td>
+</tr>
+<tr>
+<td>3</td>
+<td>Navigation Tabs</td>
+<td><code>images/ats-health-monitor-navigation-tabs.png</code></td>
+</tr>
+<tr>
+<td>4</td>
+<td>System Overview Tab</td>
+<td><code>images/ats-health-monitor-tab-overview.png</code></td>
+</tr>
+<tr>
+<td>5</td>
+<td>Positions Tab</td>
+<td><code>images/ats-health-monitor-tab-positions.png</code></td>
+</tr>
+<tr>
+<td>6</td>
+<td>FIX Protocol Tab</td>
+<td><code>images/ats-health-monitor-tab-fix.png</code></td>
+</tr>
+<tr>
+<td>7</td>
+<td>Pro Dashboard Tab</td>
+<td><code>images/ats-health-monitor-tab-pro.png</code></td>
+</tr>
+<tr>
+<td>8</td>
+<td>Email Monitor Tab</td>
+<td><code>images/ats-health-monitor-tab-email.png</code></td>
+</tr>
+<tr>
+<td>9</td>
+<td>Database Monitor Tab</td>
+<td><code>images/ats-health-monitor-tab-database.png</code></td>
+</tr>
+<tr>
+<td>10</td>
+<td>ATS Log Monitor Tab</td>
+<td><code>images/ats-health-monitor-tab-atslog.png</code></td>
+</tr>
+<tr>
+<td>11</td>
+<td>STP Orders Tab</td>
+<td><code>images/ats-health-monitor-tab-stp-orders.png</code></td>
+</tr>
+<tr>
+<td>12</td>
+<td>Order History Tab</td>
+<td><code>images/ats-health-monitor-tab-history.png</code></td>
+</tr>
+<tr>
+<td>13</td>
+<td>System Health Tab</td>
+<td><code>images/ats-health-monitor-tab-health.png</code></td>
+</tr>
+<tr>
+<td>14</td>
+<td>Debug Dashboard Tab</td>
+<td><code>images/ats-health-monitor-tab-debug.png</code></td>
+</tr>
+<tr>
+<td>15</td>
+<td>Setup/Configuration Tab</td>
+<td><code>images/ats-health-monitor-tab-setup.png</code></td>
+</tr>
+<tr>
+<td>16</td>
+<td>RBAC Login Page</td>
+<td><code>images/ats-health-monitor-login-page.png</code></td>
+</tr>
+<tr>
+<td>17</td>
+<td>User Session Info</td>
+<td><code>images/ats-health-monitor-user-session.png</code></td>
+</tr>
+<tr>
+<td>18</td>
+<td>Telegram Alert Example</td>
+<td><code>images/ats-health-monitor-telegram-alert.png</code></td>
+</tr>
+<tr>
+<td>19</td>
+<td>API Response Example</td>
+<td><code>images/ats-health-monitor-api-response.png</code></td>
+</tr>
+<tr>
+<td>20</td>
+<td>Test Script Results</td>
+<td><code>images/ats-health-monitor-test-results.png</code></td>
+</tr>
+<tr>
+<td>21</td>
+<td>Go Unit Test Output</td>
+<td><code>images/ats-health-monitor-go-test.png</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Screenshot Location:</strong> <code>SOPs/05-Production-ATS-Administration/images/</code></p>
+<p>See <code>images/README.md</code> for screenshot capture instructions and checklist.</p>
+</body>
+</html>

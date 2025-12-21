@@ -1,0 +1,206 @@
+# ATS Health Monitor - Cursor Rules
+# Source of Truth for AI Agents
+
+## Project Overview
+
+ATS Health Monitor is a Golang/React trading surveillance system for Hong Kong SFC compliance.
+- **Backend**: Go 1.23 + Gin framework
+- **Frontend**: React 18 + Vite
+- **Database**: TimescaleDB (PostgreSQL 14)
+- **Deployment**: Docker
+
+---
+
+## CRITICAL RULES
+
+### 0. Documentation Governance (Prevent Doc/SOP Sprawl)
+
+**Default rule: DO NOT create new documentation files.**
+
+- ❌ **FORBIDDEN by default**: creating new `*.md` files anywhere (including `SOPs/`, `AI-Arch/`, `AI-History/`, `Scripts/**/docs/`, etc.).
+- ✅ **ALLOWED**: updating existing “control docs” only (see list below).
+- ✅ **ALLOWED**: adding new docs **only** when the user explicitly asks for a new doc/SOP file *by name or by clearly requesting a new document*.
+
+#### Canonical “control docs” (update these, don’t create new ones)
+
+- **Rules / governance**: `.cursorrules`
+- **Architecture (repo-wide)**: `AI-Arch/README.md` and other existing `AI-Arch/*.md`
+- **Session history index**: `AI-History/README.md`
+- **Project onboarding contexts**: `Scripts/05-Production-ATS-Administration/ATS-Health-Monitor/AI-Agent-Context/*`
+- **Project-local architecture index**: `Scripts/05-Production-ATS-Administration/ATS-Health-Monitor/AI-Arch/README.md`
+- **SOPs (customer-facing)**: update existing SOPs in `SOPs/` only; do not create new SOP files unless explicitly requested.
+
+#### Where “new writing” is allowed (rare)
+
+- **AI-History**: only add a new `AI-History/YYYY-MM-DD-*.md` session file when the user explicitly asks to record a session or produce a new history entry.
+
+### 1. UTC Timestamps (Bug #1 Prevention)
+
+**Use the `pkg/timez` standard library for all timestamp handling.**
+See: `AI-Arch/timezone_standard.md` for full documentation.
+
+```go
+// ✅ ALWAYS use timez package
+import "github.com/your-org/ats-health-monitor/pkg/timez"
+t, err := timez.ParseFIX(timeStr)  // Parses as UTC
+apiStr := timez.ToAPI(t)           // "2025-12-15T20:55:07.322Z"
+
+// ❌ NEVER use time.Parse() - causes local timezone interpretation
+t, err := time.Parse("20060102-15:04:05.000", timeStr)  // WRONG!
+```
+
+### 2. V2 Parser Priority
+
+- Use V2 FIX parser (`fix_parser_v2.go`) for all new features
+- V1 parser is legacy - Strangler Fig pattern
+- Schema: `sfc_fix.messages_raw`, `sfc_fix.messages_parsed`, `sfc_fix.issues`
+
+### 3. Issue Aggregation (Search-Before-Insert)
+
+```go
+// ✅ CORRECT: Search for existing issue, then link message
+existingIssue := findIssueByKey(symbol, issueType, sessionID)
+if existingIssue != nil {
+    linkMessageToIssue(existingIssue.ID, messageID)  // 1:N relationship
+} else {
+    newIssue := createIssue(...)
+    linkMessageToIssue(newIssue.ID, messageID)
+}
+
+// ❌ WRONG: Creating 1 issue per message (1:1)
+issue := createIssue(...)  // Creates duplicate issues!
+```
+
+### 4. Database Schema Migration (CRITICAL - Bug #2 Prevention)
+
+**NEVER modify `db_manager.go` schema without creating migration scripts.**
+
+**The Solution:**
+1. Create Migration Script in `deploy/migrations/` FIRST.
+2. Test Migration Locally.
+3. Update `db_manager.go` ONLY after migration is verified.
+
+### 5. V2 Schema Initialization (TimescaleDB Hypertable Constraints)
+
+The `db_manager.go` **now creates ALL V2 tables** on startup via `initV2FixSchema()`:
+
+| Schema | Table | Type | Purpose |
+|--------|-------|------|---------|
+| `sfc_fix` | `messages_raw` | Hypertable | Raw FIX audit trail |
+| `sfc_fix` | `messages_parsed` | Hypertable | Normalized parsed messages |
+| `sfc_fix` | `issues` | Regular | SFC compliance issues |
+| `sfc_fix` | `issue_messages` | Regular | Issue-to-message links (1:N) |
+| `sfc_fix` | `order_states` | Regular | GTC STP order tracking |
+| `sfc_fix` | `orders` | Regular | Parent order records |
+| `sfc_fix` | `executions` | Regular | Child execution records |
+
+**TimescaleDB Constraint**: Hypertables require composite PKs including the partitioning column.
+- FK references to hypertables are **NOT supported** (use soft references via IDs instead).
+- If `db_manager.go` fails silently, run migrations manually: `deploy/migrations/v2_fix_schema_complete.sql`
+
+**Troubleshooting V2 Schema**:
+```sql
+-- Verify V2 tables exist
+\dt sfc_fix.*
+
+-- If missing, run migration manually:
+-- PowerShell: Get-Content migration.sql | docker exec -i timescaledb-dev psql -U user -d db
+```
+
+### 6. LogReceiver → ReliableReceiver Migration (CRITICAL - Bug #3 Prevention)
+
+**🚨 MAJOR BUG: This fix has been reverted multiple times. DO NOT REVERT.**
+
+**Problem**: `appConfig.LogReceiver` is **DEPRECATED** and no longer used at runtime. The system uses `appConfig.ReliableReceiver` for all log receiver functionality.
+
+**CRITICAL RULE**: In `api_service.go`, the `/api/v1/config/full` (GET) and `/api/v1/config` (PUT) endpoints **MUST** use `appConfig.ReliableReceiver`, NOT `appConfig.LogReceiver`.
+
+```go
+// ✅ CORRECT - MUST USE THIS:
+"log_receiver": func() map[string]interface{} {
+    // MUST use appConfig.ReliableReceiver (not LogReceiver)
+    return map[string]interface{}{
+        "enabled":    appConfig.ReliableReceiver.Enabled,
+        "publishers": publishers, // from ReliableReceiver.Publishers
+    }
+}()
+
+// PUT endpoint
+if v, ok := valuesMap["enabled"].(bool); ok {
+    appConfig.ReliableReceiver.Enabled = v  // MUST save to ReliableReceiver
+}
+
+// ❌ FORBIDDEN - DO NOT USE:
+appConfig.LogReceiver.Enabled
+appConfig.LogReceiver.Publishers
+```
+
+**Why This Matters**:
+- Setup page reads/writes via `"log_receiver"` key for backward compatibility
+- But runtime system uses `ReliableReceiver` exclusively
+- Using `LogReceiver` causes: config loss, "disabled" status when receiver is active, settings lost on restart
+
+**Verification**:
+- See `CRITICAL_FIXES.md` for full details and regression tests
+- Run `scripts/validate-critical-fixes.ps1` before committing
+- If you see `appConfig.LogReceiver` in `api_service.go` (outside comments), **STOP** and fix it
+
+**Files Affected**:
+- `api_service.go` - GET/PUT endpoints (lines ~646, ~1197)
+- `connection_tests.go` - Already uses ReliableReceiver (correct)
+
+---
+
+## PROTECTED FILES & ENGINES (Require User Confirmation)
+
+The following files and logic are core infrastructure. They are **IMMUTABLE** and **MUST NOT** be modified without explicit user confirmation:
+
+| Component | Target File(s) | Reason |
+|:---|:---|:---|
+| **FIX Parsing Engine** | `fix_parser_v2.go` | Core parsing logic is validated and sensitive. Changes cause data corruption. |
+| **Canonical Spec** | `AI-Arch/v2_fix_parser_canonical.md` | Defines the source of truth for timestamp ranking and logic. |
+| **Build Infrastructure** | `build-management/scripts/build-docker.ps1` | Controls image creation, versioning, and dev mode. |
+| **Database Schema** | `db_manager.go` | Schema changes require production migrations. |
+| **AI Rules** | `.cursorrules` | Defines agent behavior across sessions. |
+
+**Agent Rule**: Before modifying ANY of the above components:
+1. Explain exactly what you want to change and **why** the existing "Production Ready" logic is insufficient.
+2. Show the proposed code diff.
+3. **Wait for explicit user approval** before applying.
+
+---
+
+## Backend Rules (Golang/Gin)
+
+### Route Naming
+```go
+// Pattern: /api/v1/{resource}/{action} or /api/v2/{resource}
+```
+
+### API Response Structure
+```go
+type APIResponse struct {
+    Success bool        `json:"success"`
+    Data    interface{} `json:"data,omitempty"`
+    Error   string      `json:"error,omitempty"`
+}
+```
+
+---
+
+## Frontend Rules (React)
+
+### Table Component
+- ✅ MANDATORY: Use `CustomTable` wrapper.
+- ❌ FORBIDDEN: Direct TanStack import.
+
+---
+
+## DO NOT
+
+- ❌ Modify `fix_parser_v2.go` logic without confirmation.
+- ❌ Use `time.Parse()` for FIX timestamps (causes timezone bugs).
+- ❌ Create 1 issue per message (violates aggregation).
+- ❌ Modify `db_manager.go` schema without migration scripts.
+- ❌ Default security booleans to `false`.
+- ❌ **USE `appConfig.LogReceiver` in `api_service.go`** - Use `appConfig.ReliableReceiver` instead (see Rule #6).

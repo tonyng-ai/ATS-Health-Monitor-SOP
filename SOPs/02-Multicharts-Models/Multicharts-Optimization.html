@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Multicharts Optimization</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 { border-bottom: 2px solid #3498db; padding-bottom: 0.3em; }
+        h2 { border-bottom: 1px solid #ecf0f1; padding-bottom: 0.2em; }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1em;
+            overflow-x: auto;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 1em 0;
+            padding-left: 1em;
+            color: #666;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 2em 0;
+            padding: 1em;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .pdf-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 8px 16px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .pdf-link:hover {
+            background-color: #c0392b;
+        }
+    </style>
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <p><a href="Multicharts-Optimization.pdf" class="pdf-link">📄 Download PDF Version</a></p>
+    <h1 id="multicharts-system-optimization-procedure">Multicharts System Optimization Procedure</h1>
+<h2 id="metadata">Metadata</h2>
+<p><strong>Category:</strong> Multicharts Models
+<strong>Last Updated:</strong> 2024-01-15
+<strong>Author:</strong> System Administrator
+<strong>Version:</strong> 1.0
+<strong>Review Date:</strong> 2024-04-15
+<strong>Status:</strong> Active</p>
+<hr />
+<h2 id="purpose">Purpose</h2>
+<p>This procedure covers optimizing Multicharts system for running 40+ instances, including GDI handle limits, memory allocation, and process management.</p>
+<p><strong>When to Use:</strong>
+- Initial system optimization
+- Performance degradation issues
+- Scaling to more instances
+- System tuning</p>
+<hr />
+<h2 id="prerequisites">Prerequisites</h2>
+<h3 id="required-access">Required Access</h3>
+<ul>
+<li>[x] Administrator privileges</li>
+<li>[x] Access to Multicharts system</li>
+</ul>
+<h3 id="required-tools">Required Tools</h3>
+<ul>
+<li>[x] PowerShell (Administrator)</li>
+<li>[x] Script: <code>Scripts\02-Multicharts-Models\Optimized-Multicharts-Management.ps1</code></li>
+<li>[x] Backup script (run first!)</li>
+</ul>
+<hr />
+<h2 id="procedure-steps">Procedure Steps</h2>
+<h3 id="step-1-backup-current-state">Step 1: Backup Current State</h3>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell">cd I:\HyperV_PowerScript_Optimazation\Scripts\02-Multicharts-Models
+.\Backup-Multicharts-State.ps1
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- Backup created successfully</p>
+<hr />
+<h3 id="step-2-apply-settings-only">Step 2: Apply Settings Only</h3>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell">.\Optimized-Multicharts-Management.ps1 -ApplySettingsOnly
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- Registry settings applied
+- System settings configured</p>
+<hr />
+<h3 id="step-3-reboot-system">Step 3: Reboot System</h3>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># MANDATORY: Reboot required
+Restart-Computer -Force
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- System reboots
+- Settings take effect</p>
+<hr />
+<h3 id="step-4-enable-monitoring">Step 4: Enable Monitoring</h3>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># After reboot, enable monitoring
+.\Optimized-Multicharts-Management.ps1 -EnableMonitoring -MaxMonitorIterations 288
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- Monitoring enabled
+- Performance metrics tracked</p>
+<hr />
+<h2 id="related-scripts">Related Scripts</h2>
+<ul>
+<li><a href="../../Scripts/02-Multicharts-Models/Optimized-Multicharts-Management.ps1">Optimized-Multicharts-Management.ps1</a></li>
+<li><a href="../../Scripts/02-Multicharts-Models/Backup-Multicharts-State.ps1">Backup-Multicharts-State.ps1</a></li>
+</ul>
+</body>
+</html>

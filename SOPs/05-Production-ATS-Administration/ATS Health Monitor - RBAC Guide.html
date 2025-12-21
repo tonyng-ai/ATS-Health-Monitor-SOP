@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>ATS Health Monitor   RBAC Guide</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 { border-bottom: 2px solid #3498db; padding-bottom: 0.3em; }
+        h2 { border-bottom: 1px solid #ecf0f1; padding-bottom: 0.2em; }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1em;
+            overflow-x: auto;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 1em 0;
+            padding-left: 1em;
+            color: #666;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 2em 0;
+            padding: 1em;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .pdf-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 8px 16px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .pdf-link:hover {
+            background-color: #c0392b;
+        }
+    </style>
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <p><a href="ATS Health Monitor - RBAC Guide.pdf" class="pdf-link">📄 Download PDF Version</a></p>
+    <h1 id="ats-health-monitor-rbac-guide">ATS Health Monitor - RBAC Guide</h1>
+<h2 id="metadata">Metadata</h2>
+<p><strong>Category:</strong> Trading System Administration - Access Control
+<strong>Last Updated:</strong> 2025-12-17
+<strong>Author:</strong> ATS Production Team
+<strong>Version:</strong> 1.1
+<strong>Review Date:</strong> 2026-03-17
+<strong>Status:</strong> Active</p>
+<hr />
+<h2 id="purpose">Purpose</h2>
+<p>This procedure covers the Role-Based Access Control (RBAC) system in ATS Health Monitor, including user management, role configuration, password policies, and security compliance features.</p>
+<p><strong>Key Features:</strong>
+- PostgreSQL-backed user and role management
+- SFC/PCI-DSS compliant password policies (90-day rotation)
+- First login password change enforcement
+- Account lockout after failed attempts
+- Real-time audit logging
+- GUI-based role and user administration</p>
+<p><strong>When to Use:</strong></p>
+<ul>
+<li>Creating new users for ATS Health Monitor</li>
+<li>Managing role permissions and access levels</li>
+<li>Resetting user passwords</li>
+<li>Reviewing authentication audit logs</li>
+<li>Creating custom roles for specific teams</li>
+<li>Troubleshooting access issues</li>
+</ul>
+<h3 id="procedure-overview">Procedure Overview</h3>
+<pre class="codehilite"><code class="language-mermaid">flowchart TD
+    Start([New User Setup]) --&gt; Admin[Admin Creates User]
+    Admin --&gt; Default[User Gets Default Password]
+    Default --&gt; Login[User Logs In]
+    Login --&gt; Change{Must Change Password?}
+    Change --&gt;|Yes| NewPwd[Enter New Password]
+    Change --&gt;|No| Dashboard[Access Dashboard]
+    NewPwd --&gt; Validate{Password Valid?}
+    Validate --&gt;|No, &lt; 12 chars| NewPwd
+    Validate --&gt;|Yes| Dashboard
+    Dashboard --&gt; Access{Has Permission?}
+    Access --&gt;|Yes| Feature[Use Feature]
+    Access --&gt;|No| Denied[Permission Denied]
+    Feature --&gt; Expiry{Password Expiring?}
+    Expiry --&gt;|&lt; 14 days| Warning[Show Warning]
+    Expiry --&gt;|&gt; 14 days| Continue[Continue]
+    Warning --&gt; Continue
+    Continue --&gt; Dashboard
+</code></pre>
+
+<hr />
+<h2 id="table-of-contents">Table of Contents</h2>
+<ol>
+<li><a href="#1-prerequisites">Prerequisites</a></li>
+<li><a href="#2-quick-start">Quick Start</a></li>
+<li><a href="#3-roles-matrix">Roles Matrix</a></li>
+<li><a href="#4-user-management">User Management</a></li>
+<li><a href="#5-password-policies">Password Policies</a></li>
+<li><a href="#6-role-management">Role Management</a></li>
+<li><a href="#7-audit-log">Audit Log</a></li>
+<li><a href="#8-troubleshooting">Troubleshooting</a></li>
+<li><a href="#9-related-documentation">Related Documentation</a></li>
+<li><a href="#10-change-log">Change Log</a></li>
+</ol>
+<hr />
+<h2 id="1-prerequisites">1. Prerequisites</h2>
+<h3 id="required-access">Required Access</h3>
+<ul>
+<li>[ ] Admin role in ATS Health Monitor</li>
+<li>[ ] PostgreSQL database connection (for persistent RBAC)</li>
+<li>[ ] Network access to ATS Health Monitor web interface</li>
+</ul>
+<h3 id="required-information">Required Information</h3>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Default Password</td>
+<td><code>default</code></td>
+</tr>
+<tr>
+<td>Minimum Password Length</td>
+<td>12 characters</td>
+</tr>
+<tr>
+<td>Password Expiry</td>
+<td>90 days</td>
+</tr>
+<tr>
+<td>Warning Period</td>
+<td>14 days before expiry</td>
+</tr>
+<tr>
+<td>Max Failed Attempts</td>
+<td>5 (then 30 min lockout)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="2-quick-start">2. Quick Start</h2>
+<h3 id="21-for-new-users">2.1 For New Users</h3>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Action</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Navigate to ATS Health Monitor URL</td>
+<td>Contact admin for URL</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Enter username and password <code>default</code></td>
+<td>Temporary password</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Change password when prompted</td>
+<td>Min 12 characters</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Access dashboard</td>
+<td>Based on assigned role</td>
+</tr>
+</tbody>
+</table>
+<h3 id="22-for-administrators">2.2 For Administrators</h3>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Action</th>
+<th>Location</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Go to Access Control tab</td>
+<td>Left navigation</td>
+</tr>
+<tr>
+<td>2</td>
+<td>View Roles Matrix</td>
+<td>First sub-tab</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Manage Users</td>
+<td>Users sub-tab</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Review Audit Log</td>
+<td>Audit Log sub-tab</td>
+</tr>
+</tbody>
+</table>
+<h3 id="23-default-roles-summary">2.3 Default Roles Summary</h3>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Access Level</th>
+<th>Best For</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Admin</strong></td>
+<td>All features + user management</td>
+<td>System administrators</td>
+</tr>
+<tr>
+<td><strong>Operator</strong></td>
+<td>Monitor + execute actions</td>
+<td>Operations team</td>
+</tr>
+<tr>
+<td><strong>Analyst</strong></td>
+<td>View + export data</td>
+<td>Data analysts, compliance</td>
+</tr>
+<tr>
+<td><strong>Viewer</strong></td>
+<td>Dashboard viewing only</td>
+<td>Stakeholders, read-only access</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="3-roles-matrix">3. Roles Matrix</h2>
+<h3 id="31-quick-reference-screenshot">3.1 Quick Reference Screenshot</h3>
+<p><img alt="RBAC Roles Matrix" src="./images/rbac-roles-matrix.png" /></p>
+<p><em>Figure 1: Roles Matrix showing permissions for each role. Click role header to edit.</em></p>
+<h3 id="32-tab-access-permissions">3.2 Tab Access Permissions</h3>
+<table>
+<thead>
+<tr>
+<th>Permission</th>
+<th>Description</th>
+<th style="text-align: center;">Admin</th>
+<th style="text-align: center;">Operator</th>
+<th style="text-align: center;">Analyst</th>
+<th style="text-align: center;">Viewer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Overview</td>
+<td>System dashboard</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+</tr>
+<tr>
+<td>Email</td>
+<td>Email monitoring</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">–</td>
+<td style="text-align: center;">–</td>
+</tr>
+<tr>
+<td>Database</td>
+<td>Database health</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">–</td>
+</tr>
+<tr>
+<td>ATS Log</td>
+<td>Application logs (V2)</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">–</td>
+</tr>
+<tr>
+<td><strong>Order Flow (V2)</strong></td>
+<td><strong>FIX message monitoring</strong></td>
+<td style="text-align: center;"><strong>✓</strong></td>
+<td style="text-align: center;"><strong>✓</strong></td>
+<td style="text-align: center;"><strong>✓</strong></td>
+<td style="text-align: center;"><strong>✓</strong></td>
+</tr>
+<tr>
+<td>↳ Ghost STP</td>
+<td>Cancelled STP detection</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+</tr>
+<tr>
+<td>↳ Multi-Venue</td>
+<td>Multi-exchange routing</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">–</td>
+</tr>
+<tr>
+<td>↳ Patterns</td>
+<td>Order pattern analysis</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">–</td>
+</tr>
+<tr>
+<td><strong>Pos History (V2)</strong></td>
+<td><strong>MSSQL round trips with V2 drill-down</strong></td>
+<td style="text-align: center;"><strong>✓</strong></td>
+<td style="text-align: center;"><strong>✓</strong></td>
+<td style="text-align: center;"><strong>✓</strong></td>
+<td style="text-align: center;"><strong>✓</strong></td>
+</tr>
+<tr>
+<td><strong>OnHand Pos (V2)</strong></td>
+<td><strong>On-hand orders with V2 API</strong></td>
+<td style="text-align: center;"><strong>✓</strong></td>
+<td style="text-align: center;"><strong>✓</strong></td>
+<td style="text-align: center;"><strong>✓</strong></td>
+<td style="text-align: center;"><strong>–</strong></td>
+</tr>
+<tr>
+<td>History</td>
+<td>Order history timeline</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+</tr>
+<tr>
+<td>Health</td>
+<td>System metrics</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">–</td>
+</tr>
+<tr>
+<td>Debug</td>
+<td>Debug tools</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">–</td>
+<td style="text-align: center;">–</td>
+<td style="text-align: center;">–</td>
+</tr>
+<tr>
+<td>Setup</td>
+<td>Configuration</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">–</td>
+<td style="text-align: center;">–</td>
+<td style="text-align: center;">–</td>
+</tr>
+<tr>
+<td>Access Control</td>
+<td>RBAC management</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">–</td>
+<td style="text-align: center;">–</td>
+<td style="text-align: center;">–</td>
+</tr>
+<tr>
+<td>Help</td>
+<td>Reference guide</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Note:</strong> V2 tabs use the upgraded API endpoints that query <code>sfc_fix.messages_parsed</code> with millisecond precision.</p>
+<h3 id="33-action-permissions">3.3 Action Permissions</h3>
+<table>
+<thead>
+<tr>
+<th>Permission</th>
+<th>Description</th>
+<th style="text-align: center;">Admin</th>
+<th style="text-align: center;">Operator</th>
+<th style="text-align: center;">Analyst</th>
+<th style="text-align: center;">Viewer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Trigger Check</td>
+<td>Manual health checks</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">–</td>
+<td style="text-align: center;">–</td>
+</tr>
+<tr>
+<td>Refresh Positions</td>
+<td>Sync MSSQL data</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">–</td>
+</tr>
+</tbody>
+</table>
+<h3 id="34-export-permissions">3.4 Export Permissions</h3>
+<table>
+<thead>
+<tr>
+<th>Permission</th>
+<th>Description</th>
+<th style="text-align: center;">Admin</th>
+<th style="text-align: center;">Operator</th>
+<th style="text-align: center;">Analyst</th>
+<th style="text-align: center;">Viewer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Daily Export</td>
+<td>Export today's data</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">–</td>
+</tr>
+<tr>
+<td>Historical Export</td>
+<td>Export past data</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">–</td>
+</tr>
+<tr>
+<td>Bulk Export</td>
+<td>Large data exports</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">–</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">–</td>
+</tr>
+</tbody>
+</table>
+<h3 id="35-api-access-permissions">3.5 API Access Permissions</h3>
+<table>
+<thead>
+<tr>
+<th>Permission</th>
+<th>Description</th>
+<th style="text-align: center;">Admin</th>
+<th style="text-align: center;">Operator</th>
+<th style="text-align: center;">Analyst</th>
+<th style="text-align: center;">Viewer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>API Read</td>
+<td>Read-only API</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">✓</td>
+</tr>
+<tr>
+<td>API Write</td>
+<td>Write API</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">–</td>
+<td style="text-align: center;">–</td>
+<td style="text-align: center;">–</td>
+</tr>
+<tr>
+<td>All (*)</td>
+<td>Full admin</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">–</td>
+<td style="text-align: center;">–</td>
+<td style="text-align: center;">–</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="4-user-management">4. User Management</h2>
+<h3 id="41-creating-a-new-user">4.1 Creating a New User</h3>
+<p><strong>Procedure:</strong></p>
+<ol>
+<li>Navigate to <strong>Access Control</strong> → <strong>Users</strong> tab</li>
+<li>Click <strong>+ Add User</strong> button</li>
+<li>Enter username (lowercase, no spaces)</li>
+<li>Select role(s) from available options</li>
+<li>Click <strong>Create User</strong></li>
+</ol>
+<p><strong>Result:</strong>
+- User created with password <code>default</code>
+- <code>must_change_password</code> flag set to <code>true</code>
+- User must change password on first login</p>
+<h3 id="42-editing-a-user">4.2 Editing a User</h3>
+<p><strong>Procedure:</strong></p>
+<ol>
+<li>Find user in Users list</li>
+<li>Click <strong>Edit</strong> button</li>
+<li>Modify:</li>
+<li>Status (Enable/Disable)</li>
+<li>Assigned roles</li>
+<li>Reset password (if needed)</li>
+<li>Click <strong>Save Changes</strong></li>
+</ol>
+<h3 id="43-resetting-a-password">4.3 Resetting a Password</h3>
+<p><strong>Procedure:</strong></p>
+<ol>
+<li>Find user in Users list</li>
+<li>Click <strong>Edit</strong></li>
+<li>Enter new password in <strong>Reset Password</strong> field (min 12 chars)</li>
+<li>Click <strong>🔑 Reset</strong> button</li>
+</ol>
+<p><strong>Result:</strong>
+- Password updated
+- <code>must_change_password</code> set to <code>true</code>
+- User must change password on next login</p>
+<h3 id="44-disabling-a-user">4.4 Disabling a User</h3>
+<p><strong>Procedure:</strong></p>
+<ol>
+<li>Find user in Users list</li>
+<li>Click <strong>Edit</strong></li>
+<li>Set <strong>Status</strong> to <strong>Disabled</strong></li>
+<li>Click <strong>Save Changes</strong></li>
+</ol>
+<p><strong>Result:</strong>
+- User cannot login
+- Existing sessions invalidated
+- Audit log entry created</p>
+<hr />
+<h2 id="5-password-policies">5. Password Policies</h2>
+<h3 id="51-security-settings-sfcpci-dss-compliance">5.1 Security Settings (SFC/PCI-DSS Compliance)</h3>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Value</th>
+<th>Compliance Standard</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Password Expiry</strong></td>
+<td>90 days</td>
+<td>SFC, PCI-DSS</td>
+</tr>
+<tr>
+<td><strong>Warning Period</strong></td>
+<td>14 days before expiry</td>
+<td>Enterprise standard</td>
+</tr>
+<tr>
+<td><strong>Minimum Length</strong></td>
+<td>12 characters</td>
+<td>Enterprise standard</td>
+</tr>
+<tr>
+<td><strong>Max Failed Attempts</strong></td>
+<td>5 attempts</td>
+<td>PCI-DSS</td>
+</tr>
+<tr>
+<td><strong>Lockout Duration</strong></td>
+<td>30 minutes</td>
+<td>PCI-DSS</td>
+</tr>
+<tr>
+<td><strong>First Login</strong></td>
+<td>Must change password</td>
+<td>Best practice</td>
+</tr>
+</tbody>
+</table>
+<h3 id="52-password-expiry-indicators">5.2 Password Expiry Indicators</h3>
+<table>
+<thead>
+<tr>
+<th>Indicator</th>
+<th>Meaning</th>
+<th>Action Required</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>✓ Green + days</td>
+<td>Password valid</td>
+<td>None</td>
+</tr>
+<tr>
+<td>⚠️ Yellow + days</td>
+<td>Expiring soon (≤14 days)</td>
+<td>Change recommended</td>
+</tr>
+<tr>
+<td>🔴 Expired</td>
+<td>Password expired</td>
+<td>Must change now</td>
+</tr>
+</tbody>
+</table>
+<h3 id="53-changing-your-password">5.3 Changing Your Password</h3>
+<p><strong>Procedure:</strong></p>
+<ol>
+<li>Login with current password</li>
+<li>If prompted (first login or expired), enter new password</li>
+<li>Or go to profile → Change Password</li>
+<li>Enter current password</li>
+<li>Enter new password (min 12 characters)</li>
+<li>Confirm new password</li>
+<li>Click <strong>Change Password</strong></li>
+</ol>
+<p><strong>Requirements:</strong>
+- Minimum 12 characters
+- Cannot reuse current password
+- Valid for 90 days</p>
+<hr />
+<h2 id="6-role-management">6. Role Management</h2>
+<h3 id="61-default-roles">6.1 Default Roles</h3>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Description</th>
+<th style="text-align: center;">Can Delete?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>admin</td>
+<td>Full administrative access</td>
+<td style="text-align: center;">No</td>
+</tr>
+<tr>
+<td>operator</td>
+<td>Operations team - monitor and execute</td>
+<td style="text-align: center;">No</td>
+</tr>
+<tr>
+<td>analyst</td>
+<td>Analysts - view and export data</td>
+<td style="text-align: center;">No</td>
+</tr>
+<tr>
+<td>viewer</td>
+<td>Read-only dashboard access</td>
+<td style="text-align: center;">No</td>
+</tr>
+</tbody>
+</table>
+<h3 id="62-creating-a-custom-role">6.2 Creating a Custom Role</h3>
+<p><strong>Procedure:</strong></p>
+<ol>
+<li>Navigate to <strong>Access Control</strong> → <strong>Roles Matrix</strong></li>
+<li>Click <strong>+ Add Role</strong></li>
+<li>Enter:</li>
+<li><strong>Role Name</strong>: Lowercase, no spaces (e.g., <code>compliance_officer</code>)</li>
+<li><strong>Description</strong>: Purpose of the role</li>
+<li><strong>Permissions</strong>: Check required permissions</li>
+<li>Click <strong>Create Role</strong></li>
+</ol>
+<h3 id="63-editing-a-role">6.3 Editing a Role</h3>
+<p><strong>Procedure:</strong></p>
+<ol>
+<li>Click role name in Roles Matrix or Role Cards</li>
+<li>Modify description and/or permissions</li>
+<li>Click <strong>Save Changes</strong></li>
+</ol>
+<p><strong>Note:</strong> Built-in roles cannot be deleted but can be edited.</p>
+<hr />
+<h2 id="7-audit-log">7. Audit Log</h2>
+<h3 id="71-logged-events">7.1 Logged Events</h3>
+<table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Description</th>
+<th>Logged Data</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>login</code></td>
+<td>Successful login</td>
+<td>Username, IP, timestamp</td>
+</tr>
+<tr>
+<td><code>login_failed</code></td>
+<td>Failed login attempt</td>
+<td>Username, IP, reason</td>
+</tr>
+<tr>
+<td><code>logout</code></td>
+<td>User logout</td>
+<td>Username, IP, timestamp</td>
+</tr>
+<tr>
+<td><code>password_changed</code></td>
+<td>Password change</td>
+<td>Username, IP, expiry date</td>
+</tr>
+<tr>
+<td><code>create_user</code></td>
+<td>New user created</td>
+<td>Username, roles, created_by</td>
+</tr>
+<tr>
+<td><code>update_user</code></td>
+<td>User modified</td>
+<td>Username, changes, modified_by</td>
+</tr>
+<tr>
+<td><code>delete_user</code></td>
+<td>User deleted</td>
+<td>Username, deleted_by</td>
+</tr>
+<tr>
+<td><code>create_role</code></td>
+<td>New role created</td>
+<td>Role name, permissions</td>
+</tr>
+<tr>
+<td><code>update_role</code></td>
+<td>Role modified</td>
+<td>Role name, changes</td>
+</tr>
+<tr>
+<td><code>account_locked</code></td>
+<td>Account locked</td>
+<td>Username, failed attempts</td>
+</tr>
+</tbody>
+</table>
+<h3 id="72-viewing-the-audit-log">7.2 Viewing the Audit Log</h3>
+<p><strong>Procedure:</strong></p>
+<ol>
+<li>Navigate to <strong>Access Control</strong> → <strong>Audit Log</strong></li>
+<li>View recent events (last 100)</li>
+<li>Check:</li>
+<li>Time of event</li>
+<li>Username</li>
+<li>Action performed</li>
+<li>IP address</li>
+<li>Success/failure status</li>
+</ol>
+<hr />
+<h2 id="8-troubleshooting">8. Troubleshooting</h2>
+<h3 id="81-common-issues">8.1 Common Issues</h3>
+<table>
+<thead>
+<tr>
+<th>Issue</th>
+<th>Cause</th>
+<th>Solution</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"Account Locked"</td>
+<td>5 failed login attempts</td>
+<td>Wait 30 minutes, then retry</td>
+</tr>
+<tr>
+<td>"Password Expired"</td>
+<td>Password &gt; 90 days old</td>
+<td>Login and change password</td>
+</tr>
+<tr>
+<td>"Permission Denied"</td>
+<td>Missing role permission</td>
+<td>Contact admin for access</td>
+</tr>
+<tr>
+<td>"Invalid Credentials"</td>
+<td>Wrong username/password</td>
+<td>Verify credentials, check Caps Lock</td>
+</tr>
+<tr>
+<td>"Must Change Password"</td>
+<td>First login or reset</td>
+<td>Enter new password (min 12 chars)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="82-admin-recovery">8.2 Admin Recovery</h3>
+<p>If all admin accounts are locked:</p>
+<ol>
+<li>Wait 30 minutes for auto-unlock, OR</li>
+<li>Direct PostgreSQL access:</li>
+</ol>
+<pre class="codehilite"><code class="language-sql">-- Unlock admin account
+UPDATE rbac_users
+SET locked_until = NULL, failed_login_count = 0
+WHERE username = 'admin';
+</code></pre>
+
+<hr />
+<h2 id="9-related-documentation">9. Related Documentation</h2>
+<table>
+<thead>
+<tr>
+<th>Document</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="./ATS%20Health%20Monitor%20-%20Complete%20Guide.md">ATS Health Monitor - Complete Guide</a></td>
+<td>Full system documentation</td>
+</tr>
+<tr>
+<td><a href="./ATS%20Health%20Monitor%20-%20Production%20Deployment%20Guide.md">ATS Health Monitor - Production Deployment Guide</a></td>
+<td><strong>Deployment procedures, database migration, multi-site setup</strong></td>
+</tr>
+<tr>
+<td><a href="./FIX%20Log%20Monitor%20-%20SFC%20Compliance%20Monitoring.md">FIX Log Monitor - SFC Compliance</a></td>
+<td>FIX protocol monitoring</td>
+</tr>
+<tr>
+<td><a href="./ATS%20JDBC%20Connection%20Monitor%20-%20Database%20Health%20Monitoring%20%26%20Telegram%20Alerts.md">ATS JDBC Connection Monitor</a></td>
+<td>Database monitoring</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="10-change-log">10. Change Log</h2>
+<table>
+<thead>
+<tr>
+<th>Version</th>
+<th>Date</th>
+<th>Author</th>
+<th>Changes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1.1</td>
+<td>2025-12-17</td>
+<td>ATS Production Team</td>
+<td><strong>Production Deployment Reference</strong>: Added link to new Production Deployment Guide. <strong>Password Compatibility</strong>: Clarified that bcrypt password hashes remain valid across deployments (no reset needed). <strong>V2 Tab Permissions</strong>: Updated for V2 upgrades - Order Flow sub-tabs (Ghost STP, Multi-Venue, Patterns), Pos History (was Positions), OnHand Pos (was On-Hand). All V2 tabs query <code>sfc_fix.messages_parsed</code> with millisecond precision.</td>
+</tr>
+<tr>
+<td>1.0</td>
+<td>2025-12-09</td>
+<td>ATS Production Team</td>
+<td>Initial release - PostgreSQL RBAC</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="support">Support</h2>
+<p>For access issues, contact:
+- <strong>System Administrator</strong>: [Your admin contact]
+- <strong>Email</strong>: [Support email]</p>
+<p>For urgent trading issues:
+- <strong>Operations Team</strong>: [Ops contact]</p>
+</body>
+</html>

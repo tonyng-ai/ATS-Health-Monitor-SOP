@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Plane Deployment Guide</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 { border-bottom: 2px solid #3498db; padding-bottom: 0.3em; }
+        h2 { border-bottom: 1px solid #ecf0f1; padding-bottom: 0.2em; }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1em;
+            overflow-x: auto;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 1em 0;
+            padding-left: 1em;
+            color: #666;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 2em 0;
+            padding: 1em;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .pdf-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 8px 16px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .pdf-link:hover {
+            background-color: #c0392b;
+        }
+    </style>
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <p><a href="Plane-Deployment-Guide.pdf" class="pdf-link">📄 Download PDF Version</a></p>
+    <h1 id="plane-deployment-guide">Plane Deployment Guide</h1>
+<blockquote>
+<p><strong>Version</strong>: 1.0.0<br />
+<strong>Last Updated</strong>: December 7, 2025<br />
+<strong>Environment</strong>: Production (NY Datacenter)</p>
+</blockquote>
+<hr />
+<h2 id="overview">📋 Overview</h2>
+<p>This guide covers deploying Plane project management in a production environment using Docker on a Hyper-V VM hosted by Windows Server 2022.</p>
+<hr />
+<h2 id="architecture">🏗️ Architecture</h2>
+<pre class="codehilite"><code>┌─────────────────────────────────────────────────────────────────────────┐
+│                       NY DATACENTER (Windows 2022)                       │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│   ┌─────────────────────────────────────────────────────────────────┐   │
+│   │                    HYPER-V VM (Ubuntu 22.04)                     │   │
+│   │                                                                  │   │
+│   │   ┌──────────────────────────────────────────────────────────┐  │   │
+│   │   │                    DOCKER ENVIRONMENT                     │  │   │
+│   │   │                                                           │  │   │
+│   │   │  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐        │  │   │
+│   │   │  │  Plane  │ │  Plane  │ │  Plane  │ │  Plane  │        │  │   │
+│   │   │  │   Web   │ │   API   │ │  Worker │ │  Beat   │        │  │   │
+│   │   │  └────┬────┘ └────┬────┘ └────┬────┘ └────┬────┘        │  │   │
+│   │   │       └──────────┬┴──────────┬┴───────────┘              │  │   │
+│   │   │                  │           │                           │  │   │
+│   │   │           ┌──────┴───┐ ┌─────┴─────┐                    │  │   │
+│   │   │           │ Postgres │ │   Redis   │                    │  │   │
+│   │   │           │   :5432  │ │   :6379   │                    │  │   │
+│   │   │           └──────────┘ └───────────┘                    │  │   │
+│   │   │                                                           │  │   │
+│   │   └──────────────────────────────────────────────────────────┘  │   │
+│   │                              │                                   │   │
+│   │   ┌──────────────────────────┴───────────────────────────────┐  │   │
+│   │   │                    SECURITY LAYER                         │  │   │
+│   │   │                                                           │  │   │
+│   │   │  ┌─────────┐ ┌─────────┐ ┌─────────┐                    │  │   │
+│   │   │  │  Nginx  │ │WireGuard│ │Fail2ban │                    │  │   │
+│   │   │  │ :80/443 │ │ :51820  │ │ IPS     │                    │  │   │
+│   │   │  └─────────┘ └─────────┘ └─────────┘                    │  │   │
+│   │   │                                                           │  │   │
+│   │   └──────────────────────────────────────────────────────────┘  │   │
+│   │                                                                  │   │
+│   └─────────────────────────────────────────────────────────────────┘   │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+</code></pre>
+
+<hr />
+<h2 id="prerequisites">📦 Prerequisites</h2>
+<h3 id="hardware-requirements">Hardware Requirements</h3>
+<table>
+<thead>
+<tr>
+<th>Resource</th>
+<th>Minimum</th>
+<th>Recommended</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CPU</td>
+<td>4 cores</td>
+<td>8 cores</td>
+</tr>
+<tr>
+<td>RAM</td>
+<td>8 GB</td>
+<td>16 GB</td>
+</tr>
+<tr>
+<td>Storage</td>
+<td>50 GB SSD</td>
+<td>100 GB SSD</td>
+</tr>
+<tr>
+<td>Network</td>
+<td>100 Mbps</td>
+<td>1 Gbps</td>
+</tr>
+</tbody>
+</table>
+<h3 id="software-requirements">Software Requirements</h3>
+<ul>
+<li>Windows Server 2022 with Hyper-V</li>
+<li>Ubuntu 22.04 LTS (VM)</li>
+<li>Docker Engine 24.0+</li>
+<li>Docker Compose 2.20+</li>
+</ul>
+<hr />
+<h2 id="quick-start">🚀 Quick Start</h2>
+<h3 id="step-1-clone-the-deployment-scripts">Step 1: Clone the Deployment Scripts</h3>
+<pre class="codehilite"><code class="language-bash">cd /opt
+git clone https://github.com/your-org/plane-production.git
+cd plane-production
+</code></pre>
+
+<h3 id="step-2-configure-environment">Step 2: Configure Environment</h3>
+<pre class="codehilite"><code class="language-bash"># Copy example environment file
+cp env-example.txt .env
+
+# Edit with your settings
+nano .env
+</code></pre>
+
+<h3 id="step-3-generate-secrets">Step 3: Generate Secrets</h3>
+<pre class="codehilite"><code class="language-bash"># Generate secure keys
+./scripts/generate-secrets.sh
+</code></pre>
+
+<h3 id="step-4-start-services">Step 4: Start Services</h3>
+<pre class="codehilite"><code class="language-bash"># Pull images and start
+docker compose up -d
+
+# Check status
+docker compose ps
+</code></pre>
+
+<hr />
+<h2 id="configuration">⚙️ Configuration</h2>
+<h3 id="environment-variables">Environment Variables</h3>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>PLANE_HOST</code></td>
+<td>Your domain</td>
+<td><code>plane.company.com</code></td>
+</tr>
+<tr>
+<td><code>SECRET_KEY</code></td>
+<td>Django secret</td>
+<td><code>generate-random-64-char</code></td>
+</tr>
+<tr>
+<td><code>DATABASE_URL</code></td>
+<td>PostgreSQL URL</td>
+<td><code>postgresql://user:pass@db:5432/plane</code></td>
+</tr>
+<tr>
+<td><code>REDIS_URL</code></td>
+<td>Redis URL</td>
+<td><code>redis://redis:6379/0</code></td>
+</tr>
+<tr>
+<td><code>WEB_URL</code></td>
+<td>Public URL</td>
+<td><code>https://plane.company.com</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="ssl-configuration">SSL Configuration</h3>
+<pre class="codehilite"><code class="language-nginx"># /etc/nginx/conf.d/plane.conf
+server {
+    listen 443 ssl http2;
+    server_name plane.company.com;
+
+    ssl_certificate /etc/letsencrypt/live/plane.company.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/plane.company.com/privkey.pem;
+
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+</code></pre>
+
+<hr />
+<h2 id="security-setup">🔐 Security Setup</h2>
+<h3 id="wireguard-vpn">WireGuard VPN</h3>
+<pre class="codehilite"><code class="language-ini"># /etc/wireguard/wg0.conf
+[Interface]
+Address = 10.100.0.1/24
+ListenPort = 51820
+PrivateKey = &lt;server-private-key&gt;
+
+# Vancouver Office
+[Peer]
+PublicKey = &lt;vancouver-public-key&gt;
+AllowedIPs = 10.100.0.10/32
+
+# Hong Kong Office
+[Peer]
+PublicKey = &lt;hongkong-public-key&gt;
+AllowedIPs = 10.100.0.20/32
+</code></pre>
+
+<h3 id="fail2ban">Fail2ban</h3>
+<pre class="codehilite"><code class="language-ini"># /etc/fail2ban/jail.local
+[plane-auth]
+enabled = true
+port = http,https
+filter = plane-auth
+logpath = /var/log/nginx/access.log
+maxretry = 5
+bantime = 3600
+</code></pre>
+
+<hr />
+<h2 id="monitoring">📊 Monitoring</h2>
+<h3 id="health-checks">Health Checks</h3>
+<pre class="codehilite"><code class="language-bash"># Check all services
+curl -s http://localhost:3000/api/v1/health/
+
+# Check database
+docker compose exec db pg_isready
+
+# Check Redis
+docker compose exec redis redis-cli ping
+</code></pre>
+
+<h3 id="logs">Logs</h3>
+<pre class="codehilite"><code class="language-bash"># View all logs
+docker compose logs -f
+
+# View specific service
+docker compose logs -f api
+
+# View last 100 lines
+docker compose logs --tail=100
+</code></pre>
+
+<hr />
+<h2 id="backup-recovery">🔄 Backup &amp; Recovery</h2>
+<h3 id="automated-backup-script">Automated Backup Script</h3>
+<pre class="codehilite"><code class="language-bash">#!/bin/bash
+# /opt/plane-production/scripts/backup.sh
+
+DATE=$(date +%Y%m%d_%H%M%S)
+BACKUP_DIR=&quot;/backup/plane&quot;
+
+# Backup PostgreSQL
+docker compose exec -T db pg_dump -U plane plane &gt; $BACKUP_DIR/db_$DATE.sql
+
+# Backup volumes
+tar -czf $BACKUP_DIR/volumes_$DATE.tar.gz /var/lib/docker/volumes/plane_*
+
+# Cleanup old backups (keep 7 days)
+find $BACKUP_DIR -mtime +7 -delete
+</code></pre>
+
+<h3 id="recovery">Recovery</h3>
+<pre class="codehilite"><code class="language-bash"># Stop services
+docker compose down
+
+# Restore database
+cat backup.sql | docker compose exec -T db psql -U plane plane
+
+# Restore volumes
+tar -xzf volumes_backup.tar.gz -C /var/lib/docker/volumes/
+
+# Restart
+docker compose up -d
+</code></pre>
+
+<hr />
+<h2 id="cloud-sync-optional">☁️ Cloud Sync (Optional)</h2>
+<p>For syncing with Plane Cloud:</p>
+<pre class="codehilite"><code class="language-python"># sync_to_cloud.py
+import requests
+from datetime import datetime
+
+PLANE_CLOUD_API = &quot;https://api.plane.so/v1&quot;
+PLANE_CLOUD_TOKEN = &quot;your-api-token&quot;
+
+def sync_issues():
+    # Export from local
+    local_issues = get_local_issues()
+
+    # Push to cloud
+    for issue in local_issues:
+        requests.post(
+            f&quot;{PLANE_CLOUD_API}/issues/&quot;,
+            headers={&quot;Authorization&quot;: f&quot;Bearer {PLANE_CLOUD_TOKEN}&quot;},
+            json=issue
+        )
+</code></pre>
+
+<hr />
+<h2 id="related-documents">🔗 Related Documents</h2>
+<ul>
+<li><a href="Master-Plan-Global-Collaboration.md">Master Plan</a></li>
+<li><a href="WireGuard-VPN-Setup.md">WireGuard Setup</a></li>
+<li><a href="../../Scripts/06-AI-Agent-Project-Management/plane-production/">Scripts</a></li>
+</ul>
+</body>
+</html>

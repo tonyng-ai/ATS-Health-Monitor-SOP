@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>TradeShield Monitor Summary</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 { border-bottom: 2px solid #3498db; padding-bottom: 0.3em; }
+        h2 { border-bottom: 1px solid #ecf0f1; padding-bottom: 0.2em; }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1em;
+            overflow-x: auto;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 1em 0;
+            padding-left: 1em;
+            color: #666;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 2em 0;
+            padding: 1em;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .pdf-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 8px 16px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .pdf-link:hover {
+            background-color: #c0392b;
+        }
+    </style>
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <p><a href="TradeShield-Monitor-Summary.pdf" class="pdf-link">📄 Download PDF Version</a></p>
+    <h1 id="tradeshield-monitor-implementation-summary">TradeShield Monitor - Implementation Summary</h1>
+<h2 id="metadata">Metadata</h2>
+<p><strong>Category:</strong> Security and Trading Platform Administration
+<strong>Last Updated:</strong> 2024-11-29
+<strong>Author:</strong> System Administrator
+<strong>Version:</strong> 1.0
+<strong>Review Date:</strong> 2025-02-28
+<strong>Status:</strong> Active</p>
+<hr />
+<h2 id="overview">Overview</h2>
+<p>TradeShield Monitor is a lightweight, self-contained monitoring dashboard built with Go (Gin), React.js, and DuckDB. It provides real-time monitoring capabilities similar to Grafana and Prometheus, specifically designed for TradeShield Remote infrastructure.</p>
+<hr />
+<h2 id="technology-stack">Technology Stack</h2>
+<h3 id="backend">Backend</h3>
+<ul>
+<li><strong>Language:</strong> Go 1.21+</li>
+<li><strong>Framework:</strong> Gin (HTTP web framework)</li>
+<li><strong>Database:</strong> DuckDB (analytical database)</li>
+<li><strong>Features:</strong></li>
+<li>RESTful API</li>
+<li>Automatic metrics collection</li>
+<li>Health check integration</li>
+<li>Time-series data storage</li>
+</ul>
+<h3 id="frontend">Frontend</h3>
+<ul>
+<li><strong>Framework:</strong> React.js 18</li>
+<li><strong>Build Tool:</strong> Vite</li>
+<li><strong>Charts:</strong> Recharts</li>
+<li><strong>HTTP Client:</strong> Axios</li>
+<li><strong>Features:</strong></li>
+<li>Real-time dashboard</li>
+<li>Interactive charts</li>
+<li>Component status visualization</li>
+<li>Responsive design</li>
+</ul>
+<h3 id="database">Database</h3>
+<ul>
+<li><strong>Engine:</strong> DuckDB</li>
+<li><strong>Format:</strong> Embedded database file</li>
+<li><strong>Location:</strong> <code>C:\TradeShield\monitor\tradeshield-monitor.duckdb</code></li>
+<li><strong>Features:</strong></li>
+<li>High-performance analytics</li>
+<li>JSON column support</li>
+<li>Time-series optimized</li>
+<li>SQL-compatible</li>
+</ul>
+<hr />
+<h2 id="project-structure">Project Structure</h2>
+<pre class="codehilite"><code>TradeShield-Monitor/
+├── main.go                 # Application entry point
+├── database.go             # Database initialization
+├── models.go               # Data models
+├── metric_service.go       # Metrics API handlers
+├── health_service.go       # Health check API handlers
+├── collector.go            # Data collection logic
+├── dashboard.go            # Dashboard API handlers
+├── go.mod                  # Go dependencies
+├── install.ps1             # Installation script
+├── build.ps1               # Build script
+├── run.ps1                 # Run script
+├── README.md               # Documentation
+├── QUICK-START.md          # Quick start guide
+└── frontend/               # React.js application
+    ├── package.json
+    ├── vite.config.js
+    ├── index.html
+    └── src/
+        ├── main.jsx
+        ├── App.jsx
+        ├── index.css
+        ├── services/
+        │   └── api.js      # API client
+        └── components/
+            ├── Dashboard.jsx
+            ├── SummaryCards.jsx
+            ├── ComponentList.jsx
+            ├── MetricsChart.jsx
+            └── ComponentDetails.jsx
+</code></pre>
+
+<hr />
+<h2 id="key-features">Key Features</h2>
+<h3 id="1-real-time-metrics-collection">1. Real-Time Metrics Collection</h3>
+<ul>
+<li>Automatic collection every 30 seconds</li>
+<li>Monitors CHR instances, RustDesk services, databases, load balancer</li>
+<li>Stores metrics in DuckDB for fast queries</li>
+</ul>
+<h3 id="2-health-monitoring">2. Health Monitoring</h3>
+<ul>
+<li>Health checks every 5 minutes</li>
+<li>Integrates with PowerShell health check script</li>
+<li>Tracks component uptime and status</li>
+</ul>
+<h3 id="3-interactive-dashboard">3. Interactive Dashboard</h3>
+<ul>
+<li>Real-time component status</li>
+<li>Time-series charts</li>
+<li>Component details view</li>
+<li>Summary statistics</li>
+</ul>
+<h3 id="4-restful-api">4. RESTful API</h3>
+<ul>
+<li>Complete API for metrics and health data</li>
+<li>Time-range queries</li>
+<li>Component-specific filtering</li>
+<li>JSON responses</li>
+</ul>
+<hr />
+<h2 id="api-endpoints">API Endpoints</h2>
+<h3 id="dashboard">Dashboard</h3>
+<ul>
+<li><code>GET /api/v1/dashboard/summary</code> - Overall dashboard summary</li>
+<li><code>GET /api/v1/dashboard/components</code> - All components status</li>
+<li><code>GET /api/v1/dashboard/metrics/overview</code> - Metrics overview</li>
+</ul>
+<h3 id="metrics">Metrics</h3>
+<ul>
+<li><code>GET /api/v1/metrics</code> - Get all metrics (with filters)</li>
+<li><code>GET /api/v1/metrics/latest</code> - Latest metrics per component</li>
+<li><code>GET /api/v1/metrics/component/:component</code> - Metrics by component</li>
+<li><code>GET /api/v1/metrics/range</code> - Metrics by time range</li>
+<li><code>POST /api/v1/metrics</code> - Create new metric</li>
+</ul>
+<h3 id="health-checks">Health Checks</h3>
+<ul>
+<li><code>GET /api/v1/health</code> - Current health status</li>
+<li><code>GET /api/v1/health/history</code> - Health check history</li>
+<li><code>GET /api/v1/health/component/:component</code> - Component health</li>
+<li><code>POST /api/v1/health</code> - Record health check</li>
+</ul>
+<hr />
+<h2 id="data-collection">Data Collection</h2>
+<h3 id="automatic-collection">Automatic Collection</h3>
+<p>The monitor automatically collects:
+- <strong>CHR Metrics:</strong> Ping response times, availability
+- <strong>RustDesk Metrics:</strong> Port response times, service availability
+- <strong>Database Metrics:</strong> Connection response times
+- <strong>Load Balancer Metrics:</strong> Cluster status</p>
+<h3 id="integration-points">Integration Points</h3>
+<ul>
+<li>Reads health status from: <code>C:\TradeShield\logs\health-status.json</code></li>
+<li>Executes PowerShell commands for Windows-specific checks</li>
+<li>Uses ping and port testing for connectivity</li>
+</ul>
+<hr />
+<h2 id="deployment-options">Deployment Options</h2>
+<h3 id="development-mode">Development Mode</h3>
+<pre class="codehilite"><code class="language-powershell">.\run.ps1 -Mode dev
+</code></pre>
+
+<ul>
+<li>Backend: http://localhost:8080</li>
+<li>Frontend: http://localhost:3000 (Vite dev server)</li>
+<li>Hot reload enabled</li>
+<li>Separate processes</li>
+</ul>
+<h3 id="production-mode">Production Mode</h3>
+<pre class="codehilite"><code class="language-powershell">.\build.ps1
+$env:ENV=&quot;production&quot;
+.\run.ps1 -Mode prod
+</code></pre>
+
+<ul>
+<li>Single executable</li>
+<li>Frontend served from backend</li>
+<li>All on http://localhost:8080</li>
+<li>Optimized builds</li>
+</ul>
+<hr />
+<h2 id="comparison-with-grafanaprometheus">Comparison with Grafana/Prometheus</h2>
+<h3 id="advantages">Advantages</h3>
+<ul>
+<li>✅ Lightweight and self-contained</li>
+<li>✅ No external dependencies</li>
+<li>✅ Easy deployment (single executable)</li>
+<li>✅ Integrated data collection</li>
+<li>✅ Customized for TradeShield infrastructure</li>
+<li>✅ DuckDB for fast analytics</li>
+</ul>
+<h3 id="differences">Differences</h3>
+<ul>
+<li>Simpler setup (no Prometheus server needed)</li>
+<li>Built-in data collection (no exporters)</li>
+<li>Custom dashboard (not as flexible as Grafana)</li>
+<li>Embedded database (not distributed)</li>
+</ul>
+<hr />
+<h2 id="performance-characteristics">Performance Characteristics</h2>
+<ul>
+<li><strong>Metrics Collection:</strong> ~30 seconds per cycle</li>
+<li><strong>Health Checks:</strong> ~5 minutes per cycle</li>
+<li><strong>API Response Time:</strong> &lt; 100ms for most queries</li>
+<li><strong>Database Size:</strong> Grows with time-series data</li>
+<li><strong>Memory Usage:</strong> ~50-100 MB typical</li>
+</ul>
+<hr />
+<h2 id="security-considerations">Security Considerations</h2>
+<ul>
+<li>CORS configured for localhost only (dev mode)</li>
+<li>No authentication (add if exposing to network)</li>
+<li>Database file permissions restricted</li>
+<li>No sensitive data in logs</li>
+</ul>
+<p><strong>Recommendations:</strong>
+- Add authentication for production use
+- Use HTTPS if exposing to network
+- Restrict database file access
+- Implement rate limiting</p>
+<hr />
+<h2 id="related-procedures">Related Procedures</h2>
+<ul>
+<li><a href="TradeShield-Monitor-Deployment.md">TradeShield Monitor - Deployment Guide</a></li>
+<li><a href="TradeShield-Remote-Deployment.md">TradeShield Remote - Deployment Guide</a></li>
+<li><a href="TradeShield-Remote-Common-Tasks.md">TradeShield Remote - Common Tasks</a></li>
+</ul>
+<h2 id="references">References</h2>
+<ul>
+<li><a href="https://go.dev/doc/">Go Documentation</a></li>
+<li><a href="https://gin-gonic.com/">Gin Framework</a></li>
+<li><a href="https://react.dev/">React Documentation</a></li>
+<li><a href="https://duckdb.org/docs/">DuckDB Documentation</a></li>
+<li><a href="https://recharts.org/">Recharts Documentation</a></li>
+</ul>
+<h2 id="change-log">Change Log</h2>
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Version</th>
+<th>Author</th>
+<th>Changes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2024-11-29</td>
+<td>1.0.1</td>
+<td>System Administrator</td>
+<td>Fixed database compatibility, error handling, and React state management</td>
+</tr>
+<tr>
+<td>2024-11-29</td>
+<td>1.0</td>
+<td>System Administrator</td>
+<td>Initial implementation</td>
+</tr>
+</tbody>
+</table>
+<p>See <a href="../../Scripts/06-Security-and-Trading-Platform-Administration/TradeShield-Monitor/CHANGELOG.md">CHANGELOG.md</a> for detailed changes.</p>
+<hr />
+<h2 id="notes">Notes</h2>
+<p><strong>TIP:</strong> The monitor integrates seamlessly with the existing health check script. Ensure <code>Health-Check-TradeShield.ps1</code> runs periodically for best results.</p>
+<p><strong>NOTE:</strong> DuckDB provides excellent performance for analytical queries on time-series data, making it ideal for monitoring dashboards.</p>
+<p><strong>WARNING:</strong> For production deployment on a network, add authentication and use HTTPS.</p>
+</body>
+</html>

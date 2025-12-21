@@ -1,0 +1,2222 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>ATS Health Monitor   Developer Deployment Guide</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 { border-bottom: 2px solid #3498db; padding-bottom: 0.3em; }
+        h2 { border-bottom: 1px solid #ecf0f1; padding-bottom: 0.2em; }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1em;
+            overflow-x: auto;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 1em 0;
+            padding-left: 1em;
+            color: #666;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 2em 0;
+            padding: 1em;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .pdf-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 8px 16px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .pdf-link:hover {
+            background-color: #c0392b;
+        }
+    </style>
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <p><a href="ATS Health Monitor - Developer Deployment Guide.pdf" class="pdf-link">📄 Download PDF Version</a></p>
+    <h1 id="ats-health-monitor-developer-deployment-guide">ATS Health Monitor - Developer Deployment Guide</h1>
+<h2 id="metadata">Metadata</h2>
+<p><strong>Category:</strong> Trading System Administration - Development &amp; Deployment
+<strong>Last Updated:</strong> 2025-12-10
+<strong>Author:</strong> ATS Production Team
+<strong>Version:</strong> 1.0
+<strong>Review Date:</strong> 2026-01-10
+<strong>Status:</strong> Active</p>
+<hr />
+<h2 id="purpose">Purpose</h2>
+<p>This guide provides complete instructions for developers to:
+1. Build all ATS Health Monitor applications from source
+2. Create and deploy Docker images to production
+3. Deploy to the NY Ubuntu VM (primary site)
+4. Replicate the deployment to Hong Kong Mega Office (secondary site)</p>
+<hr />
+<h2 id="table-of-contents">Table of Contents</h2>
+<ol>
+<li><a href="#1-architecture-overview">Architecture Overview</a></li>
+<li><a href="#2-prerequisites">Prerequisites</a></li>
+<li><a href="#3-application-components">Application Components</a></li>
+<li><a href="#4-building-applications">Building Applications</a></li>
+<li><a href="#5-docker-image-creation">Docker Image Creation</a></li>
+<li><a href="#6-deploying-to-ny-production">Deploying to NY Production</a></li>
+<li><a href="#7-deploying-to-hong-kong-office">Deploying to Hong Kong Office</a></li>
+<li><a href="#8-verification--testing">Verification &amp; Testing</a></li>
+<li><a href="#9-rollback-procedures">Rollback Procedures</a></li>
+<li><a href="#10-troubleshooting">Troubleshooting</a></li>
+<li><a href="#11-automation-scripts">Automation Scripts</a></li>
+<li><a href="#12-troubleshooting-flowcharts">Troubleshooting Flowcharts</a></li>
+</ol>
+<hr />
+<h2 id="1-architecture-overview">1. Architecture Overview</h2>
+<pre class="codehilite"><code class="language-mermaid">flowchart TB
+    subgraph NY2[&quot;NY2 Windows VM (192.168.168.2)&quot;]
+        ATS[ATS Trading System]
+        LOG_AGENT[log-agent.exe&lt;br/&gt;PUB:9000 ROUTER:9001]
+        RESYNC[resync-manager.exe&lt;br/&gt;API:8090 ZMQ:9001-9010]
+        ATS_LOG[ats.log]
+        HIST[ats_history/*.log.gz]
+    end
+
+    subgraph VPN1[&quot;VPN1 HyperV (NY Office)&quot;]
+        subgraph UBUNTU[&quot;Ubuntu VM (192.168.168.100)&quot;]
+            DOCKER[ATS-Health-Monitor&lt;br/&gt;Docker Container&lt;br/&gt;Port 8080]
+            TSDB[(TimescaleDB&lt;br/&gt;Port 5432)]
+            FTP[FTP Server&lt;br/&gt;Port 2121]
+        end
+    end
+
+    subgraph HK[&quot;Hong Kong Mega Office&quot;]
+        subgraph HK_VM[&quot;HK Ubuntu VM&quot;]
+            HK_DOCKER[ATS-Health-Monitor&lt;br/&gt;Docker Container&lt;br/&gt;Port 8080]
+            HK_TSDB[(TimescaleDB&lt;br/&gt;Port 5432)]
+        end
+    end
+
+    subgraph VPN[&quot;WireGuard VPN (10.101.0.0/24)&quot;]
+        VPN_NY[NY: 10.101.0.5]
+        VPN_HK[HK: 10.101.0.10]
+    end
+
+    ATS --&gt;|&quot;Write&quot;| ATS_LOG
+    LOG_AGENT --&gt;|&quot;Tail&quot;| ATS_LOG
+    RESYNC --&gt;|&quot;Read&quot;| ATS_LOG
+    RESYNC --&gt;|&quot;Read&quot;| HIST
+
+    LOG_AGENT --&gt;|&quot;ZMQ PUB&lt;br/&gt;Reliable Feed&quot;| DOCKER
+    LOG_AGENT --&gt;|&quot;ZMQ PUB&lt;br/&gt;via VPN&quot;| HK_DOCKER
+
+    RESYNC --&gt;|&quot;ZMQ/FTP&quot;| DOCKER
+
+    DOCKER --&gt; TSDB
+    HK_DOCKER --&gt; HK_TSDB
+
+    VPN_NY ---|&quot;WireGuard Tunnel&quot;| VPN_HK
+
+    style NY2 fill:#1e3a5f,stroke:#f59e0b,color:#fff
+    style UBUNTU fill:#1e3a5f,stroke:#10b981,color:#fff
+    style HK_VM fill:#1e3a5f,stroke:#8b5cf6,color:#fff
+</code></pre>
+
+<h3 id="component-summary">Component Summary</h3>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Runs On</th>
+<th>Purpose</th>
+<th>Port(s)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>ATS-Health-Monitor</strong></td>
+<td>Ubuntu VM (Docker)</td>
+<td>Web dashboard, API, data processing</td>
+<td>8080</td>
+</tr>
+<tr>
+<td><strong>log-agent</strong></td>
+<td>NY2 Windows</td>
+<td>Reliable log publisher</td>
+<td>9000, 9001</td>
+</tr>
+<tr>
+<td><strong>resync-manager</strong></td>
+<td>NY2 Windows</td>
+<td>Historical log import</td>
+<td>8090, 9001-9010</td>
+</tr>
+<tr>
+<td><strong>TimescaleDB</strong></td>
+<td>Ubuntu VM (Docker)</td>
+<td>Compliance database</td>
+<td>5432</td>
+</tr>
+</tbody>
+</table>
+<h3 id="recent-v2-enhancements-version-58">Recent V2 Enhancements (Version 5.8)</h3>
+<p><strong>Dashboard Upgrades:</strong>
+- <strong>Pos History (V2):</strong> Replaced "Positions" - queries <code>sfc_fix.messages_parsed</code> by <code>order_id</code> with millisecond precision
+- <strong>OnHand Pos (V2):</strong> Replaced "On-Hand" - upgraded from V1 <code>api.getOrderHistory</code> to V2 <code>api.getV2Messages</code>
+- <strong>Order Flow:</strong> New V2 FIX monitoring with sub-tabs:
+  - <strong>👻 Ghost STP:</strong> Detect cancelled STP orders that still execute
+  - <strong>🏛 Multi-Venue:</strong> Multi-exchange routing analysis (NASDAQ, NYSE, ARCA via Tag 30)
+  - <strong>📊 Patterns:</strong> Order pattern heat maps and statistical analysis</p>
+<p><strong>Backend API:</strong>
+- V2 parser queries <code>sfc_fix.messages_parsed</code> table
+- Millisecond precision timestamps (<code>.116Z</code> format)
+- Full FIX lifecycle tracking: New → Pending → Partial Fill → Fill
+- <code>order_id</code> filter support in <code>/api/v2/history/messages</code></p>
+<hr />
+<h2 id="2-prerequisites">2. Prerequisites</h2>
+<h3 id="development-machine-requirements">Development Machine Requirements</h3>
+<table>
+<thead>
+<tr>
+<th>Requirement</th>
+<th>Version</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Go</td>
+<td>1.21+</td>
+<td>Build Go applications</td>
+</tr>
+<tr>
+<td>Node.js</td>
+<td>18+</td>
+<td>Build React frontend</td>
+</tr>
+<tr>
+<td>npm</td>
+<td>9+</td>
+<td>Package management</td>
+</tr>
+<tr>
+<td>Docker Desktop</td>
+<td>Latest</td>
+<td>Build and test containers</td>
+</tr>
+<tr>
+<td>Git</td>
+<td>Latest</td>
+<td>Version control</td>
+</tr>
+<tr>
+<td>PowerShell</td>
+<td>5.1+</td>
+<td>Windows scripting</td>
+</tr>
+<tr>
+<td>SSH Client</td>
+<td>Any</td>
+<td>Remote deployment</td>
+</tr>
+</tbody>
+</table>
+<h3 id="network-access">Network Access</h3>
+<table>
+<thead>
+<tr>
+<th>Target</th>
+<th>IP/Host</th>
+<th>Port(s)</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>NY2 Windows VM</td>
+<td>192.168.168.2</td>
+<td>22, 9000, 9001, 8090</td>
+<td>Log agent, Resync</td>
+</tr>
+<tr>
+<td>NY Ubuntu VM</td>
+<td>192.168.168.100</td>
+<td>22, 8080, 5432, 2121</td>
+<td>Docker host</td>
+</tr>
+<tr>
+<td>HK Ubuntu VM</td>
+<td>10.101.0.10 (VPN)</td>
+<td>22, 8080, 5432</td>
+<td>HK deployment</td>
+</tr>
+</tbody>
+</table>
+<h3 id="credentials-required">Credentials Required</h3>
+<pre class="codehilite"><code>NY2 Windows: RDP access
+NY Ubuntu VM: atsadmin@192.168.168.100
+HK Ubuntu VM: atsadmin@10.101.0.10 (via VPN)
+</code></pre>
+
+<hr />
+<h2 id="3-application-components">3. Application Components</h2>
+<h3 id="31-ats-health-monitor-main-application">3.1 ATS-Health-Monitor (Main Application)</h3>
+<p><strong>Location:</strong> <code>Scripts/05-Production-ATS-Administration/ATS-Health-Monitor/</code></p>
+<p><strong>Components:</strong>
+- Go backend (API, data processing, ZMQ receiver)
+- React frontend (dashboard)
+- SQLite (operational data)
+- TimescaleDB client (compliance data)</p>
+<h3 id="32-log-agent-reliable-log-publisher">3.2 log-agent (Reliable Log Publisher)</h3>
+<p><strong>Location:</strong> <code>Scripts/05-Production-ATS-Administration/ATS-Health-Monitor/cmd/log-agent/</code></p>
+<p><strong>Purpose:</strong> Tail ats.log and broadcast via ZeroMQ with guaranteed delivery</p>
+<h3 id="33-resync-manager-historical-import">3.3 resync-manager (Historical Import)</h3>
+<p><strong>Location:</strong> <code>Scripts/05-Production-ATS-Administration/ATS-Health-Monitor/cmd/resync-manager/</code></p>
+<p><strong>Purpose:</strong> On-demand historical log import with FTP transfer</p>
+<hr />
+<h2 id="4-building-applications">4. Building Applications</h2>
+<h3 id="41-build-ats-health-monitor">4.1 Build ATS-Health-Monitor</h3>
+<pre class="codehilite"><code class="language-powershell"># Navigate to project directory
+cd I:\SOP-Management\Scripts\05-Production-ATS-Administration\ATS-Health-Monitor
+
+# Step 1: Install Go dependencies
+go mod tidy
+
+# Step 2: Build frontend
+cd frontend
+npm install
+npm run build
+cd ..
+
+# Step 3: Build Go backend
+go build -o ATS-Health-Monitor.exe .
+
+# Verify build
+.\ATS-Health-Monitor.exe --version
+</code></pre>
+
+<p><strong>Expected Output:</strong></p>
+<pre class="codehilite"><code>ATS Health Monitor v5.8
+Build Version: 2025-12-16T10:00-debug-postgres
+</code></pre>
+
+<h3 id="42-build-log-agent">4.2 Build log-agent</h3>
+<pre class="codehilite"><code class="language-powershell"># Navigate to log-agent directory
+cd I:\SOP-Management\Scripts\05-Production-ATS-Administration\ATS-Health-Monitor\cmd\log-agent
+
+# Build
+go build -o log-agent.exe .
+
+# Verify
+.\log-agent.exe --help
+</code></pre>
+
+<h3 id="43-build-resync-manager">4.3 Build resync-manager</h3>
+<pre class="codehilite"><code class="language-powershell"># Navigate to resync-manager directory
+cd I:\SOP-Management\Scripts\05-Production-ATS-Administration\ATS-Health-Monitor\cmd\resync-manager
+
+# Build
+go build -o resync-manager.exe .
+
+# Verify
+.\resync-manager.exe --help
+</code></pre>
+
+<h3 id="44-build-all-one-liner">4.4 Build All (One-Liner)</h3>
+<pre class="codehilite"><code class="language-powershell"># Build all three applications
+cd I:\SOP-Management\Scripts\05-Production-ATS-Administration\ATS-Health-Monitor
+
+# Frontend + Main App
+cd frontend; npm run build; cd ..; go build .
+
+# Log Agent
+cd cmd\log-agent; go build .; cd ..\..
+
+# Resync Manager
+cd cmd\resync-manager; go build .; cd ..\..
+
+Write-Host &quot;All applications built successfully!&quot; -ForegroundColor Green
+</code></pre>
+
+<hr />
+<h2 id="5-docker-image-creation">5. Docker Image Creation</h2>
+<h3 id="51-build-docker-image">5.1 Build Docker Image</h3>
+<pre class="codehilite"><code class="language-powershell"># Navigate to main directory
+cd I:\SOP-Management\Scripts\05-Production-ATS-Administration\ATS-Health-Monitor
+
+# Build Docker image with version tag
+$version = &quot;5.8&quot;
+$timestamp = Get-Date -Format &quot;yyyyMMdd-HHmm&quot;
+$tag = &quot;ats-health-monitor:${version}-${timestamp}&quot;
+
+docker build -t $tag -t ats-health-monitor:latest -t ats-health-monitor:test .
+
+# Verify image
+docker images | Select-String &quot;ats-health-monitor&quot;
+</code></pre>
+
+<p><strong>Expected Output:</strong></p>
+<pre class="codehilite"><code>ats-health-monitor   5.8-20251216-1000   abc123def456   21MB
+ats-health-monitor   latest              abc123def456   21MB
+ats-health-monitor   test                abc123def456   21MB
+</code></pre>
+
+<h3 id="52-save-docker-image-for-transfer">5.2 Save Docker Image for Transfer</h3>
+<pre class="codehilite"><code class="language-powershell"># Save to tar file for SCP transfer
+docker save ats-health-monitor:test -o C:\Temp\ats.tar
+
+# Check file size (should be ~20-25MB)
+(Get-Item C:\Temp\ats.tar).Length / 1MB
+</code></pre>
+
+<h3 id="53-dockerfile-reference">5.3 Dockerfile Reference</h3>
+<pre class="codehilite"><code class="language-dockerfile"># Multi-stage build for minimal image size
+FROM golang:1.21-alpine AS builder
+
+WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -o ats-health-monitor .
+
+# Production image
+FROM alpine:3.19
+RUN apk --no-cache add ca-certificates tzdata
+WORKDIR /app
+
+COPY --from=builder /app/ats-health-monitor .
+COPY --from=builder /app/frontend/build ./frontend/build
+
+EXPOSE 8080
+CMD [&quot;./ats-health-monitor&quot;, &quot;-web&quot;, &quot;-port&quot;, &quot;8080&quot;, &quot;-config&quot;, &quot;/app/config/config.toml&quot;]
+</code></pre>
+
+<hr />
+<h2 id="6-deploying-to-ny-production">6. Deploying to NY Production</h2>
+<h3 id="61-deployment-architecture-ny">6.1 Deployment Architecture (NY)</h3>
+<pre class="codehilite"><code class="language-mermaid">flowchart LR
+    subgraph DEV[&quot;Development Machine&quot;]
+        BUILD[Build &amp; Docker]
+        TAR[ats.tar]
+    end
+
+    subgraph NY_UBUNTU[&quot;NY Ubuntu VM (192.168.168.100)&quot;]
+        LOAD[docker load]
+        COMPOSE[docker compose]
+        CONTAINER[ats-health-monitor]
+        TSDB[(TimescaleDB)]
+    end
+
+    BUILD --&gt; TAR
+    TAR --&gt;|&quot;SCP&quot;| LOAD
+    LOAD --&gt; COMPOSE
+    COMPOSE --&gt; CONTAINER
+    CONTAINER --&gt; TSDB
+</code></pre>
+
+<h3 id="62-transfer-image-to-ny-ubuntu-vm">6.2 Transfer Image to NY Ubuntu VM</h3>
+<pre class="codehilite"><code class="language-powershell"># From development machine
+scp C:\Temp\ats.tar atsadmin@192.168.168.100:~/ats.tar
+
+# Expected output: ats.tar  100%  21MB  13.5MB/s  00:01
+</code></pre>
+
+<h3 id="63-deploy-on-ny-ubuntu-vm">6.3 Deploy on NY Ubuntu VM</h3>
+<pre class="codehilite"><code class="language-bash"># SSH to Ubuntu VM
+ssh atsadmin@192.168.168.100
+
+# Load Docker image
+docker load -i ~/ats.tar
+
+# Navigate to deployment directory
+cd ~/ats-deploy
+
+# Stop existing container
+docker compose down ats-health-monitor
+
+# Start with new image
+docker compose up -d ats-health-monitor
+
+# Verify startup
+sleep 5
+docker logs ats-health-monitor 2&gt;&amp;1 | grep -E &quot;Build Version|Starting|Connected&quot;
+</code></pre>
+
+<h3 id="64-docker-composeyml-ny-production">6.4 docker-compose.yml (NY Production)</h3>
+<pre class="codehilite"><code class="language-yaml">version: '3.8'
+
+services:
+  ats-health-monitor:
+    image: ats-health-monitor:test
+    container_name: ats-health-monitor
+    restart: unless-stopped
+    ports:
+      - &quot;8080:8080&quot;
+    volumes:
+      - ./config:/app/config:ro
+      - ats-data:/app/data
+    environment:
+      - TZ=America/New_York
+    depends_on:
+      - timescaledb
+    networks:
+      - ats-network
+
+  timescaledb:
+    image: timescale/timescaledb:latest-pg15
+    container_name: timescaledb
+    restart: unless-stopped
+    ports:
+      - &quot;5432:5432&quot;
+    environment:
+      - POSTGRES_USER=ats_health_user
+      - POSTGRES_PASSWORD=ats_health_2024
+      - POSTGRES_DB=ats_health_monitor
+    volumes:
+      - timescale-data:/var/lib/postgresql/data
+    networks:
+      - ats-network
+
+  smtp4dev:
+    image: rnwood/smtp4dev:v3
+    container_name: smtp4dev
+    restart: unless-stopped
+    ports:
+      - &quot;5000:80&quot;
+      - &quot;25:25&quot;
+    networks:
+      - ats-network
+
+volumes:
+  ats-data:
+  timescale-data:
+
+networks:
+  ats-network:
+    driver: bridge
+</code></pre>
+
+<h3 id="65-production-config-configproductiontoml">6.5 Production Config (config.production.toml)</h3>
+<pre class="codehilite"><code class="language-toml"># ==============================================================================
+# ATS Health Monitor - NY Production Configuration
+# ==============================================================================
+
+[database]
+server = &quot;192.168.168.2&quot;
+port = 1433
+database = &quot;Fund2&quot;
+username = &quot;sa&quot;
+password = &quot;Shine4me&quot;
+
+[database.operational]
+enabled = true
+path = &quot;/app/data/operational.db&quot;
+
+[database.compliance]
+enabled = true
+host = &quot;timescaledb&quot;
+port = 5432
+database = &quot;ats_health_monitor&quot;
+username = &quot;ats_health_user&quot;
+password_hash = &quot;ats_health_2024&quot;
+ssl_mode = &quot;disable&quot;
+
+[monitor]
+check_interval_seconds = 300
+enable_console = true
+
+[telegram]
+enabled = true
+token = &quot;YOUR_BOT_TOKEN&quot;
+chat_id = &quot;YOUR_CHAT_ID&quot;
+
+[reliable_log_receiver]
+enabled = true
+subscriber_id = &quot;ny-production&quot;
+state_dir = &quot;/app/data&quot;
+max_gap_before_replay = 5
+replay_timeout_seconds = 30
+
+[[reliable_log_receiver.publishers]]
+name = &quot;NY2 Primary&quot;
+pub_addr = &quot;192.168.168.2:9000&quot;
+replay_addr = &quot;192.168.168.2:9001&quot;
+priority = 1
+
+[resync]
+enabled = true
+manager_url = &quot;http://192.168.168.2:8090&quot;
+
+[rbac]
+enabled = true
+default_role = &quot;viewer&quot;
+
+[ats_log_issue_matrix]
+enabled = true
+duplicate_window_seconds = 300
+</code></pre>
+
+<h3 id="66-one-command-deployment-script">6.6 One-Command Deployment Script</h3>
+<pre class="codehilite"><code class="language-powershell"># deploy-ny.ps1 - Run from development machine
+
+$ErrorActionPreference = &quot;Stop&quot;
+
+Write-Host &quot;=== ATS Health Monitor - NY Deployment ===&quot; -ForegroundColor Cyan
+
+# Step 1: Build
+Write-Host &quot;`n[1/5] Building application...&quot; -ForegroundColor Yellow
+cd I:\SOP-Management\Scripts\05-Production-ATS-Administration\ATS-Health-Monitor
+cd frontend; npm run build; cd ..
+go build .
+
+# Step 2: Build Docker image
+Write-Host &quot;`n[2/5] Building Docker image...&quot; -ForegroundColor Yellow
+docker build -t ats-health-monitor:test .
+
+# Step 3: Save and transfer
+Write-Host &quot;`n[3/5] Transferring to NY Ubuntu VM...&quot; -ForegroundColor Yellow
+docker save ats-health-monitor:test -o C:\Temp\ats.tar
+scp C:\Temp\ats.tar atsadmin@192.168.168.100:~/ats.tar
+
+# Step 4: Deploy
+Write-Host &quot;`n[4/5] Deploying on NY Ubuntu VM...&quot; -ForegroundColor Yellow
+ssh atsadmin@192.168.168.100 @&quot;
+docker load -i ~/ats.tar
+cd ~/ats-deploy
+docker compose down ats-health-monitor
+docker compose up -d ats-health-monitor
+sleep 5
+docker logs ats-health-monitor 2&gt;&amp;1 | grep 'Build Version'
+&quot;@
+
+# Step 5: Verify
+Write-Host &quot;`n[5/5] Verifying deployment...&quot; -ForegroundColor Yellow
+$response = Invoke-WebRequest -Uri &quot;http://192.168.168.100:8080/api/v1/system/overview&quot; -UseBasicParsing
+if ($response.StatusCode -eq 200) {
+    Write-Host &quot;`n[OK] Deployment successful!&quot; -ForegroundColor Green
+} else {
+    Write-Host &quot;`n[ERROR] Deployment verification failed!&quot; -ForegroundColor Red
+}
+</code></pre>
+
+<hr />
+<h2 id="7-deploying-to-hong-kong-office">7. Deploying to Hong Kong Office</h2>
+<h3 id="71-hk-deployment-architecture">7.1 HK Deployment Architecture</h3>
+<pre class="codehilite"><code class="language-mermaid">flowchart TB
+    subgraph NY[&quot;NY Office&quot;]
+        NY2[NY2 Log Agent&lt;br/&gt;PUB:9000]
+        NY_VM[NY Ubuntu VM&lt;br/&gt;Primary Site]
+    end
+
+    subgraph VPN[&quot;WireGuard VPN&quot;]
+        TUNNEL[Encrypted Tunnel&lt;br/&gt;10.101.0.0/24]
+    end
+
+    subgraph HK[&quot;Hong Kong Mega Office&quot;]
+        HK_VM[HK Ubuntu VM&lt;br/&gt;Secondary Site]
+        HK_TSDB[(TimescaleDB)]
+        HK_DASH[Dashboard&lt;br/&gt;:8080]
+    end
+
+    NY2 --&gt;|&quot;ZMQ via VPN&lt;br/&gt;10.101.0.5:9000&quot;| TUNNEL
+    TUNNEL --&gt;|&quot;Reliable Feed&quot;| HK_VM
+    HK_VM --&gt; HK_TSDB
+    HK_VM --&gt; HK_DASH
+
+    style NY fill:#1e3a5f,stroke:#f59e0b,color:#fff
+    style HK fill:#1e3a5f,stroke:#8b5cf6,color:#fff
+</code></pre>
+
+<h3 id="72-prerequisites-for-hk-deployment">7.2 Prerequisites for HK Deployment</h3>
+<ol>
+<li><strong>WireGuard VPN</strong> configured between NY and HK</li>
+<li><strong>Ubuntu VM</strong> provisioned in HK with Docker installed</li>
+<li><strong>Network routes</strong> allowing HK VM to reach NY2 via VPN</li>
+</ol>
+<h3 id="73-wireguard-vpn-configuration">7.3 WireGuard VPN Configuration</h3>
+<p><strong>On NY2 (Server):</strong></p>
+<pre class="codehilite"><code class="language-ini"># /etc/wireguard/wg0.conf
+[Interface]
+Address = 10.101.0.5/24
+PrivateKey = &lt;NY_PRIVATE_KEY&gt;
+ListenPort = 51820
+
+[Peer]
+# Hong Kong Office
+PublicKey = &lt;HK_PUBLIC_KEY&gt;
+AllowedIPs = 10.101.0.10/32
+</code></pre>
+
+<p><strong>On HK VM (Client):</strong></p>
+<pre class="codehilite"><code class="language-ini"># /etc/wireguard/wg0.conf
+[Interface]
+Address = 10.101.0.10/24
+PrivateKey = &lt;HK_PRIVATE_KEY&gt;
+
+[Peer]
+# NY Office
+PublicKey = &lt;NY_PUBLIC_KEY&gt;
+Endpoint = ny-office.example.com:51820
+AllowedIPs = 10.101.0.0/24, 192.168.168.0/24
+PersistentKeepalive = 25
+</code></pre>
+
+<h3 id="74-transfer-image-to-hk">7.4 Transfer Image to HK</h3>
+<pre class="codehilite"><code class="language-powershell"># Option 1: Direct SCP via VPN
+scp C:\Temp\ats.tar atsadmin@10.101.0.10:~/ats.tar
+
+# Option 2: Via NY Ubuntu VM (if dev machine not on VPN)
+scp C:\Temp\ats.tar atsadmin@192.168.168.100:~/ats.tar
+ssh atsadmin@192.168.168.100 &quot;scp ~/ats.tar atsadmin@10.101.0.10:~/ats.tar&quot;
+</code></pre>
+
+<h3 id="75-hk-production-configuration">7.5 HK Production Configuration</h3>
+<p>Create <code>config.hk-production.toml</code>:</p>
+<pre class="codehilite"><code class="language-toml"># ==============================================================================
+# ATS Health Monitor - Hong Kong Production Configuration
+# ==============================================================================
+# Key Differences from NY:
+# 1. subscriber_id = &quot;hk-office&quot; (unique per site)
+# 2. pub_addr uses VPN IP (10.101.0.5:9000)
+# 3. No resync (optional - only NY has direct access to logs)
+# 4. Local TimescaleDB for HK compliance
+# ==============================================================================
+
+[database]
+# Connect to NY2 MSSQL via VPN (read-only for reference data)
+server = &quot;10.101.0.5&quot;   # NY2 via VPN
+port = 1433
+database = &quot;Fund2&quot;
+username = &quot;readonly_user&quot;
+password = &quot;readonly_password&quot;
+
+[database.operational]
+enabled = true
+path = &quot;/app/data/operational.db&quot;
+
+[database.compliance]
+enabled = true
+host = &quot;timescaledb&quot;
+port = 5432
+database = &quot;ats_health_monitor&quot;
+username = &quot;ats_health_user&quot;
+password_hash = &quot;ats_health_2024&quot;
+ssl_mode = &quot;disable&quot;
+
+[monitor]
+check_interval_seconds = 300
+enable_console = true
+
+[telegram]
+enabled = true
+token = &quot;YOUR_HK_BOT_TOKEN&quot;
+chat_id = &quot;YOUR_HK_CHAT_ID&quot;
+
+# ==============================================================================
+# RELIABLE LOG RECEIVER - Connects to NY2 via VPN
+# ==============================================================================
+[reliable_log_receiver]
+enabled = true
+subscriber_id = &quot;hk-office&quot;   # MUST be unique!
+state_dir = &quot;/app/data&quot;
+max_gap_before_replay = 5
+replay_timeout_seconds = 30
+gap_check_interval_sec = 5
+
+[[reliable_log_receiver.publishers]]
+name = &quot;NY2 via VPN&quot;
+pub_addr = &quot;10.101.0.5:9000&quot;      # NY2 via WireGuard VPN
+replay_addr = &quot;10.101.0.5:9001&quot;   # Replay requests
+priority = 1
+
+# ==============================================================================
+# RESYNC - Disabled for HK (no direct access to ATS logs)
+# ==============================================================================
+[resync]
+enabled = false
+
+# ==============================================================================
+# RBAC
+# ==============================================================================
+[rbac]
+enabled = true
+default_role = &quot;viewer&quot;
+
+# ==============================================================================
+# ATS LOG ISSUE MATRIX
+# ==============================================================================
+[ats_log_issue_matrix]
+enabled = true
+duplicate_window_seconds = 300
+</code></pre>
+
+<h3 id="76-deploy-on-hk-ubuntu-vm">7.6 Deploy on HK Ubuntu VM</h3>
+<pre class="codehilite"><code class="language-bash"># SSH to HK VM via VPN
+ssh atsadmin@10.101.0.10
+
+# Create deployment directory
+mkdir -p ~/ats-deploy/config
+
+# Copy config file (from your local machine)
+# scp config.hk-production.toml atsadmin@10.101.0.10:~/ats-deploy/config/config.toml
+
+# Load Docker image
+docker load -i ~/ats.tar
+
+# Create docker-compose.yml
+cat &gt; ~/ats-deploy/docker-compose.yml &lt;&lt; 'EOF'
+version: '3.8'
+
+services:
+  ats-health-monitor:
+    image: ats-health-monitor:test
+    container_name: ats-health-monitor
+    restart: unless-stopped
+    ports:
+      - &quot;8080:8080&quot;
+    volumes:
+      - ./config:/app/config:ro
+      - ats-data:/app/data
+    environment:
+      - TZ=Asia/Hong_Kong
+    depends_on:
+      - timescaledb
+    networks:
+      - ats-network
+
+  timescaledb:
+    image: timescale/timescaledb:latest-pg15
+    container_name: timescaledb
+    restart: unless-stopped
+    ports:
+      - &quot;5432:5432&quot;
+    environment:
+      - POSTGRES_USER=ats_health_user
+      - POSTGRES_PASSWORD=ats_health_2024
+      - POSTGRES_DB=ats_health_monitor
+    volumes:
+      - timescale-data:/var/lib/postgresql/data
+    networks:
+      - ats-network
+
+volumes:
+  ats-data:
+  timescale-data:
+
+networks:
+  ats-network:
+    driver: bridge
+EOF
+
+# Start services
+cd ~/ats-deploy
+docker compose up -d
+
+# Verify
+docker logs ats-health-monitor 2&gt;&amp;1 | grep -E &quot;Build Version|subscriber_id|Connected&quot;
+</code></pre>
+
+<h3 id="77-hk-deployment-script">7.7 HK Deployment Script</h3>
+<pre class="codehilite"><code class="language-powershell"># deploy-hk.ps1 - Run from development machine (must be on VPN)
+
+$ErrorActionPreference = &quot;Stop&quot;
+$HK_VM = &quot;10.101.0.10&quot;
+
+Write-Host &quot;=== ATS Health Monitor - HK Deployment ===&quot; -ForegroundColor Cyan
+
+# Check VPN connectivity
+Write-Host &quot;`n[0/5] Checking VPN connectivity...&quot; -ForegroundColor Yellow
+if (-not (Test-Connection $HK_VM -Count 1 -Quiet)) {
+    Write-Host &quot;[ERROR] Cannot reach HK VM. Is WireGuard VPN connected?&quot; -ForegroundColor Red
+    exit 1
+}
+Write-Host &quot;[OK] VPN connection verified&quot; -ForegroundColor Green
+
+# Step 1: Build (same as NY)
+Write-Host &quot;`n[1/5] Building application...&quot; -ForegroundColor Yellow
+cd I:\SOP-Management\Scripts\05-Production-ATS-Administration\ATS-Health-Monitor
+cd frontend; npm run build; cd ..
+go build .
+
+# Step 2: Build Docker image
+Write-Host &quot;`n[2/5] Building Docker image...&quot; -ForegroundColor Yellow
+docker build -t ats-health-monitor:test .
+
+# Step 3: Save and transfer
+Write-Host &quot;`n[3/5] Transferring to HK Ubuntu VM...&quot; -ForegroundColor Yellow
+docker save ats-health-monitor:test -o C:\Temp\ats.tar
+scp C:\Temp\ats.tar atsadmin@${HK_VM}:~/ats.tar
+
+# Step 4: Deploy
+Write-Host &quot;`n[4/5] Deploying on HK Ubuntu VM...&quot; -ForegroundColor Yellow
+ssh atsadmin@$HK_VM @&quot;
+docker load -i ~/ats.tar
+cd ~/ats-deploy
+docker compose down ats-health-monitor
+docker compose up -d ats-health-monitor
+sleep 5
+docker logs ats-health-monitor 2&gt;&amp;1 | grep -E 'Build Version|subscriber_id'
+&quot;@
+
+# Step 5: Verify
+Write-Host &quot;`n[5/5] Verifying deployment...&quot; -ForegroundColor Yellow
+Start-Sleep -Seconds 3
+$response = Invoke-WebRequest -Uri &quot;http://${HK_VM}:8080/api/v1/system/overview&quot; -UseBasicParsing
+if ($response.StatusCode -eq 200) {
+    Write-Host &quot;`n[OK] HK Deployment successful!&quot; -ForegroundColor Green
+} else {
+    Write-Host &quot;`n[ERROR] HK Deployment verification failed!&quot; -ForegroundColor Red
+}
+</code></pre>
+
+<hr />
+<h2 id="8-verification-testing">8. Verification &amp; Testing</h2>
+<h3 id="81-health-check-endpoints">8.1 Health Check Endpoints</h3>
+<table>
+<thead>
+<tr>
+<th>Endpoint</th>
+<th>Expected Response</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/api/v1/system/overview</code></td>
+<td><code>{"success": true, "data": {...}}</code></td>
+</tr>
+<tr>
+<td><code>/api/v1/health</code></td>
+<td><code>{"status": "ok"}</code></td>
+</tr>
+<tr>
+<td><code>/api/v1/user/permissions</code></td>
+<td>RBAC permissions list</td>
+</tr>
+</tbody>
+</table>
+<h3 id="82-verify-log-feed-connection">8.2 Verify Log Feed Connection</h3>
+<pre class="codehilite"><code class="language-bash"># On Ubuntu VM
+docker logs ats-health-monitor 2&gt;&amp;1 | grep -E &quot;Connected|subscribed|sequence&quot;
+
+# Expected output:
+# INF Reliable log receiver starting subscriber_id=ny-production
+# INF Connected to publisher name=&quot;NY2 Primary&quot; addr=192.168.168.2:9000
+# INF Subscribed to all topics, waiting for messages...
+</code></pre>
+
+<h3 id="83-verify-data-flow">8.3 Verify Data Flow</h3>
+<pre class="codehilite"><code class="language-bash"># Check if FIX messages are being received
+docker exec -it timescaledb psql -U ats_health_user -d ats_health_monitor -c \
+  &quot;SELECT COUNT(*) as total, MAX(time) as latest FROM fix_messages;&quot;
+
+# Check detections
+docker exec -it timescaledb psql -U ats_health_user -d ats_health_monitor -c \
+  &quot;SELECT COUNT(*) FROM atslog_detections WHERE time &gt; NOW() - INTERVAL '1 hour';&quot;
+</code></pre>
+
+<h3 id="84-multi-site-verification">8.4 Multi-Site Verification</h3>
+<pre class="codehilite"><code class="language-powershell"># Verify both sites are receiving data
+$sites = @(
+    @{Name=&quot;NY&quot;; URL=&quot;http://192.168.168.100:8080&quot;},
+    @{Name=&quot;HK&quot;; URL=&quot;http://10.101.0.10:8080&quot;}
+)
+
+foreach ($site in $sites) {
+    try {
+        $response = Invoke-RestMethod -Uri &quot;$($site.URL)/api/v1/system/overview&quot;
+        if ($response.success) {
+            Write-Host &quot;[$($site.Name)] OK - Dashboard accessible&quot; -ForegroundColor Green
+        }
+    } catch {
+        Write-Host &quot;[$($site.Name)] ERROR - $($_.Exception.Message)&quot; -ForegroundColor Red
+    }
+}
+</code></pre>
+
+<hr />
+<h2 id="9-rollback-procedures">9. Rollback Procedures</h2>
+<h3 id="91-rollback-to-previous-image">9.1 Rollback to Previous Image</h3>
+<pre class="codehilite"><code class="language-bash"># On Ubuntu VM
+cd ~/ats-deploy
+
+# List available images
+docker images | grep ats-health-monitor
+
+# Tag current as backup
+docker tag ats-health-monitor:test ats-health-monitor:backup-$(date +%Y%m%d)
+
+# Load previous version
+docker load -i ~/ats-previous.tar
+
+# Restart with previous version
+docker compose down ats-health-monitor
+docker compose up -d ats-health-monitor
+</code></pre>
+
+<h3 id="92-emergency-rollback-script">9.2 Emergency Rollback Script</h3>
+<pre class="codehilite"><code class="language-bash">#!/bin/bash
+# rollback.sh - Emergency rollback
+
+echo &quot;=== Emergency Rollback ===&quot;
+
+cd ~/ats-deploy
+
+# Stop current
+docker compose down ats-health-monitor
+
+# Find most recent backup
+BACKUP=$(docker images --format &quot;{{.Repository}}:{{.Tag}}&quot; | grep &quot;backup&quot; | head -1)
+
+if [ -n &quot;$BACKUP&quot; ]; then
+    echo &quot;Rolling back to: $BACKUP&quot;
+    docker tag $BACKUP ats-health-monitor:test
+    docker compose up -d ats-health-monitor
+    echo &quot;Rollback complete!&quot;
+else
+    echo &quot;ERROR: No backup image found!&quot;
+    exit 1
+fi
+</code></pre>
+
+<hr />
+<h2 id="10-troubleshooting">10. Troubleshooting</h2>
+<h3 id="common-issues">Common Issues</h3>
+<table>
+<thead>
+<tr>
+<th>Issue</th>
+<th>Symptom</th>
+<th>Solution</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Container won't start</td>
+<td><code>Exited (1)</code></td>
+<td>Check <code>docker logs ats-health-monitor</code></td>
+</tr>
+<tr>
+<td>No log data</td>
+<td>Dashboard empty</td>
+<td>Verify log-agent running on NY2</td>
+</tr>
+<tr>
+<td>HK not receiving data</td>
+<td>Gap errors in logs</td>
+<td>Check VPN connectivity</td>
+</tr>
+<tr>
+<td>MSSQL connection failed</td>
+<td>Timeout errors</td>
+<td>Verify firewall rules</td>
+</tr>
+<tr>
+<td>TimescaleDB errors</td>
+<td>Write failures</td>
+<td>Check disk space, credentials</td>
+</tr>
+</tbody>
+</table>
+<h3 id="debug-commands">Debug Commands</h3>
+<pre class="codehilite"><code class="language-bash"># Container status
+docker ps -a
+
+# Detailed logs
+docker logs ats-health-monitor --tail 100
+
+# Enter container shell
+docker exec -it ats-health-monitor sh
+
+# Check network connectivity from container
+docker exec ats-health-monitor ping -c 3 192.168.168.2
+
+# Check TimescaleDB connection
+docker exec timescaledb pg_isready -U ats_health_user
+
+# Restart all services
+docker compose restart
+</code></pre>
+
+<h3 id="log-files">Log Files</h3>
+<table>
+<thead>
+<tr>
+<th>Log</th>
+<th>Location</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Container logs</td>
+<td><code>docker logs ats-health-monitor</code></td>
+<td>Application logs</td>
+</tr>
+<tr>
+<td>TimescaleDB logs</td>
+<td><code>docker logs timescaledb</code></td>
+<td>Database logs</td>
+</tr>
+<tr>
+<td>Compose logs</td>
+<td><code>docker compose logs -f</code></td>
+<td>All services</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="appendix-a-quick-reference">Appendix A: Quick Reference</h2>
+<h3 id="build-commands">Build Commands</h3>
+<pre class="codehilite"><code class="language-powershell"># Full build
+cd I:\SOP-Management\Scripts\05-Production-ATS-Administration\ATS-Health-Monitor
+cd frontend; npm run build; cd ..
+go build .
+docker build -t ats-health-monitor:test .
+</code></pre>
+
+<h3 id="deploy-commands">Deploy Commands</h3>
+<pre class="codehilite"><code class="language-powershell"># NY Deployment
+docker save ats-health-monitor:test -o C:\Temp\ats.tar
+scp C:\Temp\ats.tar atsadmin@192.168.168.100:~/ats.tar
+ssh atsadmin@192.168.168.100 &quot;docker load -i ~/ats.tar &amp;&amp; cd ~/ats-deploy &amp;&amp; docker compose down ats-health-monitor &amp;&amp; docker compose up -d ats-health-monitor&quot;
+
+# HK Deployment (via VPN)
+scp C:\Temp\ats.tar atsadmin@10.101.0.10:~/ats.tar
+ssh atsadmin@10.101.0.10 &quot;docker load -i ~/ats.tar &amp;&amp; cd ~/ats-deploy &amp;&amp; docker compose down ats-health-monitor &amp;&amp; docker compose up -d ats-health-monitor&quot;
+</code></pre>
+
+<h3 id="verify-commands">Verify Commands</h3>
+<pre class="codehilite"><code class="language-bash"># Check version
+docker logs ats-health-monitor 2&gt;&amp;1 | grep &quot;Build Version&quot;
+
+# Check connections
+docker logs ats-health-monitor 2&gt;&amp;1 | grep -i &quot;connected&quot;
+
+# Check data flow
+docker exec timescaledb psql -U ats_health_user -d ats_health_monitor -c &quot;SELECT COUNT(*) FROM fix_messages;&quot;
+</code></pre>
+
+<hr />
+<h2 id="appendix-b-file-locations">Appendix B: File Locations</h2>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Development</th>
+<th>NY Production</th>
+<th>HK Production</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Source code</td>
+<td><code>I:\SOP-Management\Scripts\...</code></td>
+<td>N/A</td>
+<td>N/A</td>
+</tr>
+<tr>
+<td>Docker image</td>
+<td>Local Docker</td>
+<td><code>~/ats.tar</code></td>
+<td><code>~/ats.tar</code></td>
+</tr>
+<tr>
+<td>Config file</td>
+<td><code>config.toml</code></td>
+<td><code>~/ats-deploy/config/config.toml</code></td>
+<td><code>~/ats-deploy/config/config.toml</code></td>
+</tr>
+<tr>
+<td>Data volume</td>
+<td>N/A</td>
+<td><code>ats-data</code></td>
+<td><code>ats-data</code></td>
+</tr>
+<tr>
+<td>Compose file</td>
+<td>N/A</td>
+<td><code>~/ats-deploy/docker-compose.yml</code></td>
+<td><code>~/ats-deploy/docker-compose.yml</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="11-automation-scripts">11. Automation Scripts</h2>
+<h3 id="111-script-overview">11.1 Script Overview</h3>
+<p>The deployment process is broken into <strong>modular scripts</strong> that can be run independently. This allows you to:
+- Fix issues at each step before proceeding
+- Retry failed steps without starting over
+- Rollback specific steps if needed</p>
+<pre class="codehilite"><code class="language-mermaid">flowchart LR
+    subgraph STEP1[&quot;Step 1: Build&quot;]
+        S1[build-all.ps1]
+    end
+
+    subgraph STEP2[&quot;Step 2: Docker&quot;]
+        S2[build-docker.ps1]
+    end
+
+    subgraph STEP3[&quot;Step 3: Transfer&quot;]
+        S3A[transfer-ny.ps1]
+        S3B[transfer-hk.ps1]
+    end
+
+    subgraph STEP4[&quot;Step 4: Deploy&quot;]
+        S4A[deploy-ny.ps1]
+        S4B[deploy-hk.ps1]
+    end
+
+    subgraph STEP5[&quot;Step 5: Verify&quot;]
+        S5[verify-all.ps1]
+    end
+
+    S1 --&gt;|&quot;Success&quot;| S2
+    S2 --&gt;|&quot;Success&quot;| S3A
+    S2 --&gt;|&quot;Success&quot;| S3B
+    S3A --&gt;|&quot;Success&quot;| S4A
+    S3B --&gt;|&quot;Success&quot;| S4B
+    S4A --&gt;|&quot;Success&quot;| S5
+    S4B --&gt;|&quot;Success&quot;| S5
+
+    style STEP1 fill:#3b82f6,stroke:#60a5fa,color:#fff
+    style STEP2 fill:#8b5cf6,stroke:#a78bfa,color:#fff
+    style STEP3 fill:#f59e0b,stroke:#fbbf24,color:#000
+    style STEP4 fill:#10b981,stroke:#34d399,color:#fff
+    style STEP5 fill:#ef4444,stroke:#f87171,color:#fff
+</code></pre>
+
+<h3 id="112-script-build-allps1">11.2 Script: build-all.ps1</h3>
+<p><strong>Purpose:</strong> Build all applications from source</p>
+<pre class="codehilite"><code class="language-powershell"># build-all.ps1
+# Build all ATS Health Monitor applications
+# Usage: .\build-all.ps1 [-SkipFrontend] [-Verbose]
+
+param(
+    [switch]$SkipFrontend,
+    [switch]$Verbose
+)
+
+$ErrorActionPreference = &quot;Stop&quot;
+$ProjectRoot = &quot;I:\SOP-Management\Scripts\05-Production-ATS-Administration\ATS-Health-Monitor&quot;
+
+function Write-Step { param($msg) Write-Host &quot;`n=== $msg ===&quot; -ForegroundColor Cyan }
+function Write-OK { param($msg) Write-Host &quot;[OK] $msg&quot; -ForegroundColor Green }
+function Write-Err { param($msg) Write-Host &quot;[ERROR] $msg&quot; -ForegroundColor Red }
+
+Write-Host &quot;============================================&quot; -ForegroundColor Yellow
+Write-Host &quot;  ATS Health Monitor - Build All Apps      &quot; -ForegroundColor Yellow
+Write-Host &quot;============================================&quot; -ForegroundColor Yellow
+
+# Step 1: Frontend
+if (-not $SkipFrontend) {
+    Write-Step &quot;Building Frontend (React)&quot;
+    Set-Location &quot;$ProjectRoot\frontend&quot;
+
+    if (-not (Test-Path &quot;node_modules&quot;)) {
+        Write-Host &quot;Installing npm dependencies...&quot; -ForegroundColor Gray
+        npm install
+        if ($LASTEXITCODE -ne 0) { Write-Err &quot;npm install failed&quot;; exit 1 }
+    }
+
+    npm run build
+    if ($LASTEXITCODE -ne 0) { Write-Err &quot;npm build failed&quot;; exit 1 }
+    Write-OK &quot;Frontend built successfully&quot;
+} else {
+    Write-Host &quot;Skipping frontend build (-SkipFrontend)&quot; -ForegroundColor Yellow
+}
+
+# Step 2: Main Application
+Write-Step &quot;Building ATS-Health-Monitor (Go)&quot;
+Set-Location $ProjectRoot
+
+go mod tidy
+if ($LASTEXITCODE -ne 0) { Write-Err &quot;go mod tidy failed&quot;; exit 1 }
+
+go build -o ATS-Health-Monitor.exe .
+if ($LASTEXITCODE -ne 0) { Write-Err &quot;go build failed&quot;; exit 1 }
+Write-OK &quot;ATS-Health-Monitor.exe built&quot;
+
+# Step 3: Log Agent
+Write-Step &quot;Building log-agent (Go)&quot;
+Set-Location &quot;$ProjectRoot\cmd\log-agent&quot;
+
+go build -o log-agent.exe .
+if ($LASTEXITCODE -ne 0) { Write-Err &quot;log-agent build failed&quot;; exit 1 }
+Write-OK &quot;log-agent.exe built&quot;
+
+# Step 4: Resync Manager
+Write-Step &quot;Building resync-manager (Go)&quot;
+Set-Location &quot;$ProjectRoot\cmd\resync-manager&quot;
+
+go build -o resync-manager.exe .
+if ($LASTEXITCODE -ne 0) { Write-Err &quot;resync-manager build failed&quot;; exit 1 }
+Write-OK &quot;resync-manager.exe built&quot;
+
+# Summary
+Set-Location $ProjectRoot
+Write-Host &quot;`n============================================&quot; -ForegroundColor Green
+Write-Host &quot;  BUILD COMPLETE - All applications built  &quot; -ForegroundColor Green
+Write-Host &quot;============================================&quot; -ForegroundColor Green
+
+Write-Host &quot;`nBuilt files:&quot; -ForegroundColor Cyan
+Get-ChildItem -Path $ProjectRoot -Filter &quot;*.exe&quot; -Recurse |
+    Where-Object { $_.Name -match &quot;ATS-Health-Monitor|log-agent|resync-manager&quot; } |
+    ForEach-Object { Write-Host &quot;  - $($_.FullName)&quot; }
+
+Write-Host &quot;`nNext step: Run build-docker.ps1&quot; -ForegroundColor Yellow
+</code></pre>
+
+<h3 id="113-script-build-dockerps1">11.3 Script: build-docker.ps1</h3>
+<p><strong>Purpose:</strong> Build Docker image</p>
+<pre class="codehilite"><code class="language-powershell"># build-docker.ps1
+# Build Docker image for ATS Health Monitor
+# Usage: .\build-docker.ps1 [-Version &quot;5.8&quot;] [-Tag &quot;test&quot;]
+
+param(
+    [string]$Version = &quot;5.8&quot;,
+    [string]$Tag = &quot;test&quot;
+)
+
+$ErrorActionPreference = &quot;Stop&quot;
+$ProjectRoot = &quot;I:\SOP-Management\Scripts\05-Production-ATS-Administration\ATS-Health-Monitor&quot;
+
+function Write-Step { param($msg) Write-Host &quot;`n=== $msg ===&quot; -ForegroundColor Cyan }
+function Write-OK { param($msg) Write-Host &quot;[OK] $msg&quot; -ForegroundColor Green }
+function Write-Err { param($msg) Write-Host &quot;[ERROR] $msg&quot; -ForegroundColor Red }
+
+Write-Host &quot;============================================&quot; -ForegroundColor Yellow
+Write-Host &quot;  ATS Health Monitor - Build Docker        &quot; -ForegroundColor Yellow
+Write-Host &quot;============================================&quot; -ForegroundColor Yellow
+
+Set-Location $ProjectRoot
+
+# Check prerequisites
+Write-Step &quot;Checking Prerequisites&quot;
+
+if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
+    Write-Err &quot;Docker not found. Please install Docker Desktop.&quot;
+    exit 1
+}
+
+$dockerInfo = docker info 2&gt;&amp;1
+if ($LASTEXITCODE -ne 0) {
+    Write-Err &quot;Docker daemon not running. Please start Docker Desktop.&quot;
+    exit 1
+}
+Write-OK &quot;Docker is running&quot;
+
+# Check if frontend is built
+if (-not (Test-Path &quot;frontend\build\index.html&quot;)) {
+    Write-Err &quot;Frontend not built. Run build-all.ps1 first.&quot;
+    exit 1
+}
+Write-OK &quot;Frontend build found&quot;
+
+# Build image
+Write-Step &quot;Building Docker Image&quot;
+
+$timestamp = Get-Date -Format &quot;yyyyMMdd-HHmm&quot;
+$fullTag = &quot;ats-health-monitor:${Version}-${timestamp}&quot;
+
+Write-Host &quot;Building with tags:&quot; -ForegroundColor Gray
+Write-Host &quot;  - $fullTag&quot; -ForegroundColor Gray
+Write-Host &quot;  - ats-health-monitor:$Tag&quot; -ForegroundColor Gray
+Write-Host &quot;  - ats-health-monitor:latest&quot; -ForegroundColor Gray
+
+docker build -t $fullTag -t &quot;ats-health-monitor:$Tag&quot; -t &quot;ats-health-monitor:latest&quot; .
+
+if ($LASTEXITCODE -ne 0) {
+    Write-Err &quot;Docker build failed&quot;
+    exit 1
+}
+Write-OK &quot;Docker image built successfully&quot;
+
+# Save to tar
+Write-Step &quot;Saving Docker Image to TAR&quot;
+
+$tarPath = &quot;C:\Temp\ats.tar&quot;
+docker save &quot;ats-health-monitor:$Tag&quot; -o $tarPath
+
+if ($LASTEXITCODE -ne 0) {
+    Write-Err &quot;Failed to save Docker image&quot;
+    exit 1
+}
+
+$tarSize = [math]::Round((Get-Item $tarPath).Length / 1MB, 2)
+Write-OK &quot;Saved to $tarPath ($tarSize MB)&quot;
+
+# Summary
+Write-Host &quot;`n============================================&quot; -ForegroundColor Green
+Write-Host &quot;  DOCKER BUILD COMPLETE                    &quot; -ForegroundColor Green
+Write-Host &quot;============================================&quot; -ForegroundColor Green
+
+Write-Host &quot;`nImage details:&quot; -ForegroundColor Cyan
+docker images | Select-String &quot;ats-health-monitor&quot;
+
+Write-Host &quot;`nTAR file: $tarPath ($tarSize MB)&quot; -ForegroundColor Cyan
+Write-Host &quot;`nNext step: Run transfer-ny.ps1 or transfer-hk.ps1&quot; -ForegroundColor Yellow
+</code></pre>
+
+<h3 id="114-script-transfer-nyps1">11.4 Script: transfer-ny.ps1</h3>
+<p><strong>Purpose:</strong> Transfer Docker image to NY Ubuntu VM</p>
+<pre class="codehilite"><code class="language-powershell"># transfer-ny.ps1
+# Transfer Docker image to NY Ubuntu VM
+# Usage: .\transfer-ny.ps1 [-TarPath &quot;C:\Temp\ats.tar&quot;]
+
+param(
+    [string]$TarPath = &quot;C:\Temp\ats.tar&quot;,
+    [string]$TargetHost = &quot;192.168.168.100&quot;,
+    [string]$TargetUser = &quot;atsadmin&quot;
+)
+
+$ErrorActionPreference = &quot;Stop&quot;
+
+function Write-Step { param($msg) Write-Host &quot;`n=== $msg ===&quot; -ForegroundColor Cyan }
+function Write-OK { param($msg) Write-Host &quot;[OK] $msg&quot; -ForegroundColor Green }
+function Write-Err { param($msg) Write-Host &quot;[ERROR] $msg&quot; -ForegroundColor Red }
+
+Write-Host &quot;============================================&quot; -ForegroundColor Yellow
+Write-Host &quot;  Transfer to NY Ubuntu VM                 &quot; -ForegroundColor Yellow
+Write-Host &quot;============================================&quot; -ForegroundColor Yellow
+
+# Check TAR exists
+Write-Step &quot;Checking TAR File&quot;
+
+if (-not (Test-Path $TarPath)) {
+    Write-Err &quot;TAR file not found: $TarPath&quot;
+    Write-Host &quot;Run build-docker.ps1 first&quot; -ForegroundColor Yellow
+    exit 1
+}
+
+$tarSize = [math]::Round((Get-Item $TarPath).Length / 1MB, 2)
+Write-OK &quot;Found $TarPath ($tarSize MB)&quot;
+
+# Check connectivity
+Write-Step &quot;Checking Connectivity to $TargetHost&quot;
+
+$ping = Test-Connection $TargetHost -Count 1 -Quiet
+if (-not $ping) {
+    Write-Err &quot;Cannot reach $TargetHost&quot;
+    Write-Host &quot;Check network connectivity&quot; -ForegroundColor Yellow
+    exit 1
+}
+Write-OK &quot;Host reachable&quot;
+
+# Transfer
+Write-Step &quot;Transferring via SCP&quot;
+
+$target = &quot;${TargetUser}@${TargetHost}:~/ats.tar&quot;
+Write-Host &quot;Transferring to $target...&quot; -ForegroundColor Gray
+
+scp $TarPath $target
+
+if ($LASTEXITCODE -ne 0) {
+    Write-Err &quot;SCP transfer failed&quot;
+    Write-Host &quot;Check SSH key or password authentication&quot; -ForegroundColor Yellow
+    exit 1
+}
+Write-OK &quot;Transfer complete&quot;
+
+# Verify
+Write-Step &quot;Verifying Transfer&quot;
+
+$remoteCheck = ssh &quot;${TargetUser}@${TargetHost}&quot; &quot;ls -la ~/ats.tar 2&gt;/dev/null &amp;&amp; echo OK&quot;
+if ($remoteCheck -match &quot;OK&quot;) {
+    Write-OK &quot;File verified on remote host&quot;
+} else {
+    Write-Err &quot;File verification failed&quot;
+    exit 1
+}
+
+Write-Host &quot;`n============================================&quot; -ForegroundColor Green
+Write-Host &quot;  TRANSFER TO NY COMPLETE                  &quot; -ForegroundColor Green
+Write-Host &quot;============================================&quot; -ForegroundColor Green
+Write-Host &quot;`nNext step: Run deploy-ny.ps1&quot; -ForegroundColor Yellow
+</code></pre>
+
+<h3 id="115-script-deploy-nyps1">11.5 Script: deploy-ny.ps1</h3>
+<p><strong>Purpose:</strong> Deploy on NY Ubuntu VM</p>
+<pre class="codehilite"><code class="language-powershell"># deploy-ny.ps1
+# Deploy ATS Health Monitor on NY Ubuntu VM
+# Usage: .\deploy-ny.ps1 [-SkipBackup] [-Force]
+
+param(
+    [switch]$SkipBackup,
+    [switch]$Force,
+    [string]$TargetHost = &quot;192.168.168.100&quot;,
+    [string]$TargetUser = &quot;atsadmin&quot;
+)
+
+$ErrorActionPreference = &quot;Stop&quot;
+$Remote = &quot;${TargetUser}@${TargetHost}&quot;
+
+function Write-Step { param($msg) Write-Host &quot;`n=== $msg ===&quot; -ForegroundColor Cyan }
+function Write-OK { param($msg) Write-Host &quot;[OK] $msg&quot; -ForegroundColor Green }
+function Write-Err { param($msg) Write-Host &quot;[ERROR] $msg&quot; -ForegroundColor Red }
+
+Write-Host &quot;============================================&quot; -ForegroundColor Yellow
+Write-Host &quot;  Deploy to NY Ubuntu VM                   &quot; -ForegroundColor Yellow
+Write-Host &quot;============================================&quot; -ForegroundColor Yellow
+Write-Host &quot;Target: $Remote&quot; -ForegroundColor Gray
+
+# Check TAR exists on remote
+Write-Step &quot;Checking Remote TAR File&quot;
+
+$tarCheck = ssh $Remote &quot;test -f ~/ats.tar &amp;&amp; echo EXISTS&quot;
+if ($tarCheck -ne &quot;EXISTS&quot;) {
+    Write-Err &quot;TAR file not found on remote&quot;
+    Write-Host &quot;Run transfer-ny.ps1 first&quot; -ForegroundColor Yellow
+    exit 1
+}
+Write-OK &quot;TAR file found on remote&quot;
+
+# Backup current image
+if (-not $SkipBackup) {
+    Write-Step &quot;Backing Up Current Image&quot;
+
+    $backupCmd = @&quot;
+if docker images | grep -q ats-health-monitor; then
+    BACKUP_TAG=&quot;backup-\$(date +%Y%m%d-%H%M)&quot;
+    docker tag ats-health-monitor:test ats-health-monitor:\$BACKUP_TAG 2&gt;/dev/null &amp;&amp; echo &quot;Backed up to \$BACKUP_TAG&quot;
+else
+    echo &quot;No existing image to backup&quot;
+fi
+&quot;@
+    ssh $Remote $backupCmd
+    Write-OK &quot;Backup complete&quot;
+}
+
+# Load new image
+Write-Step &quot;Loading Docker Image&quot;
+
+$loadResult = ssh $Remote &quot;docker load -i ~/ats.tar 2&gt;&amp;1&quot;
+Write-Host $loadResult -ForegroundColor Gray
+
+if ($loadResult -match &quot;Loaded image&quot;) {
+    Write-OK &quot;Image loaded successfully&quot;
+} else {
+    Write-Err &quot;Image load may have failed&quot;
+    if (-not $Force) { exit 1 }
+}
+
+# Deploy
+Write-Step &quot;Deploying Container&quot;
+
+$deployCmd = @&quot;
+cd ~/ats-deploy
+docker compose down ats-health-monitor
+docker compose up -d ats-health-monitor
+sleep 5
+docker logs ats-health-monitor 2&gt;&amp;1 | tail -20
+&quot;@
+
+ssh $Remote $deployCmd
+
+# Verify
+Write-Step &quot;Verifying Deployment&quot;
+
+Start-Sleep -Seconds 3
+
+$healthCheck = ssh $Remote &quot;docker ps | grep ats-health-monitor | grep -q Up &amp;&amp; echo RUNNING&quot;
+if ($healthCheck -eq &quot;RUNNING&quot;) {
+    Write-OK &quot;Container is running&quot;
+} else {
+    Write-Err &quot;Container may not be running&quot;
+    Write-Host &quot;Check: ssh $Remote 'docker logs ats-health-monitor'&quot; -ForegroundColor Yellow
+    exit 1
+}
+
+# Check version
+$versionCheck = ssh $Remote &quot;docker logs ats-health-monitor 2&gt;&amp;1 | grep 'Build Version' | head -1&quot;
+Write-Host &quot;Deployed version: $versionCheck&quot; -ForegroundColor Cyan
+
+Write-Host &quot;`n============================================&quot; -ForegroundColor Green
+Write-Host &quot;  NY DEPLOYMENT COMPLETE                   &quot; -ForegroundColor Green
+Write-Host &quot;============================================&quot; -ForegroundColor Green
+Write-Host &quot;`nDashboard: http://${TargetHost}:8080&quot; -ForegroundColor Cyan
+Write-Host &quot;`nNext step: Run verify-all.ps1 or deploy-hk.ps1&quot; -ForegroundColor Yellow
+</code></pre>
+
+<h3 id="116-script-transfer-hkps1">11.6 Script: transfer-hk.ps1</h3>
+<p><strong>Purpose:</strong> Transfer Docker image to HK Office (via VPN)</p>
+<pre class="codehilite"><code class="language-powershell"># transfer-hk.ps1
+# Transfer Docker image to HK Ubuntu VM via WireGuard VPN
+# Usage: .\transfer-hk.ps1 [-TarPath &quot;C:\Temp\ats.tar&quot;]
+
+param(
+    [string]$TarPath = &quot;C:\Temp\ats.tar&quot;,
+    [string]$TargetHost = &quot;10.101.0.10&quot;,
+    [string]$TargetUser = &quot;atsadmin&quot;
+)
+
+$ErrorActionPreference = &quot;Stop&quot;
+
+function Write-Step { param($msg) Write-Host &quot;`n=== $msg ===&quot; -ForegroundColor Cyan }
+function Write-OK { param($msg) Write-Host &quot;[OK] $msg&quot; -ForegroundColor Green }
+function Write-Err { param($msg) Write-Host &quot;[ERROR] $msg&quot; -ForegroundColor Red }
+function Write-Warn { param($msg) Write-Host &quot;[WARN] $msg&quot; -ForegroundColor Yellow }
+
+Write-Host &quot;============================================&quot; -ForegroundColor Yellow
+Write-Host &quot;  Transfer to HK Office (via VPN)          &quot; -ForegroundColor Yellow
+Write-Host &quot;============================================&quot; -ForegroundColor Yellow
+
+# Check VPN connectivity
+Write-Step &quot;Checking VPN Connectivity&quot;
+
+$ping = Test-Connection $TargetHost -Count 2 -Quiet
+if (-not $ping) {
+    Write-Err &quot;Cannot reach $TargetHost&quot;
+    Write-Host @&quot;
+
+TROUBLESHOOTING:
+1. Check WireGuard VPN is connected
+2. Verify HK VM is running
+3. Check firewall rules
+
+To connect VPN:
+  wg-quick up wg0
+
+To check VPN status:
+  wg show
+&quot;@ -ForegroundColor Yellow
+    exit 1
+}
+Write-OK &quot;VPN connection verified&quot;
+
+# Check TAR exists
+Write-Step &quot;Checking TAR File&quot;
+
+if (-not (Test-Path $TarPath)) {
+    Write-Err &quot;TAR file not found: $TarPath&quot;
+    exit 1
+}
+
+$tarSize = [math]::Round((Get-Item $TarPath).Length / 1MB, 2)
+Write-OK &quot;Found $TarPath ($tarSize MB)&quot;
+
+# Transfer (may be slow over VPN)
+Write-Step &quot;Transferring via SCP (VPN - may be slow)&quot;
+
+$target = &quot;${TargetUser}@${TargetHost}:~/ats.tar&quot;
+Write-Host &quot;Transferring to $target...&quot; -ForegroundColor Gray
+Write-Warn &quot;VPN transfer may take several minutes for ~20MB file&quot;
+
+$startTime = Get-Date
+scp -o ConnectTimeout=30 $TarPath $target
+$duration = (Get-Date) - $startTime
+
+if ($LASTEXITCODE -ne 0) {
+    Write-Err &quot;SCP transfer failed&quot;
+    Write-Host @&quot;
+
+TROUBLESHOOTING:
+1. Check SSH keys are configured
+2. Try: ssh ${TargetUser}@${TargetHost} 'echo test'
+3. Check VPN bandwidth
+&quot;@ -ForegroundColor Yellow
+    exit 1
+}
+
+Write-OK &quot;Transfer complete in $([math]::Round($duration.TotalSeconds, 0)) seconds&quot;
+
+Write-Host &quot;`n============================================&quot; -ForegroundColor Green
+Write-Host &quot;  TRANSFER TO HK COMPLETE                  &quot; -ForegroundColor Green
+Write-Host &quot;============================================&quot; -ForegroundColor Green
+Write-Host &quot;`nNext step: Run deploy-hk.ps1&quot; -ForegroundColor Yellow
+</code></pre>
+
+<h3 id="117-script-deploy-hkps1">11.7 Script: deploy-hk.ps1</h3>
+<p><strong>Purpose:</strong> Deploy on HK Ubuntu VM</p>
+<pre class="codehilite"><code class="language-powershell"># deploy-hk.ps1
+# Deploy ATS Health Monitor on HK Ubuntu VM
+# Usage: .\deploy-hk.ps1 [-SkipBackup] [-Force]
+
+param(
+    [switch]$SkipBackup,
+    [switch]$Force,
+    [string]$TargetHost = &quot;10.101.0.10&quot;,
+    [string]$TargetUser = &quot;atsadmin&quot;
+)
+
+$ErrorActionPreference = &quot;Stop&quot;
+$Remote = &quot;${TargetUser}@${TargetHost}&quot;
+
+function Write-Step { param($msg) Write-Host &quot;`n=== $msg ===&quot; -ForegroundColor Cyan }
+function Write-OK { param($msg) Write-Host &quot;[OK] $msg&quot; -ForegroundColor Green }
+function Write-Err { param($msg) Write-Host &quot;[ERROR] $msg&quot; -ForegroundColor Red }
+
+Write-Host &quot;============================================&quot; -ForegroundColor Yellow
+Write-Host &quot;  Deploy to HK Ubuntu VM                   &quot; -ForegroundColor Yellow
+Write-Host &quot;============================================&quot; -ForegroundColor Yellow
+Write-Host &quot;Target: $Remote (via VPN)&quot; -ForegroundColor Gray
+
+# Check VPN
+Write-Step &quot;Checking VPN Connectivity&quot;
+
+$ping = Test-Connection $TargetHost -Count 1 -Quiet
+if (-not $ping) {
+    Write-Err &quot;Cannot reach HK VM. Check VPN connection.&quot;
+    exit 1
+}
+Write-OK &quot;VPN connection OK&quot;
+
+# Check TAR exists on remote
+Write-Step &quot;Checking Remote TAR File&quot;
+
+$tarCheck = ssh -o ConnectTimeout=10 $Remote &quot;test -f ~/ats.tar &amp;&amp; echo EXISTS&quot;
+if ($tarCheck -ne &quot;EXISTS&quot;) {
+    Write-Err &quot;TAR file not found on remote&quot;
+    Write-Host &quot;Run transfer-hk.ps1 first&quot; -ForegroundColor Yellow
+    exit 1
+}
+Write-OK &quot;TAR file found&quot;
+
+# Backup current image
+if (-not $SkipBackup) {
+    Write-Step &quot;Backing Up Current Image&quot;
+
+    ssh $Remote @&quot;
+if docker images | grep -q ats-health-monitor; then
+    docker tag ats-health-monitor:test ats-health-monitor:backup-\$(date +%Y%m%d-%H%M) 2&gt;/dev/null
+    echo 'Backup created'
+else
+    echo 'No existing image'
+fi
+&quot;@
+    Write-OK &quot;Backup complete&quot;
+}
+
+# Load and deploy
+Write-Step &quot;Loading and Deploying&quot;
+
+ssh $Remote @&quot;
+echo 'Loading Docker image...'
+docker load -i ~/ats.tar
+
+echo 'Stopping current container...'
+cd ~/ats-deploy
+docker compose down ats-health-monitor
+
+echo 'Starting new container...'
+docker compose up -d ats-health-monitor
+
+echo 'Waiting for startup...'
+sleep 8
+
+echo 'Container status:'
+docker ps | grep ats-health-monitor
+
+echo 'Build version:'
+docker logs ats-health-monitor 2&gt;&amp;1 | grep 'Build Version' | head -1
+&quot;@
+
+# Verify log receiver connection
+Write-Step &quot;Verifying Log Feed Connection&quot;
+
+Start-Sleep -Seconds 5
+$logCheck = ssh $Remote &quot;docker logs ats-health-monitor 2&gt;&amp;1 | grep -E 'subscriber_id|Connected to publisher' | head -2&quot;
+Write-Host $logCheck -ForegroundColor Gray
+
+if ($logCheck -match &quot;hk-office&quot;) {
+    Write-OK &quot;HK subscriber configured correctly&quot;
+} else {
+    Write-Warn &quot;Check subscriber_id in config&quot;
+}
+
+Write-Host &quot;`n============================================&quot; -ForegroundColor Green
+Write-Host &quot;  HK DEPLOYMENT COMPLETE                   &quot; -ForegroundColor Green
+Write-Host &quot;============================================&quot; -ForegroundColor Green
+Write-Host &quot;`nDashboard: http://${TargetHost}:8080&quot; -ForegroundColor Cyan
+Write-Host &quot;`nNext step: Run verify-all.ps1&quot; -ForegroundColor Yellow
+</code></pre>
+
+<h3 id="118-script-verify-allps1">11.8 Script: verify-all.ps1</h3>
+<p><strong>Purpose:</strong> Verify deployments on all sites</p>
+<pre class="codehilite"><code class="language-powershell"># verify-all.ps1
+# Verify ATS Health Monitor deployments on all sites
+# Usage: .\verify-all.ps1 [-IncludeHK]
+
+param(
+    [switch]$IncludeHK
+)
+
+$ErrorActionPreference = &quot;Continue&quot;
+
+function Write-Step { param($msg) Write-Host &quot;`n=== $msg ===&quot; -ForegroundColor Cyan }
+function Write-OK { param($msg) Write-Host &quot;[OK] $msg&quot; -ForegroundColor Green }
+function Write-Err { param($msg) Write-Host &quot;[ERROR] $msg&quot; -ForegroundColor Red }
+function Write-Warn { param($msg) Write-Host &quot;[WARN] $msg&quot; -ForegroundColor Yellow }
+
+Write-Host &quot;============================================&quot; -ForegroundColor Yellow
+Write-Host &quot;  Verify All Deployments                   &quot; -ForegroundColor Yellow
+Write-Host &quot;============================================&quot; -ForegroundColor Yellow
+
+$sites = @(
+    @{Name=&quot;NY Ubuntu VM&quot;; Host=&quot;192.168.168.100&quot;; Port=8080; Required=$true}
+)
+
+if ($IncludeHK) {
+    $sites += @{Name=&quot;HK Office&quot;; Host=&quot;10.101.0.10&quot;; Port=8080; Required=$false}
+}
+
+$allOK = $true
+
+foreach ($site in $sites) {
+    Write-Step &quot;Checking $($site.Name) ($($site.Host))&quot;
+
+    # Ping check
+    $ping = Test-Connection $site.Host -Count 1 -Quiet
+    if (-not $ping) {
+        if ($site.Required) {
+            Write-Err &quot;Cannot reach $($site.Host)&quot;
+            $allOK = $false
+        } else {
+            Write-Warn &quot;Cannot reach $($site.Host) (VPN may be down)&quot;
+        }
+        continue
+    }
+    Write-OK &quot;Host reachable&quot;
+
+    # API check
+    try {
+        $url = &quot;http://$($site.Host):$($site.Port)/api/v1/system/overview&quot;
+        $response = Invoke-RestMethod -Uri $url -TimeoutSec 10
+
+        if ($response.success) {
+            Write-OK &quot;API responding&quot;
+            Write-Host &quot;  Uptime: $($response.data.uptime)&quot; -ForegroundColor Gray
+        } else {
+            Write-Err &quot;API returned error&quot;
+            $allOK = $false
+        }
+    } catch {
+        Write-Err &quot;API not accessible: $($_.Exception.Message)&quot;
+        $allOK = $false
+    }
+
+    # Container check (via SSH)
+    try {
+        $user = &quot;atsadmin&quot;
+        $containerStatus = ssh &quot;${user}@$($site.Host)&quot; &quot;docker ps --format '{{.Status}}' -f name=ats-health-monitor&quot;
+
+        if ($containerStatus -match &quot;Up&quot;) {
+            Write-OK &quot;Container running: $containerStatus&quot;
+        } else {
+            Write-Err &quot;Container not running&quot;
+            $allOK = $false
+        }
+
+        # Version check
+        $version = ssh &quot;${user}@$($site.Host)&quot; &quot;docker logs ats-health-monitor 2&gt;&amp;1 | grep 'Build Version' | head -1&quot;
+        Write-Host &quot;  Version: $version&quot; -ForegroundColor Gray
+
+    } catch {
+        Write-Warn &quot;SSH check failed&quot;
+    }
+}
+
+# Summary
+Write-Host &quot;`n============================================&quot; -ForegroundColor $(if($allOK){&quot;Green&quot;}else{&quot;Red&quot;})
+if ($allOK) {
+    Write-Host &quot;  ALL CHECKS PASSED                        &quot; -ForegroundColor Green
+} else {
+    Write-Host &quot;  SOME CHECKS FAILED                       &quot; -ForegroundColor Red
+}
+Write-Host &quot;============================================&quot; -ForegroundColor $(if($allOK){&quot;Green&quot;}else{&quot;Red&quot;})
+</code></pre>
+
+<h3 id="119-script-rollbackps1">11.9 Script: rollback.ps1</h3>
+<p><strong>Purpose:</strong> Rollback to previous version</p>
+<pre class="codehilite"><code class="language-powershell"># rollback.ps1
+# Rollback ATS Health Monitor to previous version
+# Usage: .\rollback.ps1 -Site NY [-BackupTag &quot;backup-20251210-1630&quot;]
+
+param(
+    [Parameter(Mandatory=$true)]
+    [ValidateSet(&quot;NY&quot;, &quot;HK&quot;)]
+    [string]$Site,
+
+    [string]$BackupTag
+)
+
+$ErrorActionPreference = &quot;Stop&quot;
+
+$hosts = @{
+    &quot;NY&quot; = @{Host=&quot;192.168.168.100&quot;; User=&quot;atsadmin&quot;}
+    &quot;HK&quot; = @{Host=&quot;10.101.0.10&quot;; User=&quot;atsadmin&quot;}
+}
+
+$target = $hosts[$Site]
+$Remote = &quot;$($target.User)@$($target.Host)&quot;
+
+function Write-Step { param($msg) Write-Host &quot;`n=== $msg ===&quot; -ForegroundColor Cyan }
+function Write-OK { param($msg) Write-Host &quot;[OK] $msg&quot; -ForegroundColor Green }
+function Write-Err { param($msg) Write-Host &quot;[ERROR] $msg&quot; -ForegroundColor Red }
+
+Write-Host &quot;============================================&quot; -ForegroundColor Yellow
+Write-Host &quot;  ROLLBACK - $Site                         &quot; -ForegroundColor Yellow
+Write-Host &quot;============================================&quot; -ForegroundColor Yellow
+
+# List available backups
+Write-Step &quot;Available Backup Images&quot;
+
+$backups = ssh $Remote &quot;docker images --format '{{.Repository}}:{{.Tag}}' | grep backup&quot;
+Write-Host $backups -ForegroundColor Gray
+
+if ([string]::IsNullOrEmpty($BackupTag)) {
+    # Use most recent backup
+    $BackupTag = ssh $Remote &quot;docker images --format '{{.Tag}}' | grep backup | sort -r | head -1&quot;
+    Write-Host &quot;Using most recent backup: $BackupTag&quot; -ForegroundColor Yellow
+}
+
+if ([string]::IsNullOrEmpty($BackupTag)) {
+    Write-Err &quot;No backup images found!&quot;
+    exit 1
+}
+
+# Confirm
+$confirm = Read-Host &quot;Rollback to ats-health-monitor:$BackupTag? (y/N)&quot;
+if ($confirm -ne &quot;y&quot;) {
+    Write-Host &quot;Cancelled&quot; -ForegroundColor Yellow
+    exit 0
+}
+
+# Rollback
+Write-Step &quot;Rolling Back&quot;
+
+ssh $Remote @&quot;
+cd ~/ats-deploy
+docker compose down ats-health-monitor
+docker tag ats-health-monitor:$BackupTag ats-health-monitor:test
+docker compose up -d ats-health-monitor
+sleep 5
+docker logs ats-health-monitor 2&gt;&amp;1 | grep 'Build Version'
+&quot;@
+
+Write-OK &quot;Rollback complete&quot;
+
+Write-Host &quot;`n============================================&quot; -ForegroundColor Green
+Write-Host &quot;  ROLLBACK COMPLETE                        &quot; -ForegroundColor Green
+Write-Host &quot;============================================&quot; -ForegroundColor Green
+</code></pre>
+
+<hr />
+<h2 id="12-troubleshooting-flowcharts">12. Troubleshooting Flowcharts</h2>
+<h3 id="121-build-failure-flowchart">12.1 Build Failure Flowchart</h3>
+<pre class="codehilite"><code class="language-mermaid">flowchart TD
+    START([Build Failed]) --&gt; Q1{Which step failed?}
+
+    Q1 --&gt;|&quot;npm install&quot;| NPM1[Check Node.js version]
+    NPM1 --&gt; NPM2{Node &gt;= 18?}
+    NPM2 --&gt;|No| NPM3[Install Node.js 18+]
+    NPM2 --&gt;|Yes| NPM4[Delete node_modules]
+    NPM4 --&gt; NPM5[npm cache clean --force]
+    NPM5 --&gt; NPM6[npm install]
+    NPM3 --&gt; NPM6
+
+    Q1 --&gt;|&quot;npm run build&quot;| REACT1{Error type?}
+    REACT1 --&gt;|&quot;Module not found&quot;| REACT2[npm install missing-module]
+    REACT1 --&gt;|&quot;Syntax error&quot;| REACT3[Check JSX syntax]
+    REACT1 --&gt;|&quot;Out of memory&quot;| REACT4[set NODE_OPTIONS=--max-old-space-size=4096]
+
+    Q1 --&gt;|&quot;go mod tidy&quot;| GO1{Error type?}
+    GO1 --&gt;|&quot;Module not found&quot;| GO2[Check internet connection]
+    GO1 --&gt;|&quot;Version mismatch&quot;| GO3[go mod download]
+    GO2 --&gt; GO4[go mod tidy]
+    GO3 --&gt; GO4
+
+    Q1 --&gt;|&quot;go build&quot;| GOBUILD1{Error type?}
+    GOBUILD1 --&gt;|&quot;Undefined symbol&quot;| GOBUILD2[Check import statements]
+    GOBUILD1 --&gt;|&quot;CGO error&quot;| GOBUILD3[Verify CGO_ENABLED=0]
+    GOBUILD1 --&gt;|&quot;Syntax error&quot;| GOBUILD4[Fix Go syntax]
+
+    REACT2 --&gt; RETRY([Retry Build])
+    REACT3 --&gt; RETRY
+    REACT4 --&gt; RETRY
+    GOBUILD2 --&gt; RETRY
+    GOBUILD3 --&gt; RETRY
+    GOBUILD4 --&gt; RETRY
+    NPM6 --&gt; RETRY
+    GO4 --&gt; RETRY
+
+    style START fill:#ef4444,stroke:#f87171,color:#fff
+    style RETRY fill:#10b981,stroke:#34d399,color:#fff
+</code></pre>
+
+<h3 id="122-docker-build-failure-flowchart">12.2 Docker Build Failure Flowchart</h3>
+<pre class="codehilite"><code class="language-mermaid">flowchart TD
+    START([Docker Build Failed]) --&gt; Q1{Error type?}
+
+    Q1 --&gt;|&quot;Daemon not running&quot;| D1[Start Docker Desktop]
+    D1 --&gt; D2[Wait 30 seconds]
+    D2 --&gt; RETRY
+
+    Q1 --&gt;|&quot;COPY failed&quot;| COPY1{Which file?}
+    COPY1 --&gt;|&quot;frontend/build&quot;| COPY2[Run npm run build first]
+    COPY1 --&gt;|&quot;go.mod&quot;| COPY3[Check file exists]
+    COPY1 --&gt;|&quot;Other&quot;| COPY4[Check Dockerfile COPY paths]
+
+    Q1 --&gt;|&quot;Go build in container&quot;| GO1[Check go.mod syntax]
+    GO1 --&gt; GO2[Verify all imports exist]
+
+    Q1 --&gt;|&quot;Out of disk space&quot;| DISK1[docker system prune -a]
+    DISK1 --&gt; DISK2[Free up disk space]
+
+    Q1 --&gt;|&quot;Network error&quot;| NET1[Check internet connection]
+    NET1 --&gt; NET2[docker pull alpine:3.19]
+
+    COPY2 --&gt; RETRY([Retry Docker Build])
+    COPY3 --&gt; RETRY
+    COPY4 --&gt; RETRY
+    GO2 --&gt; RETRY
+    DISK2 --&gt; RETRY
+    NET2 --&gt; RETRY
+
+    style START fill:#ef4444,stroke:#f87171,color:#fff
+    style RETRY fill:#10b981,stroke:#34d399,color:#fff
+</code></pre>
+
+<h3 id="123-deployment-failure-flowchart">12.3 Deployment Failure Flowchart</h3>
+<pre class="codehilite"><code class="language-mermaid">flowchart TD
+    START([Deployment Failed]) --&gt; Q1{Which step failed?}
+
+    Q1 --&gt;|&quot;SCP Transfer&quot;| SCP1{Error type?}
+    SCP1 --&gt;|&quot;Connection refused&quot;| SCP2[Check SSH service on target]
+    SCP1 --&gt;|&quot;Permission denied&quot;| SCP3[Check SSH keys]
+    SCP1 --&gt;|&quot;Timeout&quot;| SCP4[Check network/firewall]
+    SCP2 --&gt; SCP5[ssh target 'echo test']
+    SCP3 --&gt; SCP5
+    SCP4 --&gt; SCP5
+
+    Q1 --&gt;|&quot;docker load&quot;| LOAD1{Error type?}
+    LOAD1 --&gt;|&quot;Invalid tar&quot;| LOAD2[Re-run docker save]
+    LOAD1 --&gt;|&quot;No space&quot;| LOAD3[docker system prune]
+
+    Q1 --&gt;|&quot;docker compose up&quot;| UP1{Error type?}
+    UP1 --&gt;|&quot;Port in use&quot;| UP2[docker compose down first]
+    UP1 --&gt;|&quot;Image not found&quot;| UP3[docker load -i ats.tar]
+    UP1 --&gt;|&quot;Config error&quot;| UP4[Check config.toml syntax]
+
+    Q1 --&gt;|&quot;Container exits&quot;| EXIT1[docker logs ats-health-monitor]
+    EXIT1 --&gt; EXIT2{Log shows?}
+    EXIT2 --&gt;|&quot;Config error&quot;| EXIT3[Fix config.toml]
+    EXIT2 --&gt;|&quot;DB connection&quot;| EXIT4[Check database connectivity]
+    EXIT2 --&gt;|&quot;Port bind&quot;| EXIT5[Check port 8080 available]
+
+    SCP5 --&gt; RETRY([Retry Deployment])
+    LOAD2 --&gt; RETRY
+    LOAD3 --&gt; RETRY
+    UP2 --&gt; RETRY
+    UP3 --&gt; RETRY
+    UP4 --&gt; RETRY
+    EXIT3 --&gt; RETRY
+    EXIT4 --&gt; RETRY
+    EXIT5 --&gt; RETRY
+
+    style START fill:#ef4444,stroke:#f87171,color:#fff
+    style RETRY fill:#10b981,stroke:#34d399,color:#fff
+</code></pre>
+
+<h3 id="124-log-feed-connection-flowchart">12.4 Log Feed Connection Flowchart</h3>
+<pre class="codehilite"><code class="language-mermaid">flowchart TD
+    START([No Log Data]) --&gt; Q1{Site?}
+
+    Q1 --&gt;|&quot;NY&quot;| NY1[Check log-agent on NY2]
+    NY1 --&gt; NY2{Agent running?}
+    NY2 --&gt;|No| NY3[Start log-agent.exe]
+    NY2 --&gt;|Yes| NY4[Check ZMQ port 9000]
+    NY4 --&gt; NY5{Port open?}
+    NY5 --&gt;|No| NY6[Check firewall rules]
+    NY5 --&gt;|Yes| NY7[Check receiver config]
+
+    Q1 --&gt;|&quot;HK&quot;| HK1[Check VPN connectivity]
+    HK1 --&gt; HK2{VPN connected?}
+    HK2 --&gt;|No| HK3[Connect WireGuard VPN]
+    HK2 --&gt;|Yes| HK4[Check subscriber_id]
+    HK4 --&gt; HK5{Correct ID?}
+    HK5 --&gt;|No| HK6[Fix: subscriber_id = hk-office]
+    HK5 --&gt;|Yes| HK7[Check pub_addr uses VPN IP]
+
+    NY3 --&gt; VERIFY([Verify in Logs])
+    NY6 --&gt; VERIFY
+    NY7 --&gt; VERIFY
+    HK3 --&gt; VERIFY
+    HK6 --&gt; VERIFY
+    HK7 --&gt; VERIFY
+
+    VERIFY --&gt; LOGS[docker logs ats-health-monitor]
+    LOGS --&gt; CHECK{Shows 'Connected'?}
+    CHECK --&gt;|Yes| OK([Working!])
+    CHECK --&gt;|No| DEBUG[Check detailed error]
+
+    style START fill:#ef4444,stroke:#f87171,color:#fff
+    style OK fill:#10b981,stroke:#34d399,color:#fff
+</code></pre>
+
+<h3 id="125-complete-deployment-workflow">12.5 Complete Deployment Workflow</h3>
+<pre class="codehilite"><code class="language-mermaid">flowchart TD
+    START([Start Deployment]) --&gt; BUILD[build-all.ps1]
+    BUILD --&gt; BUILD_OK{Success?}
+    BUILD_OK --&gt;|No| BUILD_FIX[See Build Failure Chart]
+    BUILD_FIX --&gt; BUILD
+    BUILD_OK --&gt;|Yes| DOCKER[build-docker.ps1]
+
+    DOCKER --&gt; DOCKER_OK{Success?}
+    DOCKER_OK --&gt;|No| DOCKER_FIX[See Docker Failure Chart]
+    DOCKER_FIX --&gt; DOCKER
+    DOCKER_OK --&gt;|Yes| TRANSFER_NY[transfer-ny.ps1]
+
+    TRANSFER_NY --&gt; TRANS_NY_OK{Success?}
+    TRANS_NY_OK --&gt;|No| TRANS_FIX[Check SSH/Network]
+    TRANS_FIX --&gt; TRANSFER_NY
+    TRANS_NY_OK --&gt;|Yes| DEPLOY_NY[deploy-ny.ps1]
+
+    DEPLOY_NY --&gt; DEP_NY_OK{Success?}
+    DEP_NY_OK --&gt;|No| DEP_FIX[See Deployment Chart]
+    DEP_FIX --&gt; DEPLOY_NY
+    DEP_NY_OK --&gt;|Yes| HK_Q{Deploy to HK?}
+
+    HK_Q --&gt;|No| VERIFY[verify-all.ps1]
+    HK_Q --&gt;|Yes| TRANSFER_HK[transfer-hk.ps1]
+
+    TRANSFER_HK --&gt; TRANS_HK_OK{Success?}
+    TRANS_HK_OK --&gt;|No| VPN_FIX[Check VPN Connection]
+    VPN_FIX --&gt; TRANSFER_HK
+    TRANS_HK_OK --&gt;|Yes| DEPLOY_HK[deploy-hk.ps1]
+
+    DEPLOY_HK --&gt; DEP_HK_OK{Success?}
+    DEP_HK_OK --&gt;|No| DEP_HK_FIX[See Deployment Chart]
+    DEP_HK_FIX --&gt; DEPLOY_HK
+    DEP_HK_OK --&gt;|Yes| VERIFY
+
+    VERIFY --&gt; ALL_OK{All Checks Pass?}
+    ALL_OK --&gt;|No| INVESTIGATE[Investigate Failed Checks]
+    INVESTIGATE --&gt; VERIFY
+    ALL_OK --&gt;|Yes| DONE([Deployment Complete!])
+
+    style START fill:#3b82f6,stroke:#60a5fa,color:#fff
+    style DONE fill:#10b981,stroke:#34d399,color:#fff
+    style BUILD_FIX fill:#f59e0b,stroke:#fbbf24,color:#000
+    style DOCKER_FIX fill:#f59e0b,stroke:#fbbf24,color:#000
+    style TRANS_FIX fill:#f59e0b,stroke:#fbbf24,color:#000
+    style DEP_FIX fill:#f59e0b,stroke:#fbbf24,color:#000
+    style VPN_FIX fill:#f59e0b,stroke:#fbbf24,color:#000
+    style DEP_HK_FIX fill:#f59e0b,stroke:#fbbf24,color:#000
+    style INVESTIGATE fill:#f59e0b,stroke:#fbbf24,color:#000
+</code></pre>
+
+<hr />
+<h2 id="appendix-c-script-quick-reference">Appendix C: Script Quick Reference</h2>
+<table>
+<thead>
+<tr>
+<th>Script</th>
+<th>Purpose</th>
+<th>Usage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>build-all.ps1</code></td>
+<td>Build all apps</td>
+<td><code>.\build-all.ps1</code></td>
+</tr>
+<tr>
+<td><code>build-docker.ps1</code></td>
+<td>Build Docker image</td>
+<td><code>.\build-docker.ps1 -Version "5.7"</code></td>
+</tr>
+<tr>
+<td><code>transfer-ny.ps1</code></td>
+<td>Transfer to NY</td>
+<td><code>.\transfer-ny.ps1</code></td>
+</tr>
+<tr>
+<td><code>transfer-hk.ps1</code></td>
+<td>Transfer to HK (VPN)</td>
+<td><code>.\transfer-hk.ps1</code></td>
+</tr>
+<tr>
+<td><code>deploy-ny.ps1</code></td>
+<td>Deploy on NY</td>
+<td><code>.\deploy-ny.ps1</code></td>
+</tr>
+<tr>
+<td><code>deploy-hk.ps1</code></td>
+<td>Deploy on HK</td>
+<td><code>.\deploy-hk.ps1</code></td>
+</tr>
+<tr>
+<td><code>verify-all.ps1</code></td>
+<td>Verify all sites</td>
+<td><code>.\verify-all.ps1 -IncludeHK</code></td>
+</tr>
+<tr>
+<td><code>rollback.ps1</code></td>
+<td>Rollback version</td>
+<td><code>.\rollback.ps1 -Site NY</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="one-line-full-deployment">One-Line Full Deployment</h3>
+<pre class="codehilite"><code class="language-powershell"># NY Only
+.\build-all.ps1; .\build-docker.ps1; .\transfer-ny.ps1; .\deploy-ny.ps1; .\verify-all.ps1
+
+# NY + HK
+.\build-all.ps1; .\build-docker.ps1; .\transfer-ny.ps1; .\deploy-ny.ps1; .\transfer-hk.ps1; .\deploy-hk.ps1; .\verify-all.ps1 -IncludeHK
+</code></pre>
+
+<hr />
+<p><strong>Document End</strong></p>
+</body>
+</html>

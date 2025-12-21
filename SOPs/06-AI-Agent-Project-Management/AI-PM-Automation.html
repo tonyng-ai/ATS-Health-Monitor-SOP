@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>AI PM Automation</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 { border-bottom: 2px solid #3498db; padding-bottom: 0.3em; }
+        h2 { border-bottom: 1px solid #ecf0f1; padding-bottom: 0.2em; }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1em;
+            overflow-x: auto;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 1em 0;
+            padding-left: 1em;
+            color: #666;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 2em 0;
+            padding: 1em;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .pdf-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 8px 16px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .pdf-link:hover {
+            background-color: #c0392b;
+        }
+    </style>
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <p><a href="AI-PM-Automation.pdf" class="pdf-link">📄 Download PDF Version</a></p>
+    <h1 id="ai-project-manager-automation">AI Project Manager Automation</h1>
+<blockquote>
+<p><strong>Version</strong>: 1.0.0<br />
+<strong>Last Updated</strong>: December 7, 2025<br />
+<strong>Status</strong>: Phase 4 - Planning<br />
+<strong>Implementation</strong>: <code>Scripts/06-AI-Agent-Project-Management/ai-pm-service/</code></p>
+</blockquote>
+<hr />
+<h2 id="purpose">🎯 Purpose</h2>
+<p>The AI Project Manager (AI PM) is an always-on service that bridges timezone gaps, automates routine project management tasks, and ensures no issue falls through the cracks during team handoffs.</p>
+<hr />
+<h2 id="system-architecture">🏗️ System Architecture</h2>
+<pre class="codehilite"><code>┌─────────────────────────────────────────────────────────────────────────────┐
+│                        AI PM SERVICE ARCHITECTURE                            │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│   ┌─────────────────────────────────────────────────────────────────────┐   │
+│   │                         INPUT SOURCES                                │   │
+│   │                                                                      │   │
+│   │   ┌──────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐        │   │
+│   │   │  GitHub  │   │  Plane   │   │ Telegram │   │ATS Health│        │   │
+│   │   │ Webhooks │   │   API    │   │   Bot    │   │ Monitor  │        │   │
+│   │   └────┬─────┘   └────┬─────┘   └────┬─────┘   └────┬─────┘        │   │
+│   │        │              │              │              │               │   │
+│   └────────┼──────────────┼──────────────┼──────────────┼───────────────┘   │
+│            │              │              │              │                    │
+│            └──────────────┴──────────────┴──────────────┘                    │
+│                                    │                                         │
+│                                    ▼                                         │
+│   ┌─────────────────────────────────────────────────────────────────────┐   │
+│   │                      AI PM CORE SERVICE                              │   │
+│   │                                                                      │   │
+│   │   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐              │   │
+│   │   │   Event     │   │   Rules     │   │   Action    │              │   │
+│   │   │   Queue     │──▶│   Engine    │──▶│   Handler   │              │   │
+│   │   │   (Redis)   │   │   (Python)  │   │   (Python)  │              │   │
+│   │   └─────────────┘   └─────────────┘   └─────────────┘              │   │
+│   │                            │                                        │   │
+│   │                     ┌──────┴──────┐                                 │   │
+│   │                     │   Claude    │                                 │   │
+│   │                     │   API       │                                 │   │
+│   │                     │ (Optional)  │                                 │   │
+│   │                     └─────────────┘                                 │   │
+│   │                                                                      │   │
+│   └─────────────────────────────────────────────────────────────────────┘   │
+│                                    │                                         │
+│                                    ▼                                         │
+│   ┌─────────────────────────────────────────────────────────────────────┐   │
+│   │                        OUTPUT ACTIONS                                │   │
+│   │                                                                      │   │
+│   │   ┌──────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐        │   │
+│   │   │  Plane   │   │ Telegram │   │  Email   │   │  GitHub  │        │   │
+│   │   │  Update  │   │  Alert   │   │  Notify  │   │  Comment │        │   │
+│   │   └──────────┘   └──────────┘   └──────────┘   └──────────┘        │   │
+│   │                                                                      │   │
+│   └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+</code></pre>
+
+<hr />
+<h2 id="core-features">📋 Core Features</h2>
+<h3 id="1-issue-monitoring-alerts">1. Issue Monitoring &amp; Alerts</h3>
+<pre class="codehilite"><code class="language-python"># Example: Stale Issue Detection
+class StaleIssueMonitor:
+    &quot;&quot;&quot;Detects issues that haven't been updated within SLA&quot;&quot;&quot;
+
+    THRESHOLDS = {
+        'critical': timedelta(hours=4),
+        'high': timedelta(hours=12),
+        'medium': timedelta(hours=24),
+        'low': timedelta(hours=48)
+    }
+
+    def check_issues(self):
+        for issue in self.plane.get_open_issues():
+            threshold = self.THRESHOLDS.get(issue.priority, timedelta(hours=24))
+            if issue.last_updated &lt; datetime.now() - threshold:
+                self.trigger_alert(issue)
+</code></pre>
+
+<h3 id="2-timezone-aware-assignment">2. Timezone-Aware Assignment</h3>
+<pre class="codehilite"><code class="language-python"># Example: Auto-Assignment Logic
+TEAM_TIMEZONES = {
+    'vancouver': ('America/Vancouver', ['dev-team-a']),
+    'chicago': ('America/Chicago', ['ops-team']),
+    'hongkong': ('Asia/Hong_Kong', ['trading-ops'])
+}
+
+def assign_to_active_team(issue):
+    &quot;&quot;&quot;Assigns issue to team currently in working hours&quot;&quot;&quot;
+    now = datetime.now(UTC)
+
+    for location, (tz, teams) in TEAM_TIMEZONES.items():
+        local_time = now.astimezone(timezone(tz))
+        if is_working_hours(local_time):  # 9am-6pm
+            return assign_to_team(issue, teams[0])
+
+    # No team active - assign to next team starting work
+    return assign_to_next_shift(issue)
+</code></pre>
+
+<h3 id="3-handoff-management">3. Handoff Management</h3>
+<pre class="codehilite"><code>┌─────────────────────────────────────────────────────────────────┐
+│                    DAILY HANDOFF TIMELINE                        │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  UTC:  00   04   08   12   16   20   24                         │
+│        │    │    │    │    │    │    │                          │
+│  HKT:  ████████████░░░░░░░░░░░░░░░░░░  (8am-5pm HKT)           │
+│        │    │    │    │    │    │    │                          │
+│  PST:  ░░░░░░░░░░░░░░░░████████████░░  (9am-6pm PST)           │
+│        │    │    │    │    │    │    │                          │
+│        │    │    │    │    │    │    │                          │
+│  AI:   ████████████████████████████████  (Always-On)           │
+│        │    │    │    │    │    │    │                          │
+│        ▲         ▲              ▲                                │
+│        │         │              │                                │
+│     HK→NA     NA→HK          NA→HK                              │
+│    Handoff   Handoff        Handoff                             │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+</code></pre>
+
+<p><strong>Handoff Actions:</strong>
+1. Generate summary of in-progress issues
+2. Highlight blockers needing immediate attention
+3. Update issue status with handoff notes
+4. Send Telegram notification to receiving team</p>
+<hr />
+<h2 id="alert-rules">🔔 Alert Rules</h2>
+<h3 id="rule-configuration">Rule Configuration</h3>
+<pre class="codehilite"><code class="language-yaml"># config/alert_rules.yaml
+
+rules:
+  - name: &quot;Critical Issue Unassigned&quot;
+    trigger:
+      event: &quot;issue.created&quot;
+      conditions:
+        - priority: &quot;critical&quot;
+        - assignee: null
+    action:
+      - type: &quot;assign&quot;
+        strategy: &quot;active_timezone&quot;
+      - type: &quot;telegram&quot;
+        channel: &quot;#alerts&quot;
+        message: &quot;🚨 Critical issue created: {issue.title}&quot;
+
+  - name: &quot;SLA Breach Warning&quot;
+    trigger:
+      event: &quot;scheduled&quot;
+      cron: &quot;*/30 * * * *&quot;  # Every 30 minutes
+      conditions:
+        - status: [&quot;open&quot;, &quot;in_progress&quot;]
+        - sla_remaining: &quot;&lt; 2h&quot;
+    action:
+      - type: &quot;telegram&quot;
+        channel: &quot;#alerts&quot;
+        message: &quot;⚠️ SLA breach in 2h: {issue.title}&quot;
+      - type: &quot;plane_comment&quot;
+        message: &quot;SLA breach warning - escalating to team lead&quot;
+
+  - name: &quot;Handoff Reminder&quot;
+    trigger:
+      event: &quot;scheduled&quot;
+      cron: &quot;0 8,17 * * 1-5&quot;  # 8am, 5pm weekdays
+    action:
+      - type: &quot;generate_handoff_report&quot;
+      - type: &quot;telegram&quot;
+        channel: &quot;#team&quot;
+        message: &quot;📋 Shift handoff report ready&quot;
+</code></pre>
+
+<hr />
+<h2 id="optional-claude-integration">🤖 Optional: Claude Integration</h2>
+<p>For complex decisions, the AI PM can use Claude API:</p>
+<pre class="codehilite"><code class="language-python">from anthropic import Anthropic
+
+class ClaudeAdvisor:
+    &quot;&quot;&quot;Uses Claude for complex issue triage&quot;&quot;&quot;
+
+    def analyze_issue(self, issue: Issue) -&gt; dict:
+        prompt = f&quot;&quot;&quot;
+        Analyze this issue and provide:
+        1. Suggested priority (critical/high/medium/low)
+        2. Best team to assign (dev/ops/trading)
+        3. Estimated complexity (1-5)
+        4. Related issues to check
+
+        Issue:
+        Title: {issue.title}
+        Description: {issue.description}
+        Labels: {issue.labels}
+        &quot;&quot;&quot;
+
+        response = self.client.messages.create(
+            model=&quot;claude-sonnet-4-20250514&quot;,
+            max_tokens=1000,
+            messages=[{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: prompt}]
+        )
+
+        return self.parse_response(response)
+</code></pre>
+
+<hr />
+<h2 id="metrics-reporting">📊 Metrics &amp; Reporting</h2>
+<h3 id="daily-report">Daily Report</h3>
+<pre class="codehilite"><code>┌─────────────────────────────────────────────────────────────────┐
+│                    DAILY AI PM REPORT                            │
+│                    December 7, 2025                              │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  📈 ACTIVITY SUMMARY                                            │
+│  ─────────────────                                              │
+│  Issues Created:      12                                         │
+│  Issues Resolved:     8                                          │
+│  Auto-Assignments:    5                                          │
+│  Handoffs Managed:    2                                          │
+│  Alerts Sent:         7                                          │
+│                                                                  │
+│  ⏰ SLA PERFORMANCE                                              │
+│  ─────────────────                                              │
+│  Critical (&lt; 4h):     100% ✅                                    │
+│  High (&lt; 12h):        95% ✅                                     │
+│  Medium (&lt; 24h):      90% ✅                                     │
+│  Low (&lt; 48h):         100% ✅                                    │
+│                                                                  │
+│  🚨 ATTENTION NEEDED                                             │
+│  ─────────────────                                              │
+│  • Issue #234: Blocked - waiting on Hong Kong response          │
+│  • Issue #256: SLA at risk - 2h remaining                       │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+</code></pre>
+
+<hr />
+<h2 id="deployment">🚀 Deployment</h2>
+<h3 id="docker-setup">Docker Setup</h3>
+<pre class="codehilite"><code class="language-dockerfile"># Dockerfile
+FROM python:3.11-slim
+
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+
+COPY . .
+CMD [&quot;python&quot;, &quot;main.py&quot;]
+</code></pre>
+
+<h3 id="docker-compose">Docker Compose</h3>
+<pre class="codehilite"><code class="language-yaml"># docker-compose.yml
+services:
+  ai-pm:
+    build: .
+    restart: unless-stopped
+    environment:
+      - PLANE_API_TOKEN=${PLANE_API_TOKEN}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+
+volumes:
+  redis_data:
+</code></pre>
+
+<hr />
+<h2 id="related-documents">📚 Related Documents</h2>
+<ul>
+<li><a href="Master-Plan-Global-Collaboration.md">Master Plan</a></li>
+<li><a href="Plane-Deployment-Guide.md">Plane Deployment</a></li>
+<li><a href="../../Scripts/06-AI-Agent-Project-Management/ai-pm-service/">Scripts</a></li>
+</ul>
+</body>
+</html>

@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>TradeShield Remote Deployment</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 { border-bottom: 2px solid #3498db; padding-bottom: 0.3em; }
+        h2 { border-bottom: 1px solid #ecf0f1; padding-bottom: 0.2em; }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1em;
+            overflow-x: auto;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 1em 0;
+            padding-left: 1em;
+            color: #666;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 2em 0;
+            padding: 1em;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .pdf-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 8px 16px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .pdf-link:hover {
+            background-color: #c0392b;
+        }
+    </style>
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <p><a href="TradeShield-Remote-Deployment.pdf" class="pdf-link">📄 Download PDF Version</a></p>
+    <h1 id="tradeshield-remote-deployment-guide">TradeShield Remote - Deployment Guide</h1>
+<h2 id="metadata">Metadata</h2>
+<p><strong>Category:</strong> Security and Trading Platform Administration
+<strong>Last Updated:</strong> 2024-11-29
+<strong>Author:</strong> System Administrator
+<strong>Version:</strong> 1.0
+<strong>Review Date:</strong> 2025-02-28
+<strong>Status:</strong> Active</p>
+<hr />
+<h2 id="purpose">Purpose</h2>
+<p>This procedure covers the deployment of TradeShield Remote, a secure, high-availability remote administration system for critical trading platform infrastructure. The system provides encrypted VPN access via WireGuard and remote desktop capabilities via RustDesk.</p>
+<p><strong>When to Use:</strong>
+- Deploying new TradeShield Remote infrastructure
+- Setting up secure remote access to trading platforms
+- Implementing high-availability VPN gateway
+- Configuring remote administration cluster</p>
+<h3 id="procedure-overview">Procedure Overview</h3>
+<pre class="codehilite"><code class="language-mermaid">flowchart TD
+    Start([Start Deployment]) --&gt; Prereq{Verify Prerequisites}
+    Prereq --&gt;|Pass| GenKeys[Generate Secure Keys]
+    Prereq --&gt;|Fail| Error1[Error: Missing Prerequisites]
+    GenKeys --&gt; CreateVM[Create CHR VMs]
+    CreateVM --&gt; ConfigCHR[Configure CHR HA]
+    ConfigCHR --&gt; DeployRD[Deploy RustDesk Cluster]
+    DeployRD --&gt; ConfigNLB[Configure Load Balancer]
+    ConfigNLB --&gt; ConfigFW[Configure Firewall]
+    ConfigFW --&gt; TestFailover[Test Failover]
+    TestFailover --&gt; Verify{Verify Deployment}
+    Verify --&gt;|Success| End([Deployment Complete])
+    Verify --&gt;|Failure| Troubleshoot[Troubleshoot]
+    Troubleshoot --&gt; ConfigCHR
+    Error1 --&gt; End
+
+    style Start fill:#90EE90
+    style End fill:#90EE90
+    style Error1 fill:#FFB6C1
+    style Troubleshoot fill:#FFD700
+</code></pre>
+
+<hr />
+<h2 id="prerequisites">Prerequisites</h2>
+<h3 id="required-access">Required Access</h3>
+<ul>
+<li>[x] Hyper-V administrator privileges</li>
+<li>[x] Domain administrative privileges</li>
+<li>[x] Network configuration access</li>
+<li>[x] SSH access to CHR instances</li>
+</ul>
+<h3 id="required-tools">Required Tools</h3>
+<ul>
+<li>[x] Windows Server 2022 with Hyper-V role</li>
+<li>[x] PowerShell 5.1+</li>
+<li>[x] OpenSSH client</li>
+<li>[x] WireGuard tools (for key generation)</li>
+<li>[x] Network Load Balancing feature</li>
+</ul>
+<h3 id="required-information">Required Information</h3>
+<ul>
+<li>[x] Static IP range: 192.168.100.0/24</li>
+<li>[x] External IP with ports 51820-51821 open</li>
+<li>[x] MikroTik CHR VHD file (version 7.15+)</li>
+<li>[x] Ubuntu Server 22.04 LTS ISO (for RustDesk servers)</li>
+</ul>
+<h3 id="pre-conditions">Pre-Conditions</h3>
+<ul>
+<li>[x] Hyper-V host with 8GB+ RAM, 100GB+ storage</li>
+<li>[x] Network switches configured (ExternalSwitch, InternalNetwork)</li>
+<li>[x] External load balancer configured (HAProxy or equivalent)</li>
+<li>[x] Network share for deployment files accessible</li>
+</ul>
+<hr />
+<h2 id="procedure-steps">Procedure Steps</h2>
+<h3 id="step-0-security-setup-recommended-before-deployment">Step 0: Security Setup (Recommended Before Deployment)</h3>
+<p><strong>Action:</strong>
+Set up security enhancements before or during deployment:</p>
+<pre class="codehilite"><code class="language-powershell">cd Scripts\06-Security-and-Trading-Platform-Administration
+
+# Generate all keys first
+.\Generate-TradeShield-Keys.ps1 -ClientCount 13
+
+# Encrypt password storage
+.\Setup-Encrypted-Password-Storage.ps1 -MigrationMode &quot;Both&quot;
+</code></pre>
+
+<p><strong>Note:</strong> SSH key authentication setup should be done after CHR instances are deployed and accessible (see Step 3.5).</p>
+<hr />
+<h3 id="step-1-generate-secure-keys">Step 1: Generate Secure Keys</h3>
+<p><strong>Action:</strong>
+Generate all required cryptographic keys for the deployment:</p>
+<pre class="codehilite"><code class="language-powershell">cd Scripts\06-Security-and-Trading-Platform-Administration
+.\Generate-TradeShield-Keys.ps1 -ClientCount 13
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- Keys generated in <code>C:\TradeShield\keys\</code>
+- CHR admin password created
+- WireGuard keys generated (primary, secondary, and 13 client keys)
+- File permissions set to restrict access</p>
+<p><strong>Verification:</strong></p>
+<pre class="codehilite"><code class="language-powershell">Get-ChildItem C:\TradeShield\keys
+</code></pre>
+
+<hr />
+<h3 id="step-2-create-chr-virtual-machines">Step 2: Create CHR Virtual Machines</h3>
+<p><strong>Action:</strong>
+Create two MikroTik CHR virtual machines for high-availability VPN gateway:</p>
+<pre class="codehilite"><code class="language-powershell">.\New-TradeShield-CHR-VM.ps1 -CHRVersion &quot;7.15&quot;
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- Two VMs created: <code>TradeShield-CHR-01</code> and <code>TradeShield-CHR-02</code>
+- VMs configured with 2 vCPUs, 2GB RAM each
+- External and internal network adapters configured
+- VMs set to auto-start</p>
+<p><strong>Verification:</strong></p>
+<pre class="codehilite"><code class="language-powershell">Get-VM | Where-Object { $_.Name -like &quot;TradeShield-CHR-*&quot; }
+</code></pre>
+
+<hr />
+<h3 id="step-3-configure-chr-high-availability">Step 3: Configure CHR High Availability</h3>
+<p><strong>Action:</strong>
+Configure both CHR instances with VRRP for high-availability:</p>
+<pre class="codehilite"><code class="language-powershell">.\Configure-TradeShield-CHR-HA.ps1 `
+    -PrimaryIP &quot;192.168.100.1&quot; `
+    -SecondaryIP &quot;192.168.100.2&quot; `
+    -VirtualIP &quot;192.168.100.254&quot;
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- Primary CHR configured with priority 254
+- Secondary CHR configured with priority 100
+- Virtual IP (192.168.100.254) configured via VRRP
+- WireGuard interfaces configured on both CHR instances
+- Secure admin user created, default admin disabled
+- SSH restricted to internal network (port 2222)</p>
+<p><strong>Verification:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Test connectivity to Virtual IP
+Test-Connection -ComputerName 192.168.100.254 -Count 3
+</code></pre>
+
+<hr />
+<h3 id="step-35-set-up-ssh-key-authentication-recommended">Step 3.5: Set Up SSH Key Authentication (Recommended)</h3>
+<p><strong>Action:</strong>
+Configure SSH key-based authentication for CHR instances:</p>
+<pre class="codehilite"><code class="language-powershell">.\Setup-SSH-Key-Authentication.ps1 -CHRIPs @(&quot;192.168.100.1&quot;, &quot;192.168.100.2&quot;)
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- SSH key pair generated (if not exists)
+- Public key distributed to CHR instances
+- Password authentication disabled
+- SSH key authentication working</p>
+<p><strong>Verification:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Test SSH key authentication
+ssh -i C:\TradeShield\keys\ssh\tradeshield-admin-key -p 2222 tradeshield-admin@192.168.100.1 &quot;/system identity print&quot;
+</code></pre>
+
+<p><strong>Note:</strong> If plink is not available, follow manual instructions provided by the script.</p>
+<hr />
+<h3 id="step-4-deploy-rustdesk-cluster">Step 4: Deploy RustDesk Cluster</h3>
+<p><strong>Action:</strong>
+Deploy RustDesk servers using the automated deployment script:</p>
+<pre class="codehilite"><code class="language-powershell">.\Deploy-RustDesk-Cluster.ps1 -NodeIPs @(&quot;192.168.100.10&quot;, &quot;192.168.100.11&quot;)
+</code></pre>
+
+<p><strong>Prerequisites:</strong>
+- SSH key authentication must be set up (see Step 1 in Security Setup)
+- RustDesk nodes must be accessible via SSH
+- User must have sudo privileges on RustDesk nodes</p>
+<p><strong>Expected Result:</strong>
+- Docker installed on both nodes
+- Docker Compose installed
+- RustDesk services (HBBS and HBBR) running in containers
+- Services accessible on ports 21115-21119
+- Health checks configured</p>
+<p><strong>Verification:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Test connectivity from Windows
+Test-NetConnection -ComputerName 192.168.100.10 -Port 21115
+
+# Or SSH to node and check
+ssh -i C:\TradeShield\keys\ssh\tradeshield-admin-key tradeshield-admin@192.168.100.10 &quot;docker ps --filter name=rustdesk&quot;
+</code></pre>
+
+<hr />
+<h3 id="step-5-configure-windows-network-load-balancing">Step 5: Configure Windows Network Load Balancing</h3>
+<p><strong>Action:</strong>
+Configure Windows NLB for RustDesk cluster:</p>
+<pre class="codehilite"><code class="language-powershell">.\Configure-Windows-NLB.ps1 `
+    -ClusterName &quot;TradeShield-RustDesk&quot; `
+    -VirtualIP &quot;192.168.100.20&quot; `
+    -Nodes @(&quot;192.168.100.10&quot;, &quot;192.168.100.11&quot;)
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- NLB cluster created
+- Both RustDesk nodes added to cluster
+- Port rules configured for ports 21115-21119
+- Virtual IP (192.168.100.20) configured</p>
+<p><strong>Verification:</strong></p>
+<pre class="codehilite"><code class="language-powershell">Get-NlbCluster
+Get-NlbClusterNode
+Get-NlbClusterPortRule
+</code></pre>
+
+<hr />
+<h3 id="step-6-configure-firewall-rules">Step 6: Configure Firewall Rules</h3>
+<p><strong>Action:</strong>
+Apply comprehensive firewall rules to CHR instances:</p>
+<pre class="codehilite"><code class="language-powershell">.\Configure-TradeShield-Firewall.ps1 `
+    -CHRIPs @(&quot;192.168.100.1&quot;, &quot;192.168.100.2&quot;) `
+    -WGPorts @(51820, 51821)
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- WireGuard rate limiting configured
+- SSH protection enabled
+- Trading platform access rules applied
+- Time-based restrictions for trading hours
+- Security event logging enabled</p>
+<p><strong>Verification:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Test SSH access (should work from internal network)
+ssh -p 2222 tradeshield-admin@192.168.100.1
+</code></pre>
+
+<hr />
+<h3 id="step-7-test-failover-functionality">Step 7: Test Failover Functionality</h3>
+<p><strong>Action:</strong>
+Test high-availability failover mechanisms:</p>
+<pre class="codehilite"><code class="language-powershell">.\Test-TradeShield-Failover.ps1
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- CHR failover test passes (VIP remains accessible)
+- RustDesk failover test passes (service remains accessible)
+- Test results logged to <code>C:\TradeShield\logs\</code></p>
+<p><strong>Verification:</strong>
+Review test log file:</p>
+<pre class="codehilite"><code class="language-powershell">Get-Content C:\TradeShield\logs\failover-test-*.log | Select-Object -Last 20
+</code></pre>
+
+<hr />
+<h3 id="step-8-set-up-monitoring-dashboard-recommended">Step 8: Set Up Monitoring Dashboard (Recommended)</h3>
+<p><strong>Action:</strong>
+Deploy TradeShield Monitor dashboard:</p>
+<pre class="codehilite"><code class="language-powershell"># Navigate to monitor directory
+cd TradeShield-Monitor
+
+# Install dependencies
+.\install.ps1
+
+# Run in development mode (or build for production)
+.\run.ps1 -Mode dev
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- Go dependencies installed
+- React dependencies installed
+- Backend running on http://localhost:8080
+- Frontend running on http://localhost:3000
+- Dashboard accessible and displaying metrics</p>
+<p><strong>Verification:</strong>
+1. Open browser to http://localhost:3000
+2. Dashboard should show component status
+3. Metrics should be updating</p>
+<p><strong>Alternative - Production Mode:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Build for production
+.\build.ps1
+
+# Run in production mode
+$env:ENV=&quot;production&quot;
+.\run.ps1 -Mode prod
+</code></pre>
+
+<hr />
+<h3 id="step-9-set-up-automated-backups-recommended">Step 9: Set Up Automated Backups (Recommended)</h3>
+<p><strong>Action:</strong>
+Configure automated backups:</p>
+<pre class="codehilite"><code class="language-powershell"># Set up automated backups
+.\Backup-TradeShield-Automated.ps1 -RetentionDays 30 -EncryptBackups
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- Backup scheduled task created (runs daily at 2:00 AM)
+- Backup directory structure created
+- Encryption enabled</p>
+<p><strong>Verification:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Check scheduled tasks
+Get-ScheduledTask | Where-Object { $_.TaskName -like &quot;*TradeShield*&quot; }
+
+# Check backup directory
+Get-ChildItem C:\TradeShield\backups
+</code></pre>
+
+<hr />
+<h2 id="verification">Verification</h2>
+<h3 id="how-to-verify-success">How to Verify Success</h3>
+<ol>
+<li><strong>CHR High Availability:</strong></li>
+<li>Virtual IP (192.168.100.254) is reachable</li>
+<li>Primary CHR has priority 254</li>
+<li>Secondary CHR has priority 100</li>
+<li>
+<p>VRRP advertisements are working</p>
+</li>
+<li>
+<p><strong>RustDesk Services:</strong></p>
+</li>
+<li>Both RustDesk servers are running</li>
+<li>Services accessible via Virtual IP (192.168.100.20)</li>
+<li>
+<p>Load balancer distributes traffic correctly</p>
+</li>
+<li>
+<p><strong>Firewall Configuration:</strong></p>
+</li>
+<li>WireGuard connections are rate-limited</li>
+<li>SSH access restricted to internal network</li>
+<li>
+<p>Trading platform ports are accessible from WireGuard network</p>
+</li>
+<li>
+<p><strong>Failover Testing:</strong></p>
+</li>
+<li>CHR failover completes within 30 seconds</li>
+<li>RustDesk failover maintains service availability</li>
+<li>All tests pass</li>
+</ol>
+<h3 id="success-criteria">Success Criteria</h3>
+<ul>
+<li>[x] Both CHR instances configured and running</li>
+<li>[x] Virtual IP accessible and failover working</li>
+<li>[x] RustDesk cluster operational</li>
+<li>[x] Load balancer configured and distributing traffic</li>
+<li>[x] Firewall rules applied and logging enabled</li>
+<li>[x] Failover tests pass</li>
+</ul>
+<hr />
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="common-issues">Common Issues</h3>
+<h4 id="issue-1-chr-vm-fails-to-start">Issue 1: CHR VM fails to start</h4>
+<p><strong>Symptoms:</strong>
+- VM created but won't start
+- Boot errors in VM console</p>
+<p><strong>Solution:</strong>
+1. Verify CHR VHD file exists and is valid
+2. Check Hyper-V integration services
+3. Verify network switches exist
+4. Check VM generation (must be Generation 2)</p>
+<p><strong>Prevention:</strong>
+- Use official MikroTik CHR VHD files
+- Verify file integrity before deployment</p>
+<hr />
+<h4 id="issue-2-chr-configuration-fails-via-ssh">Issue 2: CHR configuration fails via SSH</h4>
+<p><strong>Symptoms:</strong>
+- SSH connection timeout
+- Configuration commands fail</p>
+<p><strong>Solution:</strong>
+1. Verify CHR is fully booted (wait 2-3 minutes after VM start)
+2. Check network connectivity: <code>Test-Connection -ComputerName 192.168.100.1</code>
+3. Verify default admin credentials (admin/admin)
+4. Check SSH service is enabled on CHR</p>
+<p><strong>Prevention:</strong>
+- Wait for full CHR boot before configuration
+- Test connectivity before running configuration script</p>
+<hr />
+<h4 id="issue-3-vrrp-not-working">Issue 3: VRRP not working</h4>
+<p><strong>Symptoms:</strong>
+- Virtual IP not accessible
+- Both CHR instances show as master</p>
+<p><strong>Solution:</strong>
+1. Verify VRRP interface configuration on both CHRs
+2. Check VRRP group ID matches (should be 50)
+3. Verify priorities are different (254 vs 100)
+4. Check network connectivity between CHR instances</p>
+<p><strong>Prevention:</strong>
+- Use consistent VRRP configuration
+- Verify network switches allow multicast traffic</p>
+<hr />
+<h4 id="issue-4-rustdesk-services-not-accessible">Issue 4: RustDesk services not accessible</h4>
+<p><strong>Symptoms:</strong>
+- Cannot connect to RustDesk via Virtual IP
+- Services not responding</p>
+<p><strong>Solution:</strong>
+1. Verify Docker containers are running: <code>docker ps</code>
+2. Check port bindings: <code>docker port &lt;container&gt;</code>
+3. Verify firewall rules allow traffic
+4. Test direct connection to node IPs</p>
+<p><strong>Prevention:</strong>
+- Monitor container health
+- Set up container restart policies
+- Configure health checks</p>
+<hr />
+<h4 id="issue-5-nlb-cluster-creation-fails">Issue 5: NLB cluster creation fails</h4>
+<p><strong>Symptoms:</strong>
+- NLB module not found
+- Cluster creation errors</p>
+<p><strong>Solution:</strong>
+1. Install NLB feature: <code>Install-WindowsFeature NLB</code>
+2. Verify network adapter name matches
+3. Check for existing NLB clusters
+4. Ensure nodes are on same network segment</p>
+<p><strong>Prevention:</strong>
+- Install NLB feature before deployment
+- Use consistent network adapter names</p>
+<hr />
+<h2 id="related-procedures">Related Procedures</h2>
+<ul>
+<li><a href="TradeShield-Remote-Architecture-Overview.md">TradeShield Remote - Architecture Overview</a> - System architecture reference</li>
+<li><a href="TradeShield-Remote-Security-Review.md">TradeShield Remote - Security Review</a> - Security, availability, and administration review</li>
+<li><a href="../01-Server-Administration/ServerAdministrationSOP.md">Server Administration SOP</a> - General server administration</li>
+</ul>
+<h2 id="related-scripts">Related Scripts</h2>
+<h3 id="deployment-scripts">Deployment Scripts</h3>
+<ul>
+<li><a href="../../Scripts/06-Security-and-Trading-Platform-Administration/Generate-TradeShield-Keys.ps1">Generate-TradeShield-Keys.ps1</a> - Generate cryptographic keys</li>
+<li><a href="../../Scripts/06-Security-and-Trading-Platform-Administration/New-TradeShield-CHR-VM.ps1">New-TradeShield-CHR-VM.ps1</a> - Create CHR virtual machines</li>
+<li><a href="../../Scripts/06-Security-and-Trading-Platform-Administration/Configure-TradeShield-CHR-HA.ps1">Configure-TradeShield-CHR-HA.ps1</a> - Configure CHR high availability</li>
+<li><a href="../../Scripts/06-Security-and-Trading-Platform-Administration/Deploy-RustDesk-Cluster.ps1">Deploy-RustDesk-Cluster.ps1</a> - Deploy RustDesk cluster</li>
+<li><a href="../../Scripts/06-Security-and-Trading-Platform-Administration/Configure-Windows-NLB.ps1">Configure-Windows-NLB.ps1</a> - Configure network load balancing</li>
+<li><a href="../../Scripts/06-Security-and-Trading-Platform-Administration/Configure-TradeShield-Firewall.ps1">Configure-TradeShield-Firewall.ps1</a> - Configure firewall rules</li>
+<li><a href="../../Scripts/06-Security-and-Trading-Platform-Administration/Test-TradeShield-Failover.ps1">Test-TradeShield-Failover.ps1</a> - Test failover functionality</li>
+</ul>
+<h3 id="security-scripts">Security Scripts</h3>
+<ul>
+<li><a href="../../Scripts/06-Security-and-Trading-Platform-Administration/Setup-SSH-Key-Authentication.ps1">Setup-SSH-Key-Authentication.ps1</a> - Set up SSH key-based authentication</li>
+<li><a href="../../Scripts/06-Security-and-Trading-Platform-Administration/Setup-Encrypted-Password-Storage.ps1">Setup-Encrypted-Password-Storage.ps1</a> - Encrypt password storage</li>
+<li><a href="../../Scripts/06-Security-and-Trading-Platform-Administration/Configure-Audit-Logging.ps1">Configure-Audit-Logging.ps1</a> - Configure audit logging</li>
+</ul>
+<h3 id="monitoring-and-maintenance-scripts">Monitoring and Maintenance Scripts</h3>
+<ul>
+<li><a href="../../Scripts/06-Security-and-Trading-Platform-Administration/Health-Check-TradeShield.ps1">Health-Check-TradeShield.ps1</a> - Automated health checks</li>
+<li><a href="../../Scripts/06-Security-and-Trading-Platform-Administration/Backup-TradeShield-Automated.ps1">Backup-TradeShield-Automated.ps1</a> - Automated backups</li>
+</ul>
+<h3 id="monitoring-dashboard">Monitoring Dashboard</h3>
+<ul>
+<li><strong>TradeShield Monitor</strong> - Go/React/DuckDB monitoring dashboard</li>
+<li>Location: <code>Scripts\06-Security-and-Trading-Platform-Administration\TradeShield-Monitor\</code></li>
+<li>See <a href="TradeShield-Monitor-Deployment.md">TradeShield Monitor Deployment Guide</a> for details</li>
+</ul>
+<h2 id="references">References</h2>
+<ul>
+<li><a href="https://help.mikrotik.com/docs/display/ROS/CHR">MikroTik CHR Documentation</a></li>
+<li><a href="https://www.wireguard.com/protocol/">WireGuard Protocol</a></li>
+<li><a href="https://rustdesk.com/docs/en/self-host/">RustDesk Server Setup</a></li>
+<li><a href="https://docs.microsoft.com/en-us/windows-server/networking/technologies/network-load-balancing">Windows Network Load Balancing</a></li>
+</ul>
+<h2 id="change-log">Change Log</h2>
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Version</th>
+<th>Author</th>
+<th>Changes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2024-11-29</td>
+<td>1.0</td>
+<td>System Administrator</td>
+<td>Initial version</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="notes">Notes</h2>
+<p><strong>WARNING:</strong> This deployment affects critical trading infrastructure. Ensure proper testing in non-production environments before production deployment.</p>
+<p><strong>SECURITY WARNING:</strong> Before production deployment, review and address security concerns documented in <a href="TradeShield-Remote-Security-Review.md">TradeShield Remote - Security Review</a>. Critical security issues include:
+- Plain text password storage (use encrypted storage)
+- SSH password authentication (implement key-based auth)
+- Missing audit logging (configure centralized logging)
+- No automated security monitoring (implement IDS/IPS)</p>
+<p><strong>AVAILABILITY WARNING:</strong> Current deployment has single Hyper-V host creating a single point of failure. Consider implementing Hyper-V cluster for production.</p>
+<p><strong>TIP:</strong> Use the failover test script regularly to verify high-availability is working correctly.</p>
+<p><strong>NOTE:</strong> Linux-based scripts for RustDesk deployment are provided separately and should be run on Ubuntu servers.</p>
+</body>
+</html>

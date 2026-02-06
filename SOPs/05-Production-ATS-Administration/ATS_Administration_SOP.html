@@ -1,0 +1,921 @@
+<!DOCTYPE html><html><head>
+      <title>ATS_Administration_SOP</title>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+      <link rel="stylesheet" href="file:///c:\Users\Tony\.cursor\extensions\shd101wyy.markdown-preview-enhanced-0.8.20-universal\crossnote\dependencies\katex\katex.min.css">
+
+
+      <script type="text/javascript" src="file:///c:\Users\Tony\.cursor\extensions\shd101wyy.markdown-preview-enhanced-0.8.20-universal\crossnote\dependencies\mermaid\mermaid.min.js" charset="UTF-8"></script>
+
+
+      <style>
+      code[class*=language-],pre[class*=language-]{color:#333;background:0 0;font-family:Consolas,"Liberation Mono",Menlo,Courier,monospace;text-align:left;white-space:pre;word-spacing:normal;word-break:normal;word-wrap:normal;line-height:1.4;-moz-tab-size:8;-o-tab-size:8;tab-size:8;-webkit-hyphens:none;-moz-hyphens:none;-ms-hyphens:none;hyphens:none}pre[class*=language-]{padding:.8em;overflow:auto;border-radius:3px;background:#f5f5f5}:not(pre)>code[class*=language-]{padding:.1em;border-radius:.3em;white-space:normal;background:#f5f5f5}.token.blockquote,.token.comment{color:#969896}.token.cdata{color:#183691}.token.doctype,.token.macro.property,.token.punctuation,.token.variable{color:#333}.token.builtin,.token.important,.token.keyword,.token.operator,.token.rule{color:#a71d5d}.token.attr-value,.token.regex,.token.string,.token.url{color:#183691}.token.atrule,.token.boolean,.token.code,.token.command,.token.constant,.token.entity,.token.number,.token.property,.token.symbol{color:#0086b3}.token.prolog,.token.selector,.token.tag{color:#63a35c}.token.attr-name,.token.class,.token.class-name,.token.function,.token.id,.token.namespace,.token.pseudo-class,.token.pseudo-element,.token.url-reference .token.variable{color:#795da3}.token.entity{cursor:help}.token.title,.token.title .token.punctuation{font-weight:700;color:#1d3e81}.token.list{color:#ed6a43}.token.inserted{background-color:#eaffea;color:#55a532}.token.deleted{background-color:#ffecec;color:#bd2c00}.token.bold{font-weight:700}.token.italic{font-style:italic}.language-json .token.property{color:#183691}.language-markup .token.tag .token.punctuation{color:#333}.language-css .token.function,code.language-css{color:#0086b3}.language-yaml .token.atrule{color:#63a35c}code.language-yaml{color:#183691}.language-ruby .token.function{color:#333}.language-markdown .token.url{color:#795da3}.language-makefile .token.symbol{color:#795da3}.language-makefile .token.variable{color:#183691}.language-makefile .token.builtin{color:#0086b3}.language-bash .token.keyword{color:#0086b3}pre[data-line]{position:relative;padding:1em 0 1em 3em}pre[data-line] .line-highlight-wrapper{position:absolute;top:0;left:0;background-color:transparent;display:block;width:100%}pre[data-line] .line-highlight{position:absolute;left:0;right:0;padding:inherit 0;margin-top:1em;background:hsla(24,20%,50%,.08);background:linear-gradient(to right,hsla(24,20%,50%,.1) 70%,hsla(24,20%,50%,0));pointer-events:none;line-height:inherit;white-space:pre}pre[data-line] .line-highlight:before,pre[data-line] .line-highlight[data-end]:after{content:attr(data-start);position:absolute;top:.4em;left:.6em;min-width:1em;padding:0 .5em;background-color:hsla(24,20%,50%,.4);color:#f4f1ef;font:bold 65%/1.5 sans-serif;text-align:center;vertical-align:.3em;border-radius:999px;text-shadow:none;box-shadow:0 1px #fff}pre[data-line] .line-highlight[data-end]:after{content:attr(data-end);top:auto;bottom:.4em}html body{font-family:'Helvetica Neue',Helvetica,'Segoe UI',Arial,freesans,sans-serif;font-size:16px;line-height:1.6;color:#333;background-color:#fff;overflow:initial;box-sizing:border-box;word-wrap:break-word}html body>:first-child{margin-top:0}html body h1,html body h2,html body h3,html body h4,html body h5,html body h6{line-height:1.2;margin-top:1em;margin-bottom:16px;color:#000}html body h1{font-size:2.25em;font-weight:300;padding-bottom:.3em}html body h2{font-size:1.75em;font-weight:400;padding-bottom:.3em}html body h3{font-size:1.5em;font-weight:500}html body h4{font-size:1.25em;font-weight:600}html body h5{font-size:1.1em;font-weight:600}html body h6{font-size:1em;font-weight:600}html body h1,html body h2,html body h3,html body h4,html body h5{font-weight:600}html body h5{font-size:1em}html body h6{color:#5c5c5c}html body strong{color:#000}html body del{color:#5c5c5c}html body a:not([href]){color:inherit;text-decoration:none}html body a{color:#08c;text-decoration:none}html body a:hover{color:#00a3f5;text-decoration:none}html body img{max-width:100%}html body>p{margin-top:0;margin-bottom:16px;word-wrap:break-word}html body>ol,html body>ul{margin-bottom:16px}html body ol,html body ul{padding-left:2em}html body ol.no-list,html body ul.no-list{padding:0;list-style-type:none}html body ol ol,html body ol ul,html body ul ol,html body ul ul{margin-top:0;margin-bottom:0}html body li{margin-bottom:0}html body li.task-list-item{list-style:none}html body li>p{margin-top:0;margin-bottom:0}html body .task-list-item-checkbox{margin:0 .2em .25em -1.8em;vertical-align:middle}html body .task-list-item-checkbox:hover{cursor:pointer}html body blockquote{margin:16px 0;font-size:inherit;padding:0 15px;color:#5c5c5c;background-color:#f0f0f0;border-left:4px solid #d6d6d6}html body blockquote>:first-child{margin-top:0}html body blockquote>:last-child{margin-bottom:0}html body hr{height:4px;margin:32px 0;background-color:#d6d6d6;border:0 none}html body table{margin:10px 0 15px 0;border-collapse:collapse;border-spacing:0;display:block;width:100%;overflow:auto;word-break:normal;word-break:keep-all}html body table th{font-weight:700;color:#000}html body table td,html body table th{border:1px solid #d6d6d6;padding:6px 13px}html body dl{padding:0}html body dl dt{padding:0;margin-top:16px;font-size:1em;font-style:italic;font-weight:700}html body dl dd{padding:0 16px;margin-bottom:16px}html body code{font-family:Menlo,Monaco,Consolas,'Courier New',monospace;font-size:.85em;color:#000;background-color:#f0f0f0;border-radius:3px;padding:.2em 0}html body code::after,html body code::before{letter-spacing:-.2em;content:'\00a0'}html body pre>code{padding:0;margin:0;word-break:normal;white-space:pre;background:0 0;border:0}html body .highlight{margin-bottom:16px}html body .highlight pre,html body pre{padding:1em;overflow:auto;line-height:1.45;border:#d6d6d6;border-radius:3px}html body .highlight pre{margin-bottom:0;word-break:normal}html body pre code,html body pre tt{display:inline;max-width:initial;padding:0;margin:0;overflow:initial;line-height:inherit;word-wrap:normal;background-color:transparent;border:0}html body pre code:after,html body pre code:before,html body pre tt:after,html body pre tt:before{content:normal}html body blockquote,html body dl,html body ol,html body p,html body pre,html body ul{margin-top:0;margin-bottom:16px}html body kbd{color:#000;border:1px solid #d6d6d6;border-bottom:2px solid #c7c7c7;padding:2px 4px;background-color:#f0f0f0;border-radius:3px}@media print{html body{background-color:#fff}html body h1,html body h2,html body h3,html body h4,html body h5,html body h6{color:#000;page-break-after:avoid}html body blockquote{color:#5c5c5c}html body pre{page-break-inside:avoid}html body table{display:table}html body img{display:block;max-width:100%;max-height:100%}html body code,html body pre{word-wrap:break-word;white-space:pre}}.markdown-preview{width:100%;height:100%;box-sizing:border-box}.markdown-preview ul{list-style:disc}.markdown-preview ul ul{list-style:circle}.markdown-preview ul ul ul{list-style:square}.markdown-preview ol{list-style:decimal}.markdown-preview ol ol,.markdown-preview ul ol{list-style-type:lower-roman}.markdown-preview ol ol ol,.markdown-preview ol ul ol,.markdown-preview ul ol ol,.markdown-preview ul ul ol{list-style-type:lower-alpha}.markdown-preview .newpage,.markdown-preview .pagebreak{page-break-before:always}.markdown-preview pre.line-numbers{position:relative;padding-left:3.8em;counter-reset:linenumber}.markdown-preview pre.line-numbers>code{position:relative}.markdown-preview pre.line-numbers .line-numbers-rows{position:absolute;pointer-events:none;top:1em;font-size:100%;left:0;width:3em;letter-spacing:-1px;border-right:1px solid #999;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}.markdown-preview pre.line-numbers .line-numbers-rows>span{pointer-events:none;display:block;counter-increment:linenumber}.markdown-preview pre.line-numbers .line-numbers-rows>span:before{content:counter(linenumber);color:#999;display:block;padding-right:.8em;text-align:right}.markdown-preview .mathjax-exps .MathJax_Display{text-align:center!important}.markdown-preview:not([data-for=preview]) .code-chunk .code-chunk-btn-group{display:none}.markdown-preview:not([data-for=preview]) .code-chunk .status{display:none}.markdown-preview:not([data-for=preview]) .code-chunk .output-div{margin-bottom:16px}.markdown-preview .md-toc{padding:0}.markdown-preview .md-toc .md-toc-link-wrapper .md-toc-link{display:inline;padding:.25rem 0}.markdown-preview .md-toc .md-toc-link-wrapper .md-toc-link div,.markdown-preview .md-toc .md-toc-link-wrapper .md-toc-link p{display:inline}.markdown-preview .md-toc .md-toc-link-wrapper.highlighted .md-toc-link{font-weight:800}.scrollbar-style::-webkit-scrollbar{width:8px}.scrollbar-style::-webkit-scrollbar-track{border-radius:10px;background-color:transparent}.scrollbar-style::-webkit-scrollbar-thumb{border-radius:5px;background-color:rgba(150,150,150,.66);border:4px solid rgba(150,150,150,.66);background-clip:content-box}html body[for=html-export]:not([data-presentation-mode]){position:relative;width:100%;height:100%;top:0;left:0;margin:0;padding:0;overflow:auto}html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{position:relative;top:0;min-height:100vh}@media screen and (min-width:914px){html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{padding:2em calc(50% - 457px + 2em)}}@media screen and (max-width:914px){html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{padding:2em}}@media screen and (max-width:450px){html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{font-size:14px!important;padding:1em}}@media print{html body[for=html-export]:not([data-presentation-mode]) #sidebar-toc-btn{display:none}}html body[for=html-export]:not([data-presentation-mode]) #sidebar-toc-btn{position:fixed;bottom:8px;left:8px;font-size:28px;cursor:pointer;color:inherit;z-index:99;width:32px;text-align:center;opacity:.4}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] #sidebar-toc-btn{opacity:1}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc{position:fixed;top:0;left:0;width:300px;height:100%;padding:32px 0 48px 0;font-size:14px;box-shadow:0 0 4px rgba(150,150,150,.33);box-sizing:border-box;overflow:auto;background-color:inherit}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc::-webkit-scrollbar{width:8px}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc::-webkit-scrollbar-track{border-radius:10px;background-color:transparent}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc::-webkit-scrollbar-thumb{border-radius:5px;background-color:rgba(150,150,150,.66);border:4px solid rgba(150,150,150,.66);background-clip:content-box}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc a{text-decoration:none}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc{padding:0 16px}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper .md-toc-link{display:inline;padding:.25rem 0}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper .md-toc-link div,html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper .md-toc-link p{display:inline}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper.highlighted .md-toc-link{font-weight:800}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .markdown-preview{left:300px;width:calc(100% - 300px);padding:2em calc(50% - 457px - 300px / 2);margin:0;box-sizing:border-box}@media screen and (max-width:1274px){html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .markdown-preview{padding:2em}}@media screen and (max-width:450px){html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .markdown-preview{width:100%}}html body[for=html-export]:not([data-presentation-mode]):not([html-show-sidebar-toc]) .markdown-preview{left:50%;transform:translateX(-50%)}html body[for=html-export]:not([data-presentation-mode]):not([html-show-sidebar-toc]) .md-sidebar-toc{display:none}
+/* Please visit the URL below for more information: */
+/*   https://shd101wyy.github.io/markdown-preview-enhanced/#/customize-css */
+
+      </style>
+      <!-- The content below will be included at the end of the <head> element. --><script type="text/javascript">
+  document.addEventListener("DOMContentLoaded", function () {
+    // your code here
+  });
+</script></head><body for="html-export">
+
+
+      <div class="crossnote markdown-preview  ">
+      <div>
+<h1 id="ats-900-production-deployment-standard-operating-procedure">ATS 900 Production Deployment Standard Operating Procedure </h1>
+<h2 id="metadata">Metadata </h2>
+<p><strong>Category:</strong> Trading System Administration<br>
+<strong>Last Updated:</strong> 2025-12-26<br>
+<strong>Author:</strong> ATS Production Team<br>
+<strong>Version:</strong> 2.1<br>
+<strong>Review Date:</strong> 2026-01-26<br>
+<strong>Status:</strong> Active</p>
+<hr>
+<h2 id="purpose">Purpose </h2>
+<p>This procedure covers the deployment, configuration, and maintenance of ATS 900 trading system with optimized JDBC connection pool settings to prevent database connectivity issues.</p>
+<p><strong>When to Use:</strong></p>
+<ul>
+<li>Deploying new ATS 900 instances</li>
+<li>Troubleshooting "connection closed" errors</li>
+<li>Configuring database connection pools</li>
+<li>Setting up automated startup with visible terminals</li>
+<li>Monitoring system health and performance</li>
+</ul>
+<h3 id="procedure-overview">Procedure Overview </h3>
+<div class="mermaid">flowchart TD
+    Start([Start ATS Deployment]) --&gt; CheckPrereq{Check Prerequisites}
+    CheckPrereq --&gt;|Missing| Install[Install Missing Components]
+    CheckPrereq --&gt;|Pass| Config[Configure ats.ini]
+    Install --&gt; Config
+    Config --&gt; VerifyConfig{Verify Configuration}
+    VerifyConfig --&gt;|Invalid| Config
+    VerifyConfig --&gt;|Valid| ChooseMethod{Choose Deployment Method}
+    ChooseMethod --&gt;|Manual| ManualLaunch[Manual PowerShell Launch]
+    ChooseMethod --&gt;|Production| ScheduledTask[Create Scheduled Task]
+    ChooseMethod --&gt;|Fallback| LegacyBatch[Legacy Batch File]
+    ManualLaunch --&gt; StartATS[Start ATS Application]
+    ScheduledTask --&gt; StartATS
+    LegacyBatch --&gt; StartATS
+    StartATS --&gt; VerifyStart{Verify Startup}
+    VerifyStart --&gt;|Failed| Troubleshoot[Troubleshoot Issues]
+    VerifyStart --&gt;|Success| Monitor[Monitor System]
+    Troubleshoot --&gt; CheckJava[Check Java Installation]
+    Troubleshoot --&gt; CheckJARs[Check JAR Dependencies]
+    Troubleshoot --&gt; CheckPort[Check Port Availability]
+    Troubleshoot --&gt; CheckConfig[Check Configuration]
+    CheckJava --&gt; ResolveJava[Resolve Java Issues]
+    CheckJARs --&gt; ResolveJARs[Resolve JAR Issues]
+    CheckPort --&gt; ResolvePort[Resolve Port Issues]
+    CheckConfig --&gt; ResolveConfig[Resolve Config Issues]
+    ResolveJava --&gt; StartATS
+    ResolveJARs --&gt; StartATS
+    ResolvePort --&gt; StartATS
+    ResolveConfig --&gt; StartATS
+    Monitor --&gt; End([ATS Running Successfully])
+
+    style Start fill:#90EE90
+    style End fill:#90EE90
+    style Troubleshoot fill:#FFD700
+    style VerifyStart fill:#87CEEB
+    style VerifyConfig fill:#87CEEB
+</div><hr>
+<h2 id="prerequisites">Prerequisites </h2>
+<h3 id="required-access">Required Access </h3>
+<ul>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox"> Administrator privileges (for scheduled task creation)</li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox"> Read/Write access to <code>C:\ATS\ats900\run\</code></li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox"> Network access to database server: <code>gfprod</code></li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox"> SQL Server database access credentials</li>
+</ul>
+<h3 id="required-tools">Required Tools </h3>
+<ul>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox"> Java 8 (1.8.0_411 or compatible)</li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox"> PowerShell 5.0 or later</li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox"> SQL Server 2019 connectivity</li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox"> Windows Server 2012 R2 or later</li>
+</ul>
+<h3 id="required-information">Required Information </h3>
+<ul>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox"> Database server name: <code>gfprod</code></li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox"> Database name: <code>fund2</code></li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox"> Database credentials: <code>ver2user</code> / <code>atsats</code></li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox"> ATS ID: <code>900</code></li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox"> JMX Port: <code>30313</code></li>
+</ul>
+<h3 id="pre-conditions">Pre-Conditions </h3>
+<ul>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox"> Java 8 is installed and in PATH</li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox"> All required JAR files are present in <code>lib\</code> directory</li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox"> Network connectivity to database server is verified</li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox"> Minimum 512MB JVM heap space available</li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox"> Port 30313 is not in use by another process</li>
+</ul>
+<h3 id="required-files-structure">Required Files Structure </h3>
+<pre data-role="codeBlock" data-info="text" class="language-text text"><code>C:\ATS\ats900\run\
+├── ats.ini (Configuration file)
+├── ATS_Launcher.ps1 (Primary PowerShell launcher)
+├── ATS_Launcher_Wrapper.bat (Wrapper for visible terminal in scheduled tasks)
+├── Create-ScheduledTask.ps1 (Scheduled task creator)
+├── Check-Java.ps1 (Java verification)
+├── Check-JARs.ps1 (Dependency check)
+├── Debug-ATS.ps1 (Troubleshooting)
+├── GravPrimary_ATS.bat (Legacy batch file)
+├── logs\ (Application logs)
+├── atslog\ (ATS internal logs)
+├── data\ (Application data)
+└── lib\ (Java dependencies)
+</code></pre><hr>
+<h2 id="procedure-steps">Procedure Steps </h2>
+<h3 id="overview-diagram">Overview Diagram </h3>
+<div class="mermaid">sequenceDiagram
+    participant Admin
+    participant PowerShell
+    participant Java
+    participant Database
+    participant ATS
+
+    Admin-&gt;&gt;PowerShell: Execute ATS_Launcher.ps1
+    PowerShell-&gt;&gt;PowerShell: Check Port 30313
+    PowerShell-&gt;&gt;PowerShell: Verify ats.ini exists
+    PowerShell-&gt;&gt;Java: Launch with connection pool config
+    Java-&gt;&gt;Database: Connect using pool settings
+    Database--&gt;&gt;Java: Connection established
+    Java-&gt;&gt;ATS: Initialize ATS application
+    ATS-&gt;&gt;Database: Query symbols and positions
+    Database--&gt;&gt;ATS: Return data
+    ATS--&gt;&gt;Java: Application started
+    Java--&gt;&gt;PowerShell: Process running
+    PowerShell--&gt;&gt;Admin: ATS successfully launched
+</div><h3 id="step-1-verify-prerequisites">Step 1: Verify Prerequisites </h3>
+<p><strong>Action:</strong></p>
+<pre data-role="codeBlock" data-info="powershell" class="language-powershell powershell"><code><span class="token comment"># Navigate to ATS directory</span>
+cd C:\ATS\ats900\run
+
+<span class="token comment"># Check Java installation</span>
+<span class="token punctuation">.</span>\Check-Java<span class="token punctuation">.</span>ps1
+
+<span class="token comment"># Check JAR dependencies</span>
+<span class="token punctuation">.</span>\Check-JARs<span class="token punctuation">.</span>ps1
+</code></pre><p><strong>Expected Result:</strong></p>
+<ul>
+<li>Java 8 is installed and accessible</li>
+<li>All required JAR files are present</li>
+<li>No missing dependencies reported</li>
+</ul>
+<hr>
+<h3 id="step-2-configure-atsini">Step 2: Configure ats.ini </h3>
+<p><strong>Action:</strong></p>
+<p>Create or modify <code>C:\ATS\ats900\run\ats.ini</code> with the following settings:</p>
+<pre data-role="codeBlock" data-info="ini" class="language-ini ini"><code><span class="token comment"># CONNECTION POOL CORE SETTINGS</span>
+<span class="token key attr-name">db.pms.pool.size</span><span class="token punctuation">=</span><span class="token value attr-value">30</span>
+<span class="token key attr-name">db.rt.pool.size</span><span class="token punctuation">=</span><span class="token value attr-value">40</span>
+
+<span class="token comment"># CONNECTION VALIDATION (CRITICAL)</span>
+<span class="token key attr-name">db.pms.validationQuery</span><span class="token punctuation">=</span><span class="token value attr-value">SELECT 1</span>
+<span class="token key attr-name">db.rt.validationQuery</span><span class="token punctuation">=</span><span class="token value attr-value">SELECT 1</span>
+<span class="token key attr-name">db.pms.testOnBorrow</span><span class="token punctuation">=</span><span class="token value attr-value">true</span>
+<span class="token key attr-name">db.rt.testOnBorrow</span><span class="token punctuation">=</span><span class="token value attr-value">true</span>
+<span class="token key attr-name">db.pms.testWhileIdle</span><span class="token punctuation">=</span><span class="token value attr-value">true</span>
+<span class="token key attr-name">db.rt.testWhileIdle</span><span class="token punctuation">=</span><span class="token value attr-value">true</span>
+
+<span class="token comment"># CONNECTION LIFECYCLE (PREVENT TIMEOUTS)</span>
+<span class="token key attr-name">db.pms.maxLifetime</span><span class="token punctuation">=</span><span class="token value attr-value">1680000    # 28 minutes (under 30min SQL Server default)</span>
+<span class="token key attr-name">db.rt.maxLifetime</span><span class="token punctuation">=</span><span class="token value attr-value">1680000</span>
+<span class="token key attr-name">db.pms.idleTimeout</span><span class="token punctuation">=</span><span class="token value attr-value">240000     # 4 minutes idle max</span>
+<span class="token key attr-name">db.rt.idleTimeout</span><span class="token punctuation">=</span><span class="token value attr-value">240000</span>
+
+<span class="token comment"># POOL MAINTENANCE</span>
+<span class="token key attr-name">db.pms.timeBetweenEvictionRuns</span><span class="token punctuation">=</span><span class="token value attr-value">30000    # Check every 30 seconds</span>
+<span class="token key attr-name">db.rt.timeBetweenEvictionRuns</span><span class="token punctuation">=</span><span class="token value attr-value">30000</span>
+<span class="token key attr-name">db.pms.minEvictableIdleTime</span><span class="token punctuation">=</span><span class="token value attr-value">180000      # 3 minutes minimum idle</span>
+<span class="token key attr-name">db.rt.minEvictableIdleTime</span><span class="token punctuation">=</span><span class="token value attr-value">180000</span>
+
+<span class="token comment"># FAIL-FAST TIMEOUTS</span>
+<span class="token key attr-name">db.pms.connectionTimeout</span><span class="token punctuation">=</span><span class="token value attr-value">10000          # 10 seconds max wait for connection</span>
+<span class="token key attr-name">db.rt.connectionTimeout</span><span class="token punctuation">=</span><span class="token value attr-value">10000</span>
+<span class="token key attr-name">db.pms.loginTimeout</span><span class="token punctuation">=</span><span class="token value attr-value">10</span>
+<span class="token key attr-name">db.rt.loginTimeout</span><span class="token punctuation">=</span><span class="token value attr-value">10</span>
+
+<span class="token comment"># DATABASE SERVER</span>
+<span class="token key attr-name">db.pms.server</span><span class="token punctuation">=</span><span class="token value attr-value">gfprod</span>
+<span class="token key attr-name">db.rt.server</span><span class="token punctuation">=</span><span class="token value attr-value">gfprod</span>
+<span class="token key attr-name">db.pms.dbname</span><span class="token punctuation">=</span><span class="token value attr-value">fund2</span>
+<span class="token key attr-name">db.rt.dbname</span><span class="token punctuation">=</span><span class="token value attr-value">fund2</span>
+</code></pre><p><strong>Expected Result:</strong></p>
+<ul>
+<li><code>ats.ini file created/updated in C:\ATS\ats900\run\</code></li>
+<li>All connection pool settings are configured correctly</li>
+<li>Database server and database name are set</li>
+</ul>
+<hr>
+<h3 id="step-3-choose-deployment-method">Step 3: Choose Deployment Method </h3>
+<h4 id="method-1-manual-powershell-launch-testing">Method 1: Manual PowerShell Launch (Testing) </h4>
+<p><strong>Action:</strong></p>
+<pre data-role="codeBlock" data-info="powershell" class="language-powershell powershell"><code><span class="token comment"># Navigate to ATS directory</span>
+cd C:\ATS\ats900\run
+
+<span class="token comment"># Execute the launcher</span>
+<span class="token punctuation">.</span>\ATS_Launcher<span class="token punctuation">.</span>ps1
+</code></pre><p><strong>Expected Result:</strong></p>
+<ul>
+<li>PowerShell window displays launch information</li>
+<li>Port 30313 is checked and available</li>
+<li>ATS application starts in visible terminal</li>
+<li>Java process begins initialization</li>
+</ul>
+<p><strong>When to Use:</strong></p>
+<ul>
+<li>Initial testing and verification</li>
+<li>Troubleshooting sessions</li>
+<li>Manual intervention required</li>
+</ul>
+<hr>
+<h4 id="method-2-scheduled-task-deployment-production">Method 2: Scheduled Task Deployment (Production) </h4>
+<p><strong>Action:</strong></p>
+<pre data-role="codeBlock" data-info="powershell" class="language-powershell powershell"><code><span class="token comment"># Open PowerShell as Administrator</span>
+<span class="token comment"># Navigate to ATS directory</span>
+cd C:\ATS\ats900\run
+
+<span class="token comment"># Execute the task creator with your username for visible terminal</span>
+<span class="token punctuation">.</span>\Create-ScheduledTask<span class="token punctuation">.</span>ps1 <span class="token operator">-</span>UserName <span class="token string">"<span class="token variable">$env</span>:USERNAME"</span>
+</code></pre><p><strong>⚠️ IMPORTANT - Visible Terminal Window:</strong></p>
+<ul>
+<li><strong>SYSTEM account cannot show windows:</strong> Tasks running as SYSTEM account cannot display interactive windows to logged-in users (Windows security limitation)</li>
+<li><strong>Use user account for visible terminal:</strong> Always specify a user account with <code>-UserName</code> parameter to see the terminal window</li>
+<li><strong>Example:</strong> <code>.\Create-ScheduledTask.ps1 -UserName "YourUsername"</code></li>
+</ul>
+<p><strong>Expected Result:</strong></p>
+<ul>
+<li>Scheduled task "ATS-900-Production" is created</li>
+<li>Task is configured to run at system startup</li>
+<li>Task is set to run with visible terminal window (when using user account)</li>
+<li>Wrapper batch file (<code>ATS_Launcher_Wrapper.bat</code>) is created automatically</li>
+<li>Task appears in Task Scheduler</li>
+</ul>
+<p><strong>When to Use:</strong></p>
+<ul>
+<li>Production deployments</li>
+<li>Automated startup after reboot</li>
+<li>Long-term operation</li>
+<li>When terminal visibility is required for monitoring</li>
+</ul>
+<p><strong>Follow-up Steps:</strong></p>
+<ol>
+<li>Verify task creation in Task Scheduler</li>
+<li>Test task execution manually (right-click → Run)</li>
+<li>Verify terminal window appears and shows ATS output</li>
+<li>Reboot system to test automatic startup</li>
+</ol>
+<p><strong>Note:</strong> If you need the task to run as SYSTEM (no visible window), omit the <code>-UserName</code> parameter. However, you will not be able to see the terminal output.</p>
+<hr>
+<h4 id="method-3-legacy-batch-file-fallback">Method 3: Legacy Batch File (Fallback) </h4>
+<p><strong>Action:</strong></p>
+<pre data-role="codeBlock" data-info="cmd" class="language-cmd cmd"><code># Open Command Prompt
+cd C:\ATS\ats900\run
+
+# Execute the batch file
+GravPrimary_ATS.bat
+</code></pre><p><strong>Expected Result:</strong></p>
+<ul>
+<li>ATS starts using legacy batch file method</li>
+<li>Application initializes normally</li>
+</ul>
+<p><strong>When to Use:</strong></p>
+<ul>
+<li>PowerShell scripts unavailable</li>
+<li>Emergency fallback method</li>
+<li>Legacy system compatibility</li>
+</ul>
+<hr>
+<h3 id="step-4-monitor-startup">Step 4: Monitor Startup </h3>
+<p><strong>Action:</strong></p>
+<p>Monitor the terminal output for the following indicators:</p>
+<ol>
+<li>
+<p><strong>Port Check:</strong></p>
+<ul>
+<li>"Port 30313 is available" (green)</li>
+</ul>
+</li>
+<li>
+<p><strong>Configuration:</strong></p>
+<ul>
+<li>"Launching ATS with connection pool configuration..."</li>
+</ul>
+</li>
+<li>
+<p><strong>Application Startup:</strong></p>
+<ul>
+<li>Java process starts with assigned PID</li>
+<li>No "connection closed" errors</li>
+<li>Database connections initialize successfully</li>
+<li>Symbols load with position initialization <code>[0&lt;&gt;0]</code></li>
+</ul>
+</li>
+</ol>
+<p><strong>Expected Result:</strong></p>
+<ul>
+<li>All startup checks pass</li>
+<li>No error messages in output</li>
+<li>Application reaches operational state</li>
+</ul>
+<hr>
+<h2 id="verification">Verification </h2>
+<h3 id="how-to-verify-success">How to Verify Success </h3>
+<ol>
+<li>
+<p><strong>Process Verification:</strong></p>
+<pre data-role="codeBlock" data-info="powershell" class="language-powershell powershell"><code><span class="token function">Get-Process</span> java <span class="token punctuation">|</span> <span class="token function">Where-Object</span> <span class="token punctuation">{</span> <span class="token variable">$_</span><span class="token punctuation">.</span>Path <span class="token operator">-like</span> <span class="token string">"*java*"</span> <span class="token punctuation">}</span>
+</code></pre></li>
+<li>
+<p><strong>Port Verification:</strong></p>
+<pre data-role="codeBlock" data-info="powershell" class="language-powershell powershell"><code><span class="token function">Get-NetTCPConnection</span> <span class="token operator">-</span>LocalPort 30313 <span class="token operator">-</span>ErrorAction SilentlyContinue
+</code></pre></li>
+<li>
+<p><strong>Log Verification:</strong></p>
+<pre data-role="codeBlock" data-info="powershell" class="language-powershell powershell"><code><span class="token function">Get-Content</span> C:\ATS\ats900\run\logs\<span class="token operator">*</span><span class="token punctuation">.</span>log <span class="token operator">-</span>Tail 50
+</code></pre></li>
+<li>
+<p><strong>Trade Commander Status:</strong></p>
+<ul>
+<li>Verify "OnLn" status is displayed</li>
+<li>Confirm orders process normally</li>
+</ul>
+</li>
+</ol>
+<h3 id="success-criteria">Success Criteria </h3>
+<ul>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox"> Java process is running with PID</li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox"> Port 30313 is in use by Java process</li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox"> No "connection closed" errors in logs</li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox"> Database connections initialize successfully</li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox"> Symbols load with position initialization</li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox"> Trade Commander shows "OnLn" status</li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox"> No application crashes or freezes</li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox"> Connection pool settings are active</li>
+</ul>
+<hr>
+<h2 id="troubleshooting">Troubleshooting </h2>
+<h3 id="common-issues">Common Issues </h3>
+<h4 id="issue-1-port-30313-already-in-use">Issue 1: Port 30313 Already in Use </h4>
+<p><strong>Symptoms:</strong></p>
+<ul>
+<li>Error: "Port 30313 is in use by PID: [number]"</li>
+<li>Cannot start ATS application</li>
+</ul>
+<p><strong>Solution:</strong></p>
+<pre data-role="codeBlock" data-info="powershell" class="language-powershell powershell"><code><span class="token comment"># Find the process using the port</span>
+<span class="token variable">$process</span> = <span class="token function">Get-NetTCPConnection</span> <span class="token operator">-</span>LocalPort 30313 <span class="token punctuation">|</span> <span class="token function">Select-Object</span> <span class="token operator">-</span>ExpandProperty OwningProcess
+<span class="token function">Get-Process</span> <span class="token operator">-</span>Id <span class="token variable">$process</span>
+
+<span class="token comment"># Stop the process if it's a stale ATS instance</span>
+<span class="token function">Stop-Process</span> <span class="token operator">-</span>Id <span class="token variable">$process</span> <span class="token operator">-</span>Force
+
+<span class="token comment"># Verify port is now available</span>
+<span class="token function">Get-NetTCPConnection</span> <span class="token operator">-</span>LocalPort 30313 <span class="token operator">-</span>ErrorAction SilentlyContinue
+</code></pre><p><strong>Prevention:</strong></p>
+<ul>
+<li>Always stop ATS gracefully before restarting</li>
+<li>Use <code>Debug-ATS.ps1</code> to check for existing processes</li>
+</ul>
+<hr>
+<h4 id="issue-2-java-not-found">Issue 2: Java Not Found </h4>
+<p><strong>Symptoms:</strong></p>
+<ul>
+<li>Error: "Could not find or load main class java"</li>
+<li>Java command not recognized</li>
+</ul>
+<p><strong>Solution:</strong></p>
+<pre data-role="codeBlock" data-info="powershell" class="language-powershell powershell"><code><span class="token comment"># Run diagnostic script</span>
+<span class="token punctuation">.</span>\Check-Java<span class="token punctuation">.</span>ps1
+
+<span class="token comment"># Verify Java installation</span>
+java <span class="token operator">-</span>version
+
+<span class="token comment"># Check PATH environment variable</span>
+<span class="token variable">$env</span>:PATH <span class="token operator">-</span>split <span class="token string">';'</span> <span class="token punctuation">|</span> <span class="token function">Select-String</span> <span class="token operator">-</span>Pattern <span class="token string">"java"</span>
+
+<span class="token comment"># If Java is installed but not in PATH, add it:</span>
+<span class="token comment"># [System.Environment]::SetEnvironmentVariable("PATH", $env:PATH + ";C:\Program Files\Java\jre1.8.0_411\bin", "Machine")</span>
+</code></pre><p><strong>Prevention:</strong></p>
+<ul>
+<li>Install Java 8 and verify PATH during installation</li>
+<li>Use <code>Check-Java.ps1</code> before deployment</li>
+</ul>
+<hr>
+<h4 id="issue-3-connection-closed-errors">Issue 3: Connection Closed Errors </h4>
+<p><strong>Symptoms:</strong></p>
+<ul>
+<li>Error: "The connection is closed"</li>
+<li>Database connectivity issues</li>
+<li>Intermittent connection failures</li>
+</ul>
+<p><strong>Solution:</strong></p>
+<ol>
+<li>
+<p>Verify <code>ats.ini</code> connection pool settings:</p>
+<pre data-role="codeBlock" data-info="powershell" class="language-powershell powershell"><code><span class="token function">Get-Content</span> C:\ATS\ats900\run\ats<span class="token punctuation">.</span>ini <span class="token punctuation">|</span> <span class="token function">Select-String</span> <span class="token operator">-</span>Pattern <span class="token string">"pool|timeout|lifetime"</span>
+</code></pre></li>
+<li>
+<p>Check database server connectivity:</p>
+<pre data-role="codeBlock" data-info="powershell" class="language-powershell powershell"><code><span class="token function">Test-NetConnection</span> <span class="token operator">-</span>ComputerName gfprod <span class="token operator">-</span>Port 1433
+</code></pre></li>
+<li>
+<p>Review connection pool settings:</p>
+<ul>
+<li>Ensure <code>maxLifetime</code> is under 30 minutes (1680000 ms = 28 min)</li>
+<li>Verify <code>testOnBorrow</code> and <code>testWhileIdle</code> are <code>true</code></li>
+<li>Check <code>idleTimeout</code> is set to 240000 (4 minutes)</li>
+</ul>
+</li>
+<li>
+<p>Restart ATS with updated configuration</p>
+</li>
+</ol>
+<p><strong>Prevention:</strong></p>
+<ul>
+<li>Use optimized connection pool settings from Step 2</li>
+<li>Monitor connection pool metrics regularly</li>
+<li>Set appropriate timeout values</li>
+</ul>
+<hr>
+<h4 id="issue-4-missing-dependencies">Issue 4: Missing Dependencies </h4>
+<p><strong>Symptoms:</strong></p>
+<ul>
+<li>Error: "NoClassDefFoundError"</li>
+<li>Missing JAR file errors</li>
+<li>Class not found exceptions</li>
+</ul>
+<p><strong>Solution:</strong></p>
+<pre data-role="codeBlock" data-info="powershell" class="language-powershell powershell"><code><span class="token comment"># Run dependency check</span>
+<span class="token punctuation">.</span>\Check-JARs<span class="token punctuation">.</span>ps1
+
+<span class="token comment"># Verify required JARs are present</span>
+<span class="token variable">$requiredJars</span> = @<span class="token punctuation">(</span>
+    <span class="token string">"..\atsv5.1.31tony.jar"</span><span class="token punctuation">,</span>
+    <span class="token string">".\..\lib\mssql-jdbc-6.4.0.jre8.jar"</span><span class="token punctuation">,</span>
+    <span class="token string">".\..\lib\log4j-core-2.24.3.jar"</span><span class="token punctuation">,</span>
+    <span class="token string">".\..\lib\log4j-api-2.24.3.jar"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword keyword-foreach">foreach</span> <span class="token punctuation">(</span><span class="token variable">$jar</span> in <span class="token variable">$requiredJars</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token variable">$fullPath</span> = <span class="token function">Join-Path</span> <span class="token string">"C:\ATS\ats900\run"</span> <span class="token variable">$jar</span>
+    <span class="token keyword keyword-if">if</span> <span class="token punctuation">(</span><span class="token function">Test-Path</span> <span class="token variable">$fullPath</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">Write-Host</span> <span class="token string">"FOUND: <span class="token variable">$jar</span>"</span> <span class="token operator">-</span>ForegroundColor Green
+    <span class="token punctuation">}</span> <span class="token keyword keyword-else">else</span> <span class="token punctuation">{</span>
+        <span class="token function">Write-Host</span> <span class="token string">"MISSING: <span class="token variable">$jar</span>"</span> <span class="token operator">-</span>ForegroundColor Red
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre><p><strong>Prevention:</strong></p>
+<ul>
+<li>Maintain complete <code>lib\</code> directory</li>
+<li>Use <code>Check-JARs.ps1</code> before deployment</li>
+<li>Document all required dependencies</li>
+</ul>
+<hr>
+<h4 id="issue-5-scheduled-task-terminal-window-not-visible">Issue 5: Scheduled Task Terminal Window Not Visible </h4>
+<p><strong>Symptoms:</strong></p>
+<ul>
+<li>Terminal window not appearing when task runs</li>
+<li>Task executes but window is hidden</li>
+<li>Cannot see ATS output or progress</li>
+</ul>
+<p><strong>Root Cause:</strong></p>
+<ul>
+<li><strong>SYSTEM account limitation:</strong> Tasks running as SYSTEM account cannot display interactive windows to logged-in users. This is a Windows security feature (Session 0 isolation).</li>
+</ul>
+<p><strong>Solution:</strong></p>
+<p><strong>Option 1: Recreate Task as User Account (Recommended)</strong></p>
+<pre data-role="codeBlock" data-info="powershell" class="language-powershell powershell"><code><span class="token comment"># Delete existing task</span>
+<span class="token function">Unregister-ScheduledTask</span> <span class="token operator">-</span>TaskName <span class="token string">"ATS-900-Production"</span> <span class="token operator">-</span>Confirm:<span class="token boolean">$false</span>
+
+<span class="token comment"># Recreate with your username</span>
+cd C:\ATS\ats900\run
+<span class="token punctuation">.</span>\Create-ScheduledTask<span class="token punctuation">.</span>ps1 <span class="token operator">-</span>UserName <span class="token string">"<span class="token variable">$env</span>:USERNAME"</span>
+</code></pre><p><strong>Option 2: Verify Task Configuration</strong></p>
+<ol>
+<li>Open Task Scheduler (<code>taskschd.msc</code>)</li>
+<li>Find "ATS-900-Production" task</li>
+<li>Right-click → Properties</li>
+<li><strong>General tab:</strong>
+<ul>
+<li>Verify "Run only when user is logged on" is selected (for visible window)</li>
+<li>OR "Run whether user is logged on or not" (for SYSTEM account - no window)</li>
+<li>Check "Run with highest privileges"</li>
+</ul>
+</li>
+<li><strong>Actions tab:</strong>
+<ul>
+<li>Verify action uses <code>cmd.exe</code> with wrapper batch file</li>
+<li>Should be: <code>cmd.exe /c "C:\ATS\ats900\run\ATS_Launcher_Wrapper.bat"</code></li>
+</ul>
+</li>
+<li><strong>Settings tab:</strong>
+<ul>
+<li>Uncheck "Hidden" if present</li>
+<li>Check "Allow task to be run on demand"</li>
+</ul>
+</li>
+</ol>
+<p><strong>Option 3: Manual Launch for Monitoring</strong><br>
+If you need to run as SYSTEM but want to see output:</p>
+<pre data-role="codeBlock" data-info="powershell" class="language-powershell powershell"><code><span class="token comment"># Keep scheduled task running in background (SYSTEM)</span>
+<span class="token comment"># Manually launch visible terminal when needed:</span>
+cd C:\ATS\ats900\run
+<span class="token punctuation">.</span>\ATS_Launcher<span class="token punctuation">.</span>ps1
+</code></pre><p><strong>Prevention:</strong></p>
+<ul>
+<li>Always use <code>-UserName</code> parameter when creating scheduled task for visible terminal</li>
+<li>Test task execution immediately after creation</li>
+<li>Use <code>Create-ScheduledTask.ps1</code> which automatically creates wrapper batch file</li>
+<li>Remember: SYSTEM account = no visible window, User account = visible window</li>
+</ul>
+<hr>
+<h3 id="emergency-recovery">Emergency Recovery </h3>
+<p><strong>Stop all ATS processes:</strong></p>
+<pre data-role="codeBlock" data-info="powershell" class="language-powershell powershell"><code><span class="token function">Get-Process</span> java <span class="token punctuation">|</span> <span class="token function">Where-Object</span> <span class="token punctuation">{</span> <span class="token variable">$_</span><span class="token punctuation">.</span>Path <span class="token operator">-like</span> <span class="token string">"*java*"</span> <span class="token punctuation">}</span> <span class="token punctuation">|</span> <span class="token function">Stop-Process</span> <span class="token operator">-</span>Force
+</code></pre><p><strong>Verify port availability:</strong></p>
+<pre data-role="codeBlock" data-info="powershell" class="language-powershell powershell"><code><span class="token function">Get-NetTCPConnection</span> <span class="token operator">-</span>LocalPort 30313 <span class="token operator">-</span>ErrorAction SilentlyContinue
+</code></pre><p><strong>Restart using manual method:</strong></p>
+<pre data-role="codeBlock" data-info="powershell" class="language-powershell powershell"><code>cd C:\ATS\ats900\run
+<span class="token punctuation">.</span>\ATS_Launcher<span class="token punctuation">.</span>ps1
+</code></pre><p><strong>Use Debug Script:</strong></p>
+<pre data-role="codeBlock" data-info="powershell" class="language-powershell powershell"><code><span class="token punctuation">.</span>\<span class="token function">Debug-ATS</span><span class="token punctuation">.</span>ps1
+</code></pre><hr>
+<h2 id="maintenance-procedures">Maintenance Procedures </h2>
+<h3 id="daily-checks">Daily Checks </h3>
+<ul>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox"> Verify ATS process is running</li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox"> Check Trade Commander status ("OnLn")</li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox"> Review error logs for connection issues</li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox"> Monitor database connection pool usage</li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox"> Verify no "connection closed" errors</li>
+</ul>
+<p><strong>Script:</strong></p>
+<pre data-role="codeBlock" data-info="powershell" class="language-powershell powershell"><code><span class="token punctuation">.</span>\<span class="token function">Debug-ATS</span><span class="token punctuation">.</span>ps1 <span class="token operator">-</span>QuickCheck
+</code></pre><h3 id="weekly-maintenance">Weekly Maintenance </h3>
+<ul>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox"> Rotate log files in <code>logs\</code> directory</li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox"> Verify disk space availability</li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox"> Review <code>ats.ini</code> configuration</li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox"> Test restart procedure</li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox"> Check for Java updates (verify compatibility)</li>
+</ul>
+<p><strong>Script:</strong></p>
+<pre data-role="codeBlock" data-info="powershell" class="language-powershell powershell"><code><span class="token comment"># Log rotation</span>
+<span class="token variable">$logs</span> = <span class="token function">Get-ChildItem</span> C:\ATS\ats900\run\logs\<span class="token operator">*</span><span class="token punctuation">.</span>log
+<span class="token variable">$logs</span> <span class="token punctuation">|</span> <span class="token function">Where-Object</span> <span class="token punctuation">{</span> <span class="token variable">$_</span><span class="token punctuation">.</span>LastWriteTime <span class="token operator">-lt</span> <span class="token punctuation">(</span><span class="token function">Get-Date</span><span class="token punctuation">)</span><span class="token punctuation">.</span>AddDays<span class="token punctuation">(</span><span class="token operator">-</span>7<span class="token punctuation">)</span> <span class="token punctuation">}</span> <span class="token punctuation">|</span>
+    <span class="token function">Compress-Archive</span> <span class="token operator">-</span>DestinationPath <span class="token string">"C:\ATS\ats900\run\logs\archive_<span class="token function">$<span class="token punctuation">(</span><span class="token function">Get-Date</span> <span class="token operator">-</span>Format <span class="token string">'yyyyMMdd'</span><span class="token punctuation">)</span></span>.zip"</span>
+</code></pre><h3 id="monthly-review">Monthly Review </h3>
+<ul>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox"> Analyze connection pool performance metrics</li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox"> Review JDBC driver for updates</li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox"> Verify database server connectivity</li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox"> Update documentation as needed</li>
+<li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox"> Review and optimize connection pool settings</li>
+</ul>
+<hr>
+<h2 id="related-procedures">Related Procedures </h2>
+<ul>
+<li><a href="../01-Server-Administration/Production-Firewall-Best-Practices.md">Production Firewall Best Practices</a></li>
+<li><a href="../01-Server-Administration/SOP-Search-and-Filtering.md">SOP Search and Filtering</a></li>
+</ul>
+<h2 id="related-scripts">Related Scripts </h2>
+<ul>
+<li><a href="../../Scripts/05-Production-ATS-Administration/ATS_Launcher.ps1">ATS_Launcher.ps1</a> - Primary PowerShell launcher</li>
+<li><a href="../../Scripts/05-Production-ATS-Administration/ATS_Launcher_Wrapper.bat">ATS_Launcher_Wrapper.bat</a> - Wrapper batch file for visible terminal in scheduled tasks</li>
+<li><a href="../../Scripts/05-Production-ATS-Administration/Create-ScheduledTask.ps1">Create-ScheduledTask.ps1</a> - Scheduled task creator</li>
+<li><a href="../../Scripts/05-Production-ATS-Administration/Check-Java.ps1">Check-Java.ps1</a> - Java verification</li>
+<li><a href="../../Scripts/05-Production-ATS-Administration/Check-JARs.ps1">Check-JARs.ps1</a> - Dependency check</li>
+<li><a href="../../Scripts/05-Production-ATS-Administration/Debug-ATS.ps1">Debug-ATS.ps1</a> - Troubleshooting diagnostics</li>
+</ul>
+<h2 id="references">References </h2>
+<ul>
+<li>Java 8 Documentation: <a href="https://www.oracle.com/java/technologies/javase/javase8-archive-downloads.html">Oracle Java 8</a></li>
+<li>SQL Server JDBC Driver: <a href="https://docs.microsoft.com/en-us/sql/connect/jdbc/">Microsoft JDBC Driver</a></li>
+</ul>
+<h2 id="change-log">Change Log </h2>
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Version</th>
+<th>Author</th>
+<th>Changes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2025-12-26</td>
+<td>2.1</td>
+<td>ATS Production Team</td>
+<td>Added visible terminal window configuration for scheduled tasks, wrapper batch file, and SYSTEM vs user account guidance</td>
+</tr>
+<tr>
+<td>2025-11-26</td>
+<td>2.0</td>
+<td>ATS Production Team</td>
+<td>Added connection pool configuration and PowerShell launchers, restructured to standard SOP format, added mermaid flowcharts</td>
+</tr>
+<tr>
+<td>2025-11-25</td>
+<td>1.0</td>
+<td>ATS Production Team</td>
+<td>Initial SOP creation</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="notes">Notes </h2>
+<p><strong>⚠️ WARNING:</strong></p>
+<ul>
+<li>Always verify port 30313 is available before starting ATS</li>
+<li>Do not modify connection pool settings without understanding the impact</li>
+<li>Test configuration changes in a non-production environment first</li>
+</ul>
+<p><strong>💡 TIP:</strong></p>
+<ul>
+<li>Use <code>Debug-ATS.ps1</code> for comprehensive system diagnostics</li>
+<li>Monitor connection pool metrics to optimize settings</li>
+<li>Keep Java 8 installation separate from other Java versions to avoid conflicts</li>
+</ul>
+<p><strong>📝 NOTE:</strong></p>
+<ul>
+<li>Connection pool settings are optimized for SQL Server 2019 default timeout of 30 minutes</li>
+<li>JMX port 30313 is used for monitoring and should not be exposed to public networks</li>
+<li><strong>Scheduled Task Visibility:</strong> To see terminal window, task MUST run as a user account (not SYSTEM). Use <code>-UserName</code> parameter when creating task.</li>
+<li><strong>Wrapper Batch File:</strong> <code>ATS_Launcher_Wrapper.bat</code> is automatically created to ensure visible terminal windows from scheduled tasks</li>
+<li><strong>SYSTEM Account Limitation:</strong> Tasks running as SYSTEM cannot show interactive windows to logged-in users (Windows Session 0 isolation)</li>
+</ul>
+<hr>
+<p><strong>Document Status:</strong> Approved<br>
+<strong>Next Review Date:</strong> 2026-01-26<br>
+<strong>SOP Owner:</strong> ATS Production Team</p>
+</div>
+      </div>
+      <div class="md-sidebar-toc">
+<div class="md-toc">
+<details style="padding:0;;padding-left:0px;" open="">
+        <summary class="md-toc-link-wrapper">
+          <a href="#ats-900-production-deployment-standard-operating-procedure" class="md-toc-link"><p>ATS 900 Production Deployment Standard Operating Procedure</p>
+</a>
+          </summary>
+        <div>
+          <div class="md-toc-link-wrapper" style="padding:0;;display:list-item;list-style:square;margin-left:42px">
+          <a href="#metadata" class="md-toc-link">
+            <p>Metadata</p>
+
+          </a></div><details style="padding:0;;padding-left:24px;" open="">
+        <summary class="md-toc-link-wrapper">
+          <a href="#purpose" class="md-toc-link"><p>Purpose</p>
+</a>
+          </summary>
+        <div>
+          <div class="md-toc-link-wrapper" style="padding:0;;display:list-item;list-style:square;margin-left:42px">
+          <a href="#procedure-overview" class="md-toc-link">
+            <p>Procedure Overview</p>
+
+          </a></div>
+        </div>
+      </details>
+    <details style="padding:0;;padding-left:24px;" open="">
+        <summary class="md-toc-link-wrapper">
+          <a href="#prerequisites" class="md-toc-link"><p>Prerequisites</p>
+</a>
+          </summary>
+        <div>
+          <div class="md-toc-link-wrapper" style="padding:0;;display:list-item;list-style:square;margin-left:42px">
+          <a href="#required-access" class="md-toc-link">
+            <p>Required Access</p>
+
+          </a></div><div class="md-toc-link-wrapper" style="padding:0;;display:list-item;list-style:square;margin-left:42px">
+          <a href="#required-tools" class="md-toc-link">
+            <p>Required Tools</p>
+
+          </a></div><div class="md-toc-link-wrapper" style="padding:0;;display:list-item;list-style:square;margin-left:42px">
+          <a href="#required-information" class="md-toc-link">
+            <p>Required Information</p>
+
+          </a></div><div class="md-toc-link-wrapper" style="padding:0;;display:list-item;list-style:square;margin-left:42px">
+          <a href="#pre-conditions" class="md-toc-link">
+            <p>Pre-Conditions</p>
+
+          </a></div><div class="md-toc-link-wrapper" style="padding:0;;display:list-item;list-style:square;margin-left:42px">
+          <a href="#required-files-structure" class="md-toc-link">
+            <p>Required Files Structure</p>
+
+          </a></div>
+        </div>
+      </details>
+    <details style="padding:0;;padding-left:24px;" open="">
+        <summary class="md-toc-link-wrapper">
+          <a href="#procedure-steps" class="md-toc-link"><p>Procedure Steps</p>
+</a>
+          </summary>
+        <div>
+          <div class="md-toc-link-wrapper" style="padding:0;;display:list-item;list-style:square;margin-left:42px">
+          <a href="#overview-diagram" class="md-toc-link">
+            <p>Overview Diagram</p>
+
+          </a></div><div class="md-toc-link-wrapper" style="padding:0;;display:list-item;list-style:square;margin-left:42px">
+          <a href="#step-1-verify-prerequisites" class="md-toc-link">
+            <p>Step 1: Verify Prerequisites</p>
+
+          </a></div><div class="md-toc-link-wrapper" style="padding:0;;display:list-item;list-style:square;margin-left:42px">
+          <a href="#step-2-configure-atsini" class="md-toc-link">
+            <p>Step 2: Configure ats.ini</p>
+
+          </a></div><details style="padding:0;;padding-left:24px;" open="">
+        <summary class="md-toc-link-wrapper">
+          <a href="#step-3-choose-deployment-method" class="md-toc-link"><p>Step 3: Choose Deployment Method</p>
+</a>
+          </summary>
+        <div>
+          <div class="md-toc-link-wrapper" style="padding:0;;display:list-item;list-style:square;margin-left:42px">
+          <a href="#method-1-manual-powershell-launch-testing" class="md-toc-link">
+            <p>Method 1: Manual PowerShell Launch (Testing)</p>
+
+          </a></div><div class="md-toc-link-wrapper" style="padding:0;;display:list-item;list-style:square;margin-left:42px">
+          <a href="#method-2-scheduled-task-deployment-production" class="md-toc-link">
+            <p>Method 2: Scheduled Task Deployment (Production)</p>
+
+          </a></div><div class="md-toc-link-wrapper" style="padding:0;;display:list-item;list-style:square;margin-left:42px">
+          <a href="#method-3-legacy-batch-file-fallback" class="md-toc-link">
+            <p>Method 3: Legacy Batch File (Fallback)</p>
+
+          </a></div>
+        </div>
+      </details>
+    <div class="md-toc-link-wrapper" style="padding:0;;display:list-item;list-style:square;margin-left:42px">
+          <a href="#step-4-monitor-startup" class="md-toc-link">
+            <p>Step 4: Monitor Startup</p>
+
+          </a></div>
+        </div>
+      </details>
+    <details style="padding:0;;padding-left:24px;" open="">
+        <summary class="md-toc-link-wrapper">
+          <a href="#verification" class="md-toc-link"><p>Verification</p>
+</a>
+          </summary>
+        <div>
+          <div class="md-toc-link-wrapper" style="padding:0;;display:list-item;list-style:square;margin-left:42px">
+          <a href="#how-to-verify-success" class="md-toc-link">
+            <p>How to Verify Success</p>
+
+          </a></div><div class="md-toc-link-wrapper" style="padding:0;;display:list-item;list-style:square;margin-left:42px">
+          <a href="#success-criteria" class="md-toc-link">
+            <p>Success Criteria</p>
+
+          </a></div>
+        </div>
+      </details>
+    <details style="padding:0;;padding-left:24px;" open="">
+        <summary class="md-toc-link-wrapper">
+          <a href="#troubleshooting" class="md-toc-link"><p>Troubleshooting</p>
+</a>
+          </summary>
+        <div>
+          <details style="padding:0;;padding-left:24px;" open="">
+        <summary class="md-toc-link-wrapper">
+          <a href="#common-issues" class="md-toc-link"><p>Common Issues</p>
+</a>
+          </summary>
+        <div>
+          <div class="md-toc-link-wrapper" style="padding:0;;display:list-item;list-style:square;margin-left:42px">
+          <a href="#issue-1-port-30313-already-in-use" class="md-toc-link">
+            <p>Issue 1: Port 30313 Already in Use</p>
+
+          </a></div><div class="md-toc-link-wrapper" style="padding:0;;display:list-item;list-style:square;margin-left:42px">
+          <a href="#issue-2-java-not-found" class="md-toc-link">
+            <p>Issue 2: Java Not Found</p>
+
+          </a></div><div class="md-toc-link-wrapper" style="padding:0;;display:list-item;list-style:square;margin-left:42px">
+          <a href="#issue-3-connection-closed-errors" class="md-toc-link">
+            <p>Issue 3: Connection Closed Errors</p>
+
+          </a></div><div class="md-toc-link-wrapper" style="padding:0;;display:list-item;list-style:square;margin-left:42px">
+          <a href="#issue-4-missing-dependencies" class="md-toc-link">
+            <p>Issue 4: Missing Dependencies</p>
+
+          </a></div><div class="md-toc-link-wrapper" style="padding:0;;display:list-item;list-style:square;margin-left:42px">
+          <a href="#issue-5-scheduled-task-terminal-window-not-visible" class="md-toc-link">
+            <p>Issue 5: Scheduled Task Terminal Window Not Visible</p>
+
+          </a></div>
+        </div>
+      </details>
+    <div class="md-toc-link-wrapper" style="padding:0;;display:list-item;list-style:square;margin-left:42px">
+          <a href="#emergency-recovery" class="md-toc-link">
+            <p>Emergency Recovery</p>
+
+          </a></div>
+        </div>
+      </details>
+    <details style="padding:0;;padding-left:24px;" open="">
+        <summary class="md-toc-link-wrapper">
+          <a href="#maintenance-procedures" class="md-toc-link"><p>Maintenance Procedures</p>
+</a>
+          </summary>
+        <div>
+          <div class="md-toc-link-wrapper" style="padding:0;;display:list-item;list-style:square;margin-left:42px">
+          <a href="#daily-checks" class="md-toc-link">
+            <p>Daily Checks</p>
+
+          </a></div><div class="md-toc-link-wrapper" style="padding:0;;display:list-item;list-style:square;margin-left:42px">
+          <a href="#weekly-maintenance" class="md-toc-link">
+            <p>Weekly Maintenance</p>
+
+          </a></div><div class="md-toc-link-wrapper" style="padding:0;;display:list-item;list-style:square;margin-left:42px">
+          <a href="#monthly-review" class="md-toc-link">
+            <p>Monthly Review</p>
+
+          </a></div>
+        </div>
+      </details>
+    <div class="md-toc-link-wrapper" style="padding:0;;display:list-item;list-style:square;margin-left:42px">
+          <a href="#related-procedures" class="md-toc-link">
+            <p>Related Procedures</p>
+
+          </a></div><div class="md-toc-link-wrapper" style="padding:0;;display:list-item;list-style:square;margin-left:42px">
+          <a href="#related-scripts" class="md-toc-link">
+            <p>Related Scripts</p>
+
+          </a></div><div class="md-toc-link-wrapper" style="padding:0;;display:list-item;list-style:square;margin-left:42px">
+          <a href="#references" class="md-toc-link">
+            <p>References</p>
+
+          </a></div><div class="md-toc-link-wrapper" style="padding:0;;display:list-item;list-style:square;margin-left:42px">
+          <a href="#change-log" class="md-toc-link">
+            <p>Change Log</p>
+
+          </a></div><div class="md-toc-link-wrapper" style="padding:0;;display:list-item;list-style:square;margin-left:42px">
+          <a href="#notes" class="md-toc-link">
+            <p>Notes</p>
+
+          </a></div>
+        </div>
+      </details>
+
+</div>
+</div>
+      <a id="sidebar-toc-btn">≡</a>
+
+
+    <script type="module">
+// TODO: If ZenUML gets integrated into mermaid in the future,
+//      we can remove the following lines.
+
+
+var MERMAID_CONFIG = ({"startOnLoad":false});
+if (typeof MERMAID_CONFIG !== 'undefined') {
+  MERMAID_CONFIG.startOnLoad = false
+  MERMAID_CONFIG.cloneCssStyles = false
+  MERMAID_CONFIG.theme = "default"
+}
+
+mermaid.initialize(MERMAID_CONFIG || {})
+if (typeof(window['Reveal']) !== 'undefined') {
+  function mermaidRevealHelper(event) {
+    var currentSlide = event.currentSlide
+    var diagrams = currentSlide.querySelectorAll('.mermaid')
+    for (var i = 0; i < diagrams.length; i++) {
+      var diagram = diagrams[i]
+      if (!diagram.hasAttribute('data-processed')) {
+        mermaid.init(null, diagram, ()=> {
+          Reveal.slide(event.indexh, event.indexv)
+        })
+      }
+    }
+  }
+  Reveal.addEventListener('slidetransitionend', mermaidRevealHelper)
+  Reveal.addEventListener('ready', mermaidRevealHelper)
+  await mermaid.run({
+    nodes: document.querySelectorAll('.mermaid')
+  })
+} else {
+  await mermaid.run({
+    nodes: document.querySelectorAll('.mermaid')
+  })
+}
+</script>
+
+
+
+<script>
+
+var sidebarTOCBtn = document.getElementById('sidebar-toc-btn')
+sidebarTOCBtn.addEventListener('click', function(event) {
+  event.stopPropagation()
+  if (document.body.hasAttribute('html-show-sidebar-toc')) {
+    document.body.removeAttribute('html-show-sidebar-toc')
+  } else {
+    document.body.setAttribute('html-show-sidebar-toc', true)
+  }
+})
+</script>
+
+
+    </body></html>

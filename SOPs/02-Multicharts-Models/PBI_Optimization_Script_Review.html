@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>PBI Optimization Script Review</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 { border-bottom: 2px solid #3498db; padding-bottom: 0.3em; }
+        h2 { border-bottom: 1px solid #ecf0f1; padding-bottom: 0.2em; }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1em;
+            overflow-x: auto;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 1em 0;
+            padding-left: 1em;
+            color: #666;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 2em 0;
+            padding: 1em;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .pdf-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 8px 16px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .pdf-link:hover {
+            background-color: #c0392b;
+        }
+    </style>
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <p><a href="PBI_Optimization_Script_Review.pdf" class="pdf-link">📄 Download PDF Version</a></p>
+    <h1 id="powershell-script-review-hyper-v-vm-optimization-for-40-power-bi-desktop-instances">PowerShell Script Review: Hyper-V VM Optimization for 40+ Power BI Desktop Instances</h1>
+<h2 id="executive-summary">Executive Summary</h2>
+<p><strong>Overall Assessment</strong>: The script addresses critical bottlenecks but has several issues that need correction. The approach is sound, but implementation details need refinement.</p>
+<p><strong>Critical Issues Found</strong>: 3
+<strong>Warnings</strong>: 5
+<strong>Recommendations</strong>: 8</p>
+<hr />
+<h2 id="critical-issues">Critical Issues</h2>
+<h3 id="1-desktop-heap-registry-value-format-error-critical">1. <strong>Desktop Heap Registry Value Format Error</strong> ⚠️ CRITICAL</h3>
+<p><strong>Location</strong>: <code>Optimize-DesktopHeap</code> function, line ~45</p>
+<p><strong>Problem</strong>: The script sets the entire <code>Windows</code> registry value, but also attempts to set <code>SharedSection</code> separately in <code>Optimize-MemorySettings</code>. This creates a conflict.</p>
+<p><strong>Current Code</strong>:</p>
+<pre class="codehilite"><code class="language-powershell">$newValue = &quot;%SystemRoot%\system32\csrss.exe ObjectDirectory=Windows SharedSection=1024,204800,1024 ...&quot;
+</code></pre>
+
+<p><strong>Issue</strong>: The <code>SharedSection</code> parameter in the Windows subsystem string uses commas (1024,204800,1024), but the separate registry entry uses spaces. These are different formats and shouldn't both be set.</p>
+<p><strong>Recommendation</strong>: Remove the duplicate <code>SharedSection</code> setting in <code>Optimize-MemorySettings</code> function. The desktop heap should only be set via the <code>Windows</code> registry value.</p>
+<h3 id="2-invalid-registry-path-in-optimize-memorysettings-critical">2. <strong>Invalid Registry Path in Optimize-MemorySettings</strong> ⚠️ CRITICAL</h3>
+<p><strong>Location</strong>: <code>Optimize-MemorySettings</code> function, line ~80</p>
+<p><strong>Problem</strong>: </p>
+<pre class="codehilite"><code class="language-powershell">Set-ItemProperty -Path &quot;HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\SubSystems&quot; -Name &quot;SharedSection&quot; -Value &quot;1024 204800 1024&quot; -Type String
+</code></pre>
+
+<p><strong>Issue</strong>: <code>SharedSection</code> is not a separate registry value - it's a parameter within the <code>Windows</code> value string. This will fail silently or create an invalid registry entry.</p>
+<p><strong>Recommendation</strong>: Remove this line entirely. Desktop heap is already handled in <code>Optimize-DesktopHeap</code>.</p>
+<h3 id="3-storage-performance-test-logic-error-critical">3. <strong>Storage Performance Test Logic Error</strong> ⚠️ CRITICAL</h3>
+<p><strong>Location</strong>: <code>Test-StoragePerformance</code> function, lines ~30-35</p>
+<p><strong>Problem</strong>: </p>
+<pre class="codehilite"><code class="language-powershell">$readLatency = ($results.CounterSamples | Where-Object {$_.Path -like &quot;*Read&quot;}).CookedValue
+$writeLatency = ($results.CounterSamples | Where-Object {$_.Path -like &quot;*Write&quot;}).CookedValue
+</code></pre>
+
+<p><strong>Issue</strong>: If multiple disks exist, this returns an array. The comparison <code>-gt 0.02</code> will fail or behave unexpectedly with arrays.</p>
+<p><strong>Recommendation</strong>: </p>
+<pre class="codehilite"><code class="language-powershell">$readLatency = ($results.CounterSamples | Where-Object {$_.Path -like &quot;*Read&quot;} | Measure-Object -Property CookedValue -Maximum).Maximum
+$writeLatency = ($results.CounterSamples | Where-Object {$_.Path -like &quot;*Write&quot;} | Measure-Object -Property CookedValue -Maximum).Maximum
+</code></pre>
+
+<hr />
+<h2 id="warnings-issues">Warnings &amp; Issues</h2>
+<h3 id="4-missing-error-handling-for-registry-operations">4. <strong>Missing Error Handling for Registry Operations</strong></h3>
+<p><strong>Location</strong>: Multiple functions</p>
+<p><strong>Issue</strong>: Registry operations can fail due to permissions, missing paths, or system locks. The script uses <code>-ErrorAction SilentlyContinue</code> in some places but not consistently.</p>
+<p><strong>Recommendation</strong>: Add try-catch blocks around all registry operations and provide meaningful error messages.</p>
+<h3 id="5-processmodelsection-registry-path-issue">5. <strong>ProcessModelSection Registry Path Issue</strong></h3>
+<p><strong>Location</strong>: <code>Optimize-ProcessSettings</code> function, line ~105</p>
+<p><strong>Issue</strong>: </p>
+<pre class="codehilite"><code class="language-powershell">Set-ItemProperty -Path &quot;HKLM:\SYSTEM\CurrentControlSet\Control&quot; -Name &quot;ProcessModelSection&quot; -Value 65536
+</code></pre>
+
+<p><strong>Problem</strong>: <code>ProcessModelSection</code> is not a standard Windows registry value. This may not exist and will create an invalid entry.</p>
+<p><strong>Recommendation</strong>: Remove or verify this is a custom requirement. Standard Windows doesn't use this registry value.</p>
+<h3 id="6-systempages-registry-value">6. <strong>SystemPages Registry Value</strong></h3>
+<p><strong>Location</strong>: <code>Optimize-ProcessSettings</code> function, line ~115</p>
+<p><strong>Issue</strong>: Setting <code>SystemPages</code> to 0 may not be optimal. This value controls system page table entries allocation.</p>
+<p><strong>Recommendation</strong>: Research appropriate value for your workload. Setting to 0 might actually reduce available system memory.</p>
+<h3 id="7-iopagelocklimit-value-may-be-too-high">7. <strong>IoPageLockLimit Value May Be Too High</strong></h3>
+<p><strong>Location</strong>: <code>Optimize-StorageIO</code> function, line ~135</p>
+<p><strong>Issue</strong>: </p>
+<pre class="codehilite"><code class="language-powershell">Set-ItemProperty -Path &quot;HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management&quot; -Name &quot;IoPageLockLimit&quot; -Value 67108864  # 64MB
+</code></pre>
+
+<p><strong>Problem</strong>: 64MB might be excessive. Default is typically 512KB-1MB. Too high can cause memory pressure.</p>
+<p><strong>Recommendation</strong>: Start with 16777216 (16MB) and monitor. Only increase if needed.</p>
+<h3 id="8-power-bi-temp-directory-strategy-incomplete">8. <strong>Power BI Temp Directory Strategy Incomplete</strong></h3>
+<p><strong>Location</strong>: <code>Optimize-PBITemp</code> function</p>
+<p><strong>Issue</strong>: Creates temp directories but doesn't actually configure Power BI to use them. The script mentions <code>SET PBI_TEMP</code> but Power BI Desktop doesn't use this environment variable.</p>
+<p><strong>Recommendation</strong>: 
+- Use <code>TMP</code> and <code>TEMP</code> environment variables per user session
+- Or configure via Power BI Desktop settings if available
+- Consider using junction points or symlinks to distribute load</p>
+<hr />
+<h2 id="recommendations-for-improvement">Recommendations for Improvement</h2>
+<h3 id="9-add-gdi-object-pool-monitoring">9. <strong>Add GDI Object Pool Monitoring</strong></h3>
+<p><strong>Rationale</strong>: With 40+ Power BI instances, GDI object exhaustion is likely. Each PBI instance can consume 1000+ GDI objects.</p>
+<p><strong>Recommendation</strong>: Add monitoring for:</p>
+<pre class="codehilite"><code class="language-powershell">Get-Counter &quot;\Process(*)\GDI Objects&quot; | Where-Object {$_.InstanceName -like &quot;*PBIDesktop*&quot;}
+</code></pre>
+
+<h3 id="10-add-handle-count-monitoring">10. <strong>Add Handle Count Monitoring</strong></h3>
+<p><strong>Rationale</strong>: Process handle limits can cause hangs. Each PBI instance can use 5000+ handles.</p>
+<p><strong>Recommendation</strong>: Add to emergency monitor:</p>
+<pre class="codehilite"><code class="language-powershell">Get-Process PBIDesktop | Select-Object Id, HandleCount, WorkingSet, GDIObjects, USERObjects
+</code></pre>
+
+<h3 id="11-consider-session-0-isolation">11. <strong>Consider Session 0 Isolation</strong></h3>
+<p><strong>Rationale</strong>: Running 40+ GUI applications in Session 0 (services) can cause desktop heap issues.</p>
+<p><strong>Recommendation</strong>: 
+- Use Remote Desktop Services (RDS) for proper session isolation
+- Or use Windows Server with Desktop Experience and RDS CALs
+- Consider using Windows 10/11 multi-session instead of Server 2019</p>
+<h3 id="12-add-registry-backup-before-changes">12. <strong>Add Registry Backup Before Changes</strong></h3>
+<p><strong>Location</strong>: Beginning of script</p>
+<p><strong>Issue</strong>: Script backs up desktop heap but not other registry changes.</p>
+<p><strong>Recommendation</strong>: </p>
+<pre class="codehilite"><code class="language-powershell">function Backup-Registry {
+    $regBackup = Join-Path $backupDir &quot;registry_backup.reg&quot;
+    reg export &quot;HKLM\SYSTEM\CurrentControlSet\Control\Session Manager&quot; $regBackup /y
+    reg export &quot;HKLM\SYSTEM\CurrentControlSet\Control\FileSystem&quot; &quot;$backupDir\filesystem_backup.reg&quot; /y
+}
+</code></pre>
+
+<h3 id="13-improve-storage-performance-testing">13. <strong>Improve Storage Performance Testing</strong></h3>
+<p><strong>Recommendation</strong>: Add disk queue depth monitoring and alert if &gt; 2x number of physical disks.</p>
+<h3 id="14-add-power-plan-optimization">14. <strong>Add Power Plan Optimization</strong></h3>
+<p><strong>Recommendation</strong>: Ensure High Performance power plan is active:</p>
+<pre class="codehilite"><code class="language-powershell">powercfg /setactive 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c
+powercfg /change monitor-timeout-ac 0
+powercfg /change disk-timeout-ac 0
+</code></pre>
+
+<h3 id="15-add-network-optimization-if-applicable">15. <strong>Add Network Optimization (if applicable)</strong></h3>
+<p><strong>Recommendation</strong>: If PBI instances connect to data sources:</p>
+<pre class="codehilite"><code class="language-powershell"># Increase TCP window size
+netsh int tcp set global autotuninglevel=normal
+netsh int tcp set global chimney=enabled
+</code></pre>
+
+<h3 id="16-consider-using-process-affinity">16. <strong>Consider Using Process Affinity</strong></h3>
+<p><strong>Recommendation</strong>: Distribute PBI processes across CPU cores to avoid contention:</p>
+<pre class="codehilite"><code class="language-powershell"># Example: Assign each PBI instance to specific CPU cores
+$pbiProcesses = Get-Process PBIDesktop
+$coreGroups = 0..29 | Group-Object -Property {$_ % ($pbiProcesses.Count / 10)}
+# Assign affinity based on core groups
+</code></pre>
+
+<hr />
+<h2 id="architecture-recommendations">Architecture Recommendations</h2>
+<h3 id="17-vm-configuration-review">17. <strong>VM Configuration Review</strong></h3>
+<p><strong>Current</strong>: 30 vCPU, 90GB RAM for 40+ PBI instances</p>
+<p><strong>Issues</strong>:
+- Power BI Desktop is not designed for server environments
+- 40+ GUI applications in one VM is an anti-pattern
+- Desktop heap and GDI object pools are per-session, not scalable</p>
+<p><strong>Recommendations</strong>:
+1. <strong>Use Windows 10/11 Enterprise Multi-Session</strong> (Azure Virtual Desktop compatible)
+   - Better session isolation
+   - Designed for multiple concurrent users
+   - Better resource management</p>
+<ol>
+<li><strong>Split into Multiple VMs</strong></li>
+<li>4-5 VMs with 8-10 PBI instances each</li>
+<li>Better isolation and fault tolerance</li>
+<li>
+<p>Easier to scale</p>
+</li>
+<li>
+<p><strong>Consider Power BI Report Server or Power BI Service</strong></p>
+</li>
+<li>Server-based solution designed for concurrent access</li>
+<li>No desktop heap limitations</li>
+<li>Better resource utilization</li>
+</ol>
+<h3 id="18-storage-architecture">18. <strong>Storage Architecture</strong></h3>
+<p><strong>Critical</strong>: Storage I/O is likely the primary bottleneck</p>
+<p><strong>Recommendations</strong>:
+1. <strong>Use Fixed VHDX</strong> (not dynamic)
+2. <strong>Separate VHDX files</strong>:
+   - OS disk: SSD/NVMe
+   - Page file: Separate fast disk
+   - PBI temp: Separate fast disk (if possible)
+   - User profiles: Separate disk
+3. <strong>Host Storage</strong>: 
+   - Use Storage Spaces Direct or SAN with SSD
+   - Avoid network storage (SMB/NFS) for active workloads
+   - Consider NVMe for temp directories</p>
+<h3 id="19-hyper-v-host-settings">19. <strong>Hyper-V Host Settings</strong></h3>
+<p><strong>Recommendations</strong>:</p>
+<pre class="codehilite"><code class="language-powershell"># On Hyper-V Host
+Set-VMProcessor -VMName &quot;YourVM&quot; -Reserve 30 -MaximumPercent 100
+Set-VMMemory -VMName &quot;YourVM&quot; -DynamicMemoryEnabled $false -StartupBytes 90GB
+Set-VMHardDiskDrive -VMName &quot;YourVM&quot; -Path &quot;FixedVHDX.vhdx&quot; -ControllerType SCSI
+</code></pre>
+
+<hr />
+<h2 id="script-improvements">Script Improvements</h2>
+<h3 id="20-add-validation-functions">20. <strong>Add Validation Functions</strong></h3>
+<pre class="codehilite"><code class="language-powershell">function Test-AdminPrivileges {
+    $currentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
+    return $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+}
+
+function Test-RegistryPath {
+    param([string]$Path)
+    return Test-Path $Path
+}
+</code></pre>
+
+<h3 id="21-improve-logging">21. <strong>Improve Logging</strong></h3>
+<ul>
+<li>Add log rotation</li>
+<li>Add severity levels (INFO, WARNING, ERROR, CRITICAL)</li>
+<li>Export to structured format (JSON/CSV) for analysis</li>
+</ul>
+<h3 id="22-add-rollback-capability">22. <strong>Add Rollback Capability</strong></h3>
+<pre class="codehilite"><code class="language-powershell">function Restore-Backup {
+    param([string]$BackupPath)
+    # Restore registry from backup
+    reg import &quot;$BackupPath\registry_backup.reg&quot;
+}
+</code></pre>
+
+<hr />
+<h2 id="testing-recommendations">Testing Recommendations</h2>
+<ol>
+<li><strong>Test on non-production first</strong></li>
+<li><strong>Monitor for 24-48 hours after changes</strong></li>
+<li><strong>Use Performance Monitor to track</strong>:</li>
+<li>Desktop heap usage</li>
+<li>GDI object counts</li>
+<li>Handle counts</li>
+<li>Disk queue depth</li>
+<li>
+<p>Memory pool usage</p>
+</li>
+<li>
+<p><strong>Create baseline metrics before optimization</strong></p>
+</li>
+</ol>
+<hr />
+<h2 id="priority-action-items">Priority Action Items</h2>
+<h3 id="immediate-fix-before-running">Immediate (Fix Before Running):</h3>
+<ol>
+<li>✅ Fix desktop heap registry duplication (Issue #1, #2)</li>
+<li>✅ Fix storage performance test logic (Issue #3)</li>
+<li>✅ Remove invalid registry entries (Issue #5)</li>
+</ol>
+<h3 id="high-priority">High Priority:</h3>
+<ol>
+<li>✅ Add proper error handling</li>
+<li>✅ Add registry backup for all changes</li>
+<li>✅ Fix IoPageLockLimit value</li>
+<li>✅ Add GDI object monitoring</li>
+</ol>
+<h3 id="medium-priority">Medium Priority:</h3>
+<ol>
+<li>✅ Improve Power BI temp directory strategy</li>
+<li>✅ Add power plan optimization</li>
+<li>✅ Add process affinity management</li>
+</ol>
+<h3 id="long-term-architecture">Long-term (Architecture):</h3>
+<ol>
+<li>✅ Consider Windows 10/11 Multi-Session</li>
+<li>✅ Split into multiple VMs</li>
+<li>✅ Evaluate Power BI Report Server alternative</li>
+</ol>
+<hr />
+<h2 id="conclusion">Conclusion</h2>
+<p>The script addresses real issues (desktop heap, storage I/O, memory settings) but needs corrections before production use. The primary concern is running 40+ Power BI Desktop instances in a single VM - this is fundamentally challenging due to Windows session limitations.</p>
+<p><strong>Recommendation</strong>: Fix critical issues, test thoroughly, but also plan for architectural changes (multiple VMs or alternative solutions) as a long-term strategy.</p>
+</body>
+</html>

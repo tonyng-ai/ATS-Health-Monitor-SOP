@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>ATS JDBC Connection Monitor   Database Health Monitoring & Telegram Alerts</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 { border-bottom: 2px solid #3498db; padding-bottom: 0.3em; }
+        h2 { border-bottom: 1px solid #ecf0f1; padding-bottom: 0.2em; }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1em;
+            overflow-x: auto;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 1em 0;
+            padding-left: 1em;
+            color: #666;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 2em 0;
+            padding: 1em;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .pdf-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 8px 16px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .pdf-link:hover {
+            background-color: #c0392b;
+        }
+    </style>
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <p><a href="ATS JDBC Connection Monitor - Database Health Monitoring & Telegram Alerts.pdf" class="pdf-link">📄 Download PDF Version</a></p>
+    <h1 id="ats-jdbc-connection-monitor-database-health-monitoring-telegram-alerts">ATS JDBC Connection Monitor - Database Health Monitoring &amp; Telegram Alerts</h1>
+<h2 id="metadata">Metadata</h2>
+<p><strong>Category:</strong> Trading System Administration - Monitoring
+<strong>Last Updated:</strong> 2024-11-29
+<strong>Author:</strong> ATS Production Team
+<strong>Version:</strong> 3.0
+<strong>Review Date:</strong> 2025-02-28
+<strong>Status:</strong> Active</p>
+<hr />
+<h2 id="purpose">Purpose</h2>
+<p>This procedure covers the deployment, configuration, and operation of the ATS JDBC Connection Monitor program, a Go-based database monitoring tool that checks SQL Server JDBC connection health, detects connection issues, and sends formatted alerts via Telegram. The monitor supports custom SQL queries and stored procedures with table-formatted results. Additionally, the monitor can forward emails from smtp4dev to Telegram, allowing existing email-based code (e.g., <code>sp_send_dbmail</code>) to send notifications to Telegram without code modifications.</p>
+<p><strong>NEW:</strong> The monitor now includes a web-based dashboard for real-time monitoring, historical data analysis, and REST API access. The dashboard can be enabled using the <code>-web</code> flag.</p>
+<p><strong>When to Use:</strong></p>
+<ul>
+<li>Monitoring ATS 900 database connection health in production</li>
+<li>Detecting idle connections, connection leaks, or connection errors</li>
+<li>Setting up automated database health notifications via Telegram</li>
+<li>Monitoring custom SQL queries and stored procedures</li>
+<li>Troubleshooting JDBC connection issues proactively</li>
+<li>Tracking SQL Server configuration settings</li>
+<li>Forwarding emails from smtp4dev to Telegram (email-to-Telegram bridge)</li>
+<li><strong>Using web dashboard for real-time monitoring and historical analysis</strong></li>
+<li><strong>Accessing monitoring data via REST API</strong></li>
+</ul>
+<h3 id="procedure-overview">Procedure Overview</h3>
+<pre class="codehilite"><code class="language-mermaid">flowchart TD
+    Start([Start JDBC Monitor Setup]) --&gt; CheckPrereq{Check Prerequisites}
+    CheckPrereq --&gt;|Missing| Install[Install Go &amp; Dependencies]
+    CheckPrereq --&gt;|Pass| Build[Build Executable]
+    Install --&gt; Build
+    Build --&gt; Config[Configure config.toml]
+    Config --&gt; Telegram{Telegram Required?}
+    Telegram --&gt;|Yes| SetupTelegram[Setup Telegram Bot]
+    Telegram --&gt;|No| Test[Test Monitor]
+    SetupTelegram --&gt; Test
+    Test --&gt; Deploy{Deployment Type}
+    Deploy --&gt;|Manual| ManualRun[Run Manually]
+    Deploy --&gt;|Production| ScheduledTask[Create Scheduled Task]
+    ManualRun --&gt; Monitor[Monitor Database]
+    ScheduledTask --&gt; Monitor
+    Monitor --&gt; Check{Issues Found?}
+    Check --&gt;|Yes| Format[Format Results as Table]
+    Check --&gt;|No| Continue[Continue Monitoring]
+    Format --&gt; Notify[Send Telegram Alert]
+    Notify --&gt; Continue
+    Continue --&gt; Monitor
+</code></pre>
+
+<hr />
+<h2 id="prerequisites">Prerequisites</h2>
+<h3 id="required-access">Required Access</h3>
+<ul>
+<li>[ ] Read access to SQL Server database (<code>fund2</code>)</li>
+<li>[ ] Network access to SQL Server (<code>gfprod</code>)</li>
+<li>[ ] Network access to Telegram API (if using Telegram notifications)</li>
+<li>[ ] Administrator access (if creating scheduled task)</li>
+<li>[ ] Write access to program directory (for logs)</li>
+</ul>
+<h3 id="required-tools">Required Tools</h3>
+<ul>
+<li>[ ] Go programming language (version 1.21 or later)</li>
+<li>[ ] PowerShell (for Windows execution)</li>
+<li>[ ] SQL Server Management Studio (for testing queries)</li>
+<li>[ ] Telegram account (if using Telegram notifications)</li>
+<li>[ ] Text editor (for configuration)</li>
+<li>[ ] <strong>Node.js 18+ and npm (for dashboard frontend - optional)</strong></li>
+<li>[ ] <strong>C compiler (GCC/MinGW on Windows - required for DuckDB driver)</strong></li>
+</ul>
+<h3 id="required-information">Required Information</h3>
+<ul>
+<li>[ ] SQL Server name: <code>gfprod</code></li>
+<li>[ ] Database name: <code>fund2</code></li>
+<li>[ ] Database credentials: <code>ver2user</code> / <code>atsats</code></li>
+<li>[ ] SQL Server port: <code>1433</code> (default)</li>
+<li>[ ] Telegram bot token (if using Telegram - from @BotFather)</li>
+<li>[ ] Telegram chat ID (if using Telegram - user ID or group ID)</li>
+<li>[ ] Desired monitoring interval (recommended: 300 seconds = 5 minutes)</li>
+</ul>
+<h3 id="pre-conditions">Pre-Conditions</h3>
+<ul>
+<li>[ ] SQL Server is accessible from the monitoring machine</li>
+<li>[ ] Database credentials are valid and have appropriate permissions</li>
+<li>[ ] Go is installed and in PATH (verify with <code>go version</code>)</li>
+<li>[ ] Network connectivity to SQL Server and Telegram API (if using Telegram)</li>
+<li>[ ] Firewall rules allow SQL Server connections (port 1433)</li>
+</ul>
+<hr />
+<h2 id="procedure-steps">Procedure Steps</h2>
+<h3 id="step-1-build-the-executable">Step 1: Build the Executable</h3>
+<p><strong>Action:</strong></p>
+<p>Navigate to the program directory and build the executable:</p>
+<pre class="codehilite"><code class="language-powershell">cd I:\SOP-Management\Scripts\05-Production-ATS-Administration\ATS-Health-Monitor
+
+# Download dependencies
+go mod tidy
+
+# Build executable
+go build -o ATS-Health-Monitor.exe .
+</code></pre>
+
+<p><strong>Expected Result:</strong></p>
+<ul>
+<li><code>ATS-Health-Monitor.exe</code> created in the program directory</li>
+<li>No compilation errors</li>
+<li>File size approximately 5-10 MB</li>
+</ul>
+<p><strong>Alternative:</strong> Use the provided build script:</p>
+<pre class="codehilite"><code class="language-powershell">.\COMPILE-NOW.ps1
+</code></pre>
+
+<hr />
+<h3 id="step-2-configure-telegram-bot-optional-but-recommended">Step 2: Configure Telegram Bot (Optional but Recommended)</h3>
+<p><strong>Action:</strong></p>
+<h4 id="21-create-telegram-bot">2.1: Create Telegram Bot</h4>
+<ol>
+<li>Open Telegram and search for <code>@BotFather</code></li>
+<li>Send <code>/newbot</code> command</li>
+<li>Follow prompts to name your bot (e.g., "ATS JDBC Monitor Bot")</li>
+<li>Copy the bot token provided (format: <code>123456789:ABCdefGHIjklMNOpqrsTUVwxyz</code>)</li>
+</ol>
+<h4 id="22-get-chat-id">2.2: Get Chat ID</h4>
+<p><strong>For Personal Chat:</strong></p>
+<ol>
+<li>Start a chat with your bot</li>
+<li>Send any message to the bot</li>
+<li>Visit: <code>https://api.telegram.org/bot&lt;YOUR_BOT_TOKEN&gt;/getUpdates</code></li>
+<li>Find <code>"chat":{"id":123456789}</code> - that's your chat ID</li>
+</ol>
+<p><strong>For Group Chat:</strong></p>
+<ol>
+<li>Add bot to your Telegram group</li>
+<li>Send a message in the group</li>
+<li>Visit the same URL as above</li>
+<li>Find <code>"chat":{"id":-1001234567890}</code> (negative number for groups)</li>
+</ol>
+<p><strong>Expected Result:</strong></p>
+<ul>
+<li>Bot token obtained and saved securely</li>
+<li>Chat ID identified (positive for user, negative for group)</li>
+<li>Bot responds to <code>/start</code> command</li>
+</ul>
+<hr />
+<h3 id="step-3-configure-configtoml">Step 3: Configure config.toml</h3>
+<p><strong>Action:</strong></p>
+<ol>
+<li>Copy the example configuration file:</li>
+</ol>
+<pre class="codehilite"><code class="language-powershell">Copy-Item config.toml.example config.toml
+</code></pre>
+
+<ol>
+<li>Edit <code>config.toml</code> with your settings:</li>
+</ol>
+<pre class="codehilite"><code class="language-toml">[database]
+# SQL Server connection settings
+server = &quot;gfprod&quot;
+port = 1433
+database = &quot;fund2&quot;
+username = &quot;ver2user&quot;
+password = &quot;atsats&quot;
+
+[monitor]
+# Check interval in seconds (default: 300 = 5 minutes)
+# Recommended: 300 (5 min) for production
+check_interval_seconds = 300
+
+# Idle connection threshold in minutes
+# Connections idle longer than this will be reported
+idle_threshold_minutes = 5
+
+# Minimum expected ATS connections (below this triggers ERROR)
+min_ats_connections = 1
+
+# Maximum expected ATS connections (above this triggers WARNING)
+max_ats_connections = 100
+
+# Enable console output (for debugging)
+enable_console = true
+
+[telegram]
+# Enable Telegram notifications
+enabled = true
+
+# Telegram bot token (get from @BotFather)
+token = &quot;YOUR_BOT_TOKEN_HERE&quot;
+
+# Telegram chat ID (your user ID or group ID)
+chat_id = &quot;YOUR_CHAT_ID_HERE&quot;
+</code></pre>
+
+<ol>
+<li><strong>Configure SMTP4Dev Email Forwarding (Optional):</strong></li>
+</ol>
+<p>If you want to forward emails from smtp4dev to Telegram (allows existing email code to send to Telegram):</p>
+<pre class="codehilite"><code class="language-toml">[smtp4dev]
+# Enable smtp4dev email forwarding
+# When enabled, the monitor will also forward emails from smtp4dev to Telegram
+# This allows existing email-based code (sp_send_dbmail) to send notifications to Telegram
+enabled = true
+
+# smtp4dev web interface URL
+url = &quot;http://localhost:5000&quot;
+
+# Check for new emails every N seconds
+poll_interval_seconds = 30
+
+# Delete messages from smtp4dev after forwarding
+delete_after_forward = false
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- SMTP4Dev settings configured (if using email forwarding)
+- Monitor will poll smtp4dev for new emails and forward them to Telegram</p>
+<ol>
+<li><strong>Configure Custom Queries (Required):</strong></li>
+</ol>
+<p><strong>IMPORTANT:</strong> All monitoring is now done via <code>custom_queries</code>. There are no default built-in checks. You must configure at least one custom query to monitor anything.</p>
+<pre class="codehilite"><code class="language-toml"># All monitoring is done via custom_queries
+# IMPORTANT: Empty results (no rows) = everything is good (no issue)
+# If query returns rows, those rows are formatted as a table and sent to Telegram
+
+# Example: Check SQL Server Configuration
+[[custom_queries]]
+name = &quot;Check SQL Server Configuration&quot;
+description = &quot;Monitor SQL Server configuration settings&quot;
+query = &quot;&quot;&quot;
+SELECT name, value_in_use, [description]
+FROM sys.configurations
+WHERE name IN ('remote query timeout', 'remote login timeout')
+AND value_in_use = 0
+&quot;&quot;&quot;
+severity = &quot;WARNING&quot;
+enabled = true
+
+# Example: Check Idle ATS Connections
+[[custom_queries]]
+name = &quot;Check Idle ATS Connections&quot;
+description = &quot;Find ATS connections idle longer than threshold&quot;
+query = &quot;&quot;&quot;
+SELECT
+    session_id,
+    DATEDIFF(MINUTE, last_request_end_time, GETDATE()) as minutes_idle,
+    host_name,
+    program_name
+FROM sys.dm_exec_sessions
+WHERE database_id = DB_ID('%s')
+  AND DATEDIFF(MINUTE, last_request_end_time, GETDATE()) &gt; %d
+  AND UPPER(program_name) LIKE '%ATS%'
+ORDER BY minutes_idle DESC
+&quot;&quot;&quot;
+severity = &quot;WARNING&quot;
+enabled = true
+
+# Example: Check Active Connections Count
+[[custom_queries]]
+name = &quot;Check Active ATS Connections&quot;
+description = &quot;Monitor active ATS connection count&quot;
+query = &quot;&quot;&quot;
+SELECT COUNT(*) as connection_count, 'ATS Connections' as status
+FROM sys.dm_exec_sessions s
+WHERE s.database_id = DB_ID('%s')
+  AND s.is_user_process = 1
+  AND UPPER(s.program_name) LIKE '%ATS%'
+HAVING COUNT(*) &lt; 1 OR COUNT(*) &gt; 100
+&quot;&quot;&quot;
+severity = &quot;ERROR&quot;
+enabled = true
+
+# Example: Check Connection Errors (Stored Procedure)
+[[custom_queries]]
+name = &quot;Check Connection Errors&quot;
+description = &quot;Monitor SQL Server error log for connection errors&quot;
+query = &quot;EXEC xp_readerrorlog 0, 1, 'connection', 'closed'&quot;
+severity = &quot;ERROR&quot;
+enabled = true
+</code></pre>
+
+<p><strong>Expected Result:</strong></p>
+<ul>
+<li><code>config.toml</code> file created with all required settings</li>
+<li>Database connection settings configured</li>
+<li>Telegram settings configured (if using)</li>
+<li>Custom queries configured (if needed)</li>
+</ul>
+<hr />
+<h3 id="step-4-test-database-connection">Step 4: Test Database Connection</h3>
+<p><strong>Action:</strong></p>
+<p>Test the database connection before running the monitor:</p>
+<pre class="codehilite"><code class="language-powershell"># Test connection using SQL Server Management Studio or PowerShell
+$connectionString = &quot;Server=gfprod;Database=fund2;User Id=ver2user;Password=atsats;&quot;
+# Or test with the monitor in console mode
+.\ATS-Health-Monitor.exe
+</code></pre>
+
+<p><strong>Expected Result:</strong></p>
+<ul>
+<li>Monitor starts and displays connection information</li>
+<li>No connection errors in console output</li>
+<li>Monitor begins checking database health</li>
+</ul>
+<hr />
+<h3 id="step-5-run-monitor-manually-testing">Step 5: Run Monitor Manually (Testing)</h3>
+<p><strong>Action:</strong></p>
+<p>Run the monitor manually to verify it works:</p>
+<pre class="codehilite"><code class="language-powershell">.\ATS-Health-Monitor.exe
+</code></pre>
+
+<p><strong>Expected Result:</strong></p>
+<ul>
+<li>Monitor displays startup information:</li>
+<li>Database server and name</li>
+<li>Check interval</li>
+<li>Idle threshold</li>
+<li>ATS connection range</li>
+<li><strong>Custom Queries count</strong> (enabled/total)</li>
+<li>Telegram alerts status</li>
+<li>Monitor begins periodic checks</li>
+<li>Console shows check results (if <code>enable_console = true</code>)</li>
+<li>No errors in output</li>
+</ul>
+<p><strong>Press Ctrl+C to stop the monitor.</strong></p>
+<hr />
+<h3 id="step-51-run-monitor-with-web-dashboard-optional">Step 5.1: Run Monitor with Web Dashboard (Optional)</h3>
+<p><strong>Action:</strong></p>
+<p>Run the monitor with web dashboard enabled:</p>
+<pre class="codehilite"><code class="language-powershell"># Run with web dashboard
+.\ATS-Health-Monitor.exe -web -port 8080 -config config.toml
+</code></pre>
+
+<p><strong>Expected Result:</strong></p>
+<ul>
+<li>Monitor starts in web server mode</li>
+<li>Dashboard accessible at http://localhost:8080</li>
+<li>API endpoints available at http://localhost:8080/api/v1</li>
+<li>Background monitoring continues</li>
+<li>DuckDB database created at <code>C:\ATS\monitor\ats-health-monitor.duckdb</code></li>
+</ul>
+<p><strong>Access Dashboard:</strong></p>
+<ol>
+<li>Open web browser</li>
+<li>Navigate to: http://localhost:8080</li>
+<li>Dashboard displays:</li>
+<li>Overall health status</li>
+<li>Recent issues</li>
+<li>Query execution statistics</li>
+<li>Metrics charts</li>
+</ol>
+<p><strong>API Endpoints:</strong></p>
+<ul>
+<li><code>GET /api/v1/dashboard/summary</code> - Dashboard overview</li>
+<li><code>GET /api/v1/issues</code> - Get issues (with filters)</li>
+<li><code>GET /api/v1/metrics</code> - Get metrics</li>
+<li><code>GET /api/v1/queries/history</code> - Query execution history</li>
+<li><code>GET /api/v1/config</code> - Get configuration (sanitized)</li>
+<li><code>POST /api/v1/check/trigger</code> - Manually trigger health check</li>
+</ul>
+<p><strong>Development Mode (Frontend Separate):</strong></p>
+<p>If you want to run frontend separately for development:</p>
+<pre class="codehilite"><code class="language-powershell"># Terminal 1: Backend
+.\ATS-Health-Monitor.exe -web -port 8080
+
+# Terminal 2: Frontend
+cd frontend
+npm run dev
+</code></pre>
+
+<p>Access frontend at: http://localhost:3000</p>
+<p><strong>Production Mode (Frontend Embedded):</strong></p>
+<p>Build frontend and run in production mode:</p>
+<pre class="codehilite"><code class="language-powershell"># Build frontend
+cd frontend
+npm run build
+cd ..
+
+# Run in production mode
+$env:ENV=&quot;production&quot;
+.\ATS-Health-Monitor.exe -web -port 8080
+</code></pre>
+
+<hr />
+<h3 id="step-6-deploy-as-scheduled-task-production">Step 6: Deploy as Scheduled Task (Production)</h3>
+<p><strong>Action:</strong></p>
+<p>Create a Windows Scheduled Task to run the monitor continuously:</p>
+<p><strong>For Console Mode:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Create scheduled task (console mode)
+$action = New-ScheduledTaskAction -Execute &quot;I:\SOP-Management\Scripts\05-Production-ATS-Administration\ATS-Health-Monitor\ATS-Health-Monitor.exe&quot; -WorkingDirectory &quot;I:\SOP-Management\Scripts\05-Production-ATS-Administration\ATS-Health-Monitor&quot;
+$trigger = New-ScheduledTaskTrigger -AtStartup
+$settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -RunOnlyIfNetworkAvailable
+$principal = New-ScheduledTaskPrincipal -UserId &quot;$env:USERNAME&quot; -LogonType Interactive -RunLevel Highest
+
+Register-ScheduledTask -TaskName &quot;ATS JDBC Connection Monitor&quot; -Action $action -Trigger $trigger -Settings $settings -Principal $principal -Description &quot;Monitors ATS JDBC database connections and sends alerts via Telegram&quot;
+</code></pre>
+
+<p><strong>For Web Dashboard Mode:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Create scheduled task (web mode with dashboard)
+$action = New-ScheduledTaskAction -Execute &quot;I:\SOP-Management\Scripts\05-Production-ATS-Administration\ATS-Health-Monitor\ATS-Health-Monitor.exe&quot; -Argument &quot;-web -port 8080&quot; -WorkingDirectory &quot;I:\SOP-Management\Scripts\05-Production-ATS-Administration\ATS-Health-Monitor&quot;
+$trigger = New-ScheduledTaskTrigger -AtStartup
+$settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -RunOnlyIfNetworkAvailable
+$principal = New-ScheduledTaskPrincipal -UserId &quot;$env:USERNAME&quot; -LogonType Interactive -RunLevel Highest
+
+Register-ScheduledTask -TaskName &quot;ATS JDBC Connection Monitor (Web)&quot; -Action $action -Trigger $trigger -Settings $settings -Principal $principal -Description &quot;Monitors ATS JDBC database connections with web dashboard at http://localhost:8080&quot;
+</code></pre>
+
+<p><strong>Expected Result:</strong></p>
+<ul>
+<li>Scheduled task created successfully</li>
+<li>Task runs at system startup</li>
+<li>Monitor runs continuously in background</li>
+<li>Task visible in Task Scheduler</li>
+</ul>
+<hr />
+<h2 id="verification">Verification</h2>
+<h3 id="how-to-verify-success">How to Verify Success</h3>
+<ol>
+<li><strong>Check Monitor is Running:</strong>
+   <code>powershell
+   Get-Process ATS-Health-Monitor -ErrorAction SilentlyContinue</code></li>
+<li>
+<p>Process should be running</p>
+</li>
+<li>
+<p><strong>Check Scheduled Task:</strong>
+   <code>powershell
+   Get-ScheduledTask -TaskName "ATS JDBC Connection Monitor"</code></p>
+</li>
+<li>
+<p>Task should be enabled and running</p>
+</li>
+<li>
+<p><strong>Verify Console Output (if enabled):</strong></p>
+</li>
+<li>Monitor displays periodic check messages</li>
+<li>No connection errors</li>
+<li>
+<p>Check timestamps are updating</p>
+</li>
+<li>
+<p><strong>Test Telegram Notifications:</strong></p>
+</li>
+<li>Trigger a test condition (e.g., stop ATS to create connection issue)</li>
+<li>Verify Telegram message received</li>
+<li>
+<p>Verify message format is correct (table format for custom queries)</p>
+</li>
+<li>
+<p><strong>Check Custom Queries:</strong></p>
+</li>
+<li>Enable a custom query that returns results</li>
+<li>Verify results are formatted as a table in Telegram</li>
+<li>Verify headers and columns are properly aligned</li>
+</ol>
+<h3 id="success-criteria">Success Criteria</h3>
+<ul>
+<li>[ ] Monitor executable built successfully</li>
+<li>[ ] Configuration file created with at least one custom query enabled</li>
+<li>[ ] Database connection successful</li>
+<li>[ ] Monitor runs without errors</li>
+<li>[ ] Scheduled task created and running (if deployed)</li>
+<li>[ ] Telegram notifications working (if enabled)</li>
+<li>[ ] Custom queries execute successfully</li>
+<li>[ ] Results formatted correctly in Telegram (table format)</li>
+<li>[ ] Empty results (no rows) = no alerts (everything good)</li>
+<li>[ ] Results returned = alerts sent with formatted table</li>
+<li>[ ] <strong>Dashboard accessible (if web mode enabled)</strong></li>
+<li>[ ] <strong>API endpoints responding (if web mode enabled)</strong></li>
+<li>[ ] <strong>DuckDB database created and storing data (if web mode enabled)</strong></li>
+</ul>
+<hr />
+<h2 id="monitoring-architecture">Monitoring Architecture</h2>
+<p><strong>All monitoring is done via <code>custom_queries</code></strong> - there are no default built-in checks. This provides complete flexibility:</p>
+<ul>
+<li>Configure exactly what you want to monitor</li>
+<li>Enable/disable individual queries as needed</li>
+<li>Add your own custom queries for specific monitoring needs</li>
+<li>Use stored procedures for complex monitoring logic</li>
+</ul>
+<p><strong>Key Principle:</strong>
+- <strong>Empty results (0 rows)</strong> = Everything is good, no issue reported
+- <strong>Results returned (1+ rows)</strong> = Issue detected, results formatted as table and sent to Telegram</p>
+<h3 id="email-forwarding-smtp4dev">Email Forwarding (SMTP4Dev)</h3>
+<p>The monitor can also forward emails from smtp4dev to Telegram. This allows existing email-based code (e.g., SQL Server <code>sp_send_dbmail</code>) to send notifications to Telegram without any code modifications.</p>
+<p><strong>How It Works:</strong>
+1. Application code sends email via <code>sp_send_dbmail</code> to smtp4dev (localhost:25)
+2. smtp4dev captures the email (viewable at http://localhost:5000)
+3. Monitor polls smtp4dev API for new emails (every 30 seconds by default)
+4. New emails are formatted and forwarded to Telegram
+5. Processed email IDs are tracked to avoid duplicate forwarding</p>
+<p><strong>Benefits:</strong>
+- No code changes required - existing email code works as-is
+- Automatic forwarding to Telegram
+- Transparent bridge between email and messaging platforms
+- Can view captured emails in smtp4dev web interface</p>
+<hr />
+<h2 id="what-the-monitor-checks-examples">What the Monitor Checks (Examples)</h2>
+<h3 id="example-custom-queries">Example Custom Queries</h3>
+<p>The following are examples of common monitoring queries you can configure. All are provided in <code>config.toml.example</code>:</p>
+<h4 id="1-sql-server-configuration">1. SQL Server Configuration</h4>
+<pre class="codehilite"><code class="language-toml">[[custom_queries]]
+name = &quot;Check SQL Server Configuration&quot;
+query = &quot;&quot;&quot;
+SELECT name, value_in_use, [description]
+FROM sys.configurations
+WHERE name IN ('remote query timeout', 'remote login timeout')
+AND value_in_use = 0
+&quot;&quot;&quot;
+</code></pre>
+
+<p><strong>Alert Conditions:</strong>
+- Returns rows when configuration values are problematic (e.g., timeout = 0)</p>
+<h4 id="2-idle-connections">2. Idle Connections</h4>
+<pre class="codehilite"><code class="language-toml">[[custom_queries]]
+name = &quot;Check Idle ATS Connections&quot;
+query = &quot;&quot;&quot;
+SELECT session_id, minutes_idle, host_name, program_name
+FROM sys.dm_exec_sessions
+WHERE database_id = DB_ID('%s')
+  AND DATEDIFF(MINUTE, last_request_end_time, GETDATE()) &gt; %d
+  AND UPPER(program_name) LIKE '%ATS%'
+&quot;&quot;&quot;
+</code></pre>
+
+<p><strong>Alert Conditions:</strong>
+- Returns rows when ATS connections are idle longer than threshold</p>
+<h4 id="3-active-connections-count">3. Active Connections Count</h4>
+<pre class="codehilite"><code class="language-toml">[[custom_queries]]
+name = &quot;Check Active ATS Connections&quot;
+query = &quot;&quot;&quot;
+SELECT COUNT(*) as connection_count
+FROM sys.dm_exec_sessions s
+WHERE s.database_id = DB_ID('%s')
+  AND UPPER(s.program_name) LIKE '%ATS%'
+HAVING COUNT(*) &lt; 1 OR COUNT(*) &gt; 100
+&quot;&quot;&quot;
+</code></pre>
+
+<p><strong>Alert Conditions:</strong>
+- Returns rows when connection count is outside expected range</p>
+<h4 id="4-connection-errors-stored-procedure">4. Connection Errors (Stored Procedure)</h4>
+<pre class="codehilite"><code class="language-toml">[[custom_queries]]
+name = &quot;Check Connection Errors&quot;
+query = &quot;EXEC xp_readerrorlog 0, 1, 'connection', 'closed'&quot;
+</code></pre>
+
+<p><strong>Alert Conditions:</strong>
+- Returns rows when connection errors are found in SQL Server log</p>
+<h4 id="5-custom-queries-stored-procedures">5. Custom Queries &amp; Stored Procedures</h4>
+<ul>
+<li>Executes user-defined SQL queries or stored procedures</li>
+<li><strong>Important Logic:</strong></li>
+<li><strong>Empty results (0 rows)</strong> = Everything is good, no issue reported</li>
+<li><strong>Results returned (1+ rows)</strong> = Issue detected, results formatted as table and sent to Telegram</li>
+</ul>
+<p><strong>Features:</strong>
+- Supports both SELECT queries and stored procedures (EXEC)
+- Results formatted with proper column headers
+- Aligned columns for readability
+- Automatic truncation of long values (max 30 chars per column)
+- Limit of 50 rows displayed (with total count if more)</p>
+<p><strong>Example Custom Query:</strong></p>
+<pre class="codehilite"><code class="language-toml">[[custom_queries]]
+name = &quot;Check Blocked Sessions&quot;
+description = &quot;Find sessions that are blocked by other sessions&quot;
+query = &quot;&quot;&quot;
+SELECT
+    s.session_id,
+    s.login_name,
+    s.host_name,
+    s.program_name,
+    s.blocking_session_id,
+    s.wait_type,
+    s.wait_time
+FROM sys.dm_exec_sessions s
+WHERE s.database_id = DB_ID('%s')
+  AND s.blocking_session_id &gt; 0
+ORDER BY s.wait_time DESC
+&quot;&quot;&quot;
+severity = &quot;ERROR&quot;
+enabled = true
+</code></pre>
+
+<hr />
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="issue-1-cannot-connect-to-database">Issue 1: Cannot Connect to Database</h3>
+<p><strong>Symptoms:</strong>
+- Monitor fails to start
+- Connection timeout errors
+- Authentication failures</p>
+<p><strong>Solution:</strong></p>
+<ol>
+<li>
+<p>Verify SQL Server is accessible:
+   <code>powershell
+   Test-NetConnection gfprod -Port 1433</code></p>
+</li>
+<li>
+<p>Check firewall rules:
+   <code>powershell
+   Get-NetFirewallRule | Where-Object {$_.DisplayName -like "*SQL*"}</code></p>
+</li>
+<li>
+<p>Verify credentials in <code>config.toml</code>:</p>
+</li>
+<li>Check username and password are correct</li>
+<li>
+<p>Verify user has appropriate permissions</p>
+</li>
+<li>
+<p>Test connection with SQL Server Management Studio:</p>
+</li>
+<li>Use same credentials</li>
+<li>
+<p>Verify connection succeeds</p>
+</li>
+<li>
+<p>Check SQL Server error log for connection issues</p>
+</li>
+</ol>
+<p><strong>Prevention:</strong>
+- Document database credentials securely
+- Test connection before deploying monitor
+- Verify firewall rules allow SQL Server connections</p>
+<hr />
+<h3 id="issue-2-no-telegram-alerts-received">Issue 2: No Telegram Alerts Received</h3>
+<p><strong>Symptoms:</strong>
+- Monitor runs but no Telegram messages
+- Console shows issues but Telegram doesn't receive them</p>
+<p><strong>Solution:</strong></p>
+<ol>
+<li>
+<p>Verify Telegram configuration:
+   <code>toml
+   [telegram]
+   enabled = true
+   token = "YOUR_BOT_TOKEN"  # Must be correct
+   chat_id = "YOUR_CHAT_ID"  # Must be correct</code></p>
+</li>
+<li>
+<p>Test Telegram bot token:
+   <code>powershell
+   $token = "YOUR_BOT_TOKEN"
+   Invoke-RestMethod -Uri "https://api.telegram.org/bot$token/getMe"</code></p>
+</li>
+<li>
+<p>Verify chat ID:</p>
+</li>
+<li>Visit: <code>https://api.telegram.org/bot&lt;TOKEN&gt;/getUpdates</code></li>
+<li>
+<p>Find your chat ID in the response</p>
+</li>
+<li>
+<p>Check network connectivity:
+   <code>powershell
+   Test-NetConnection api.telegram.org -Port 443</code></p>
+</li>
+<li>
+<p>Check console output for Telegram errors</p>
+</li>
+</ol>
+<p><strong>Prevention:</strong>
+- Test Telegram bot before deploying
+- Verify bot token and chat ID are correct
+- Keep Telegram credentials secure</p>
+<hr />
+<h3 id="issue-3-custom-query-returns-no-results-expected-behavior">Issue 3: Custom Query Returns No Results (Expected Behavior)</h3>
+<p><strong>Symptoms:</strong>
+- Custom query configured but no alerts received
+- Query returns 0 rows</p>
+<p><strong>Solution:</strong></p>
+<p><strong>This is CORRECT behavior!</strong></p>
+<ul>
+<li><strong>Empty results (0 rows) = Everything is good (no issue)</strong></li>
+<li>The monitor only sends alerts when queries return results (rows)</li>
+<li>If your query returns 0 rows, that means the condition you're monitoring for is NOT present, which is good</li>
+</ul>
+<p><strong>To test custom queries:</strong></p>
+<ol>
+<li>
+<p>Temporarily modify query to always return results:
+   <code>sql
+   -- Test query that always returns a row
+   SELECT 'Test' as message, GETDATE() as timestamp</code></p>
+</li>
+<li>
+<p>Enable the query and verify Telegram alert is received</p>
+</li>
+<li>
+<p>Restore original query</p>
+</li>
+</ol>
+<hr />
+<h3 id="issue-4-custom-query-results-not-formatted-correctly">Issue 4: Custom Query Results Not Formatted Correctly</h3>
+<p><strong>Symptoms:</strong>
+- Telegram message received but table format is broken
+- Columns not aligned properly</p>
+<p><strong>Solution:</strong></p>
+<ol>
+<li>Check query returns proper column names:</li>
+<li>Use aliases for calculated columns</li>
+<li>
+<p>Avoid special characters in column names</p>
+</li>
+<li>
+<p>Verify results are not too wide:</p>
+</li>
+<li>Monitor automatically truncates columns to 30 characters</li>
+<li>
+<p>Consider limiting columns in query if needed</p>
+</li>
+<li>
+<p>Check for NULL values:</p>
+</li>
+<li>NULL values are displayed as "NULL"</li>
+<li>
+<p>This is expected behavior</p>
+</li>
+<li>
+<p>Verify date/time formatting:</p>
+</li>
+<li>Dates are automatically formatted as readable timestamps</li>
+<li>This should work correctly</li>
+</ol>
+<p><strong>Prevention:</strong>
+- Test queries in SQL Server Management Studio first
+- Use descriptive column aliases
+- Limit number of columns if possible</p>
+<hr />
+<h3 id="issue-5-high-cpu-or-memory-usage">Issue 5: High CPU or Memory Usage</h3>
+<p><strong>Symptoms:</strong>
+- Monitor uses excessive CPU
+- High memory consumption</p>
+<p><strong>Solution:</strong></p>
+<ol>
+<li>
+<p>Increase check interval:
+   <code>toml
+   [monitor]
+   check_interval_seconds = 600  # 10 minutes instead of 5</code></p>
+</li>
+<li>
+<p>Disable console output:
+   <code>toml
+   [monitor]
+   enable_console = false</code></p>
+</li>
+<li>
+<p>Reduce number of custom queries:</p>
+</li>
+<li>Disable unnecessary custom queries</li>
+<li>
+<p>Optimize query performance</p>
+</li>
+<li>
+<p>Check for query performance issues:</p>
+</li>
+<li>Use SQL Server Management Studio to analyze query execution plans</li>
+<li>Add indexes if needed</li>
+</ol>
+<p><strong>Prevention:</strong>
+- Use recommended check interval (300 seconds = 5 minutes)
+- Optimize custom queries before enabling
+- Monitor resource usage regularly</p>
+<hr />
+<h3 id="issue-6-stored-procedure-execution-fails">Issue 6: Stored Procedure Execution Fails</h3>
+<p><strong>Symptoms:</strong>
+- Custom query using EXEC fails
+- Error message about stored procedure</p>
+<p><strong>Solution:</strong></p>
+<ol>
+<li>
+<p>Verify stored procedure exists:
+   <code>sql
+   SELECT * FROM sys.procedures WHERE name = 'YourProcedureName'</code></p>
+</li>
+<li>
+<p>Check permissions:</p>
+</li>
+<li>User must have EXECUTE permission on stored procedure</li>
+<li>
+<p>Verify user has access to required databases (e.g., <code>msdb</code>)</p>
+</li>
+<li>
+<p>Test stored procedure manually:
+   <code>sql
+   EXEC msdb.dbo.sp_help_job @execution_status = 0</code></p>
+</li>
+<li>
+<p>Verify parameter syntax:</p>
+</li>
+<li>Use correct parameter format for stored procedures</li>
+<li>
+<p>Check if parameters are required</p>
+</li>
+<li>
+<p>Check database context:</p>
+</li>
+<li>Some stored procedures require specific database context</li>
+<li>Use fully qualified names: <code>database.schema.procedure</code></li>
+</ol>
+<p><strong>Prevention:</strong>
+- Test stored procedures in SQL Server Management Studio first
+- Verify permissions before configuring
+- Use fully qualified procedure names</p>
+<hr />
+<h3 id="issue-7-dashboard-not-loading">Issue 7: Dashboard Not Loading</h3>
+<p><strong>Symptoms:</strong>
+- Dashboard shows "Loading..." indefinitely
+- API endpoints return errors
+- CORS errors in browser console</p>
+<p><strong>Solution:</strong>
+1. Verify backend is running: <code>Get-Process ATS-Health-Monitor</code>
+2. Check backend logs for errors
+3. Verify port is not in use: <code>Test-NetConnection -ComputerName localhost -Port 8080</code>
+4. Check CORS configuration in code
+5. Verify DuckDB database directory exists: <code>Test-Path C:\ATS\monitor</code>
+6. Check browser console for specific errors
+7. Verify API URL in frontend: <code>frontend/src/services/api.js</code></p>
+<hr />
+<h3 id="issue-8-duckdb-database-errors">Issue 8: DuckDB Database Errors</h3>
+<p><strong>Symptoms:</strong>
+- Database file not created
+- Permission errors
+- SQL syntax errors</p>
+<p><strong>Solution:</strong>
+1. Check directory exists: <code>Test-Path C:\ATS\monitor</code>
+2. Verify write permissions on directory
+3. Create directory manually if needed: <code>New-Item -Path C:\ATS\monitor -ItemType Directory -Force</code>
+4. Run as administrator if permission issues persist
+5. Verify CGO is enabled: <code>$env:CGO_ENABLED="1"</code>
+6. Check DuckDB driver compatibility</p>
+<hr />
+<h3 id="issue-9-frontend-build-fails">Issue 9: Frontend Build Fails</h3>
+<p><strong>Symptoms:</strong>
+- <code>npm run build</code> fails
+- Dependency errors</p>
+<p><strong>Solution:</strong>
+1. Clear node_modules: <code>Remove-Item -Recurse frontend\node_modules</code>
+2. Clear npm cache: <code>npm cache clean --force</code>
+3. Reinstall: <code>cd frontend &amp;&amp; npm install</code>
+4. Check Node.js version: <code>node --version</code> (requires 18+)
+5. Try build again: <code>npm run build</code></p>
+<hr />
+<h3 id="issue-10-cgo-build-errors">Issue 10: CGO Build Errors</h3>
+<p><strong>Symptoms:</strong>
+- Go build fails with CGO errors
+- DuckDB driver compilation fails</p>
+<p><strong>Solution:</strong>
+1. Ensure CGO is enabled: <code>$env:CGO_ENABLED="1"</code>
+2. Install C compiler (GCC or MinGW on Windows)
+3. Verify C compiler in PATH
+4. Try building with verbose output: <code>go build -v -x</code>
+5. Check Go version: <code>go version</code> (requires 1.21+)</p>
+<hr />
+<h2 id="maintenance-procedures">Maintenance Procedures</h2>
+<h3 id="daily-operations">Daily Operations</h3>
+<ul>
+<li>[ ] Verify monitor is running (check process or scheduled task)</li>
+<li>[ ] Review Telegram alerts (if any)</li>
+<li>[ ] Check console output for errors (if console enabled)</li>
+<li>[ ] Verify database connectivity</li>
+</ul>
+<h3 id="weekly-maintenance">Weekly Maintenance</h3>
+<ul>
+<li>[ ] Review custom query results and adjust thresholds if needed</li>
+<li>[ ] Check monitor resource usage (CPU, memory)</li>
+<li>[ ] Verify Telegram notifications are working</li>
+<li>[ ] Review and update custom queries as needed</li>
+</ul>
+<h3 id="monthly-review">Monthly Review</h3>
+<ul>
+<li>[ ] Validate configuration against current environment</li>
+<li>[ ] Review and optimize custom queries</li>
+<li>[ ] Update documentation if configuration changes</li>
+<li>[ ] Test disaster recovery procedures</li>
+<li>[ ] Review alert frequency and adjust thresholds</li>
+</ul>
+<hr />
+<h2 id="related-procedures">Related Procedures</h2>
+<ul>
+<li><a href="ATS_Administration_SOP.md">ATS 900 Production Deployment</a></li>
+<li><a href="../05-Production-ATS-Administration/ATS%20Log%20Monitor%20-%20Real-Time%20Error%20Monitoring%20%26%20Telegram%20Notifications.md">ATS Log Monitor - Real-Time Error Monitoring</a></li>
+</ul>
+<h2 id="related-scripts">Related Scripts</h2>
+<ul>
+<li><a href="../../Scripts/05-Production-ATS-Administration/ATS-Health-Monitor/main.go">ATS-Health-Monitor/main.go</a> - Main Go program source code</li>
+<li><a href="../../Scripts/05-Production-ATS-Administration/ATS-Health-Monitor/COMPILE-NOW.ps1">ATS-Health-Monitor/COMPILE-NOW.ps1</a> - Build script</li>
+<li><a href="../../Scripts/05-Production-ATS-Administration/ATS-Health-Monitor/build.ps1">ATS-Health-Monitor/build.ps1</a> - Build script (includes dashboard)</li>
+<li><a href="../../Scripts/05-Production-ATS-Administration/ATS-Health-Monitor/install.ps1">ATS-Health-Monitor/install.ps1</a> - Installation script</li>
+<li><a href="../../Scripts/05-Production-ATS-Administration/ATS-Health-Monitor/config.toml.example">ATS-Health-Monitor/config.toml.example</a> - Configuration template</li>
+<li><a href="../../Scripts/05-Production-ATS-Administration/ATS-Health-Monitor/README-DASHBOARD.md">ATS-Health-Monitor/README-DASHBOARD.md</a> - Dashboard documentation</li>
+</ul>
+<h2 id="references">References</h2>
+<ul>
+<li>Go Programming Language: <a href="https://go.dev/">https://go.dev/</a></li>
+<li>SQL Server Dynamic Management Views: <a href="https://docs.microsoft.com/en-us/sql/relational-databases/system-dynamic-management-views/">Microsoft Docs</a></li>
+<li>Telegram Bot API: <a href="https://core.telegram.org/bots/api">https://core.telegram.org/bots/api</a></li>
+<li>go-mssqldb Driver: <a href="https://github.com/denisenkom/go-mssqldb">https://github.com/denisenkom/go-mssqldb</a></li>
+<li>Gin Web Framework: <a href="https://gin-gonic.com/">https://gin-gonic.com/</a></li>
+<li>DuckDB: <a href="https://duckdb.org/">https://duckdb.org/</a></li>
+<li>React.js: <a href="https://react.dev/">https://react.dev/</a></li>
+</ul>
+<h2 id="change-log">Change Log</h2>
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Version</th>
+<th>Author</th>
+<th>Changes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2024-11-29</td>
+<td>3.0</td>
+<td>ATS Production Team</td>
+<td>Added web dashboard with React.js frontend, REST API endpoints, and DuckDB data storage. Dashboard provides real-time monitoring, historical data analysis, and query statistics. Backward compatible with console mode.</td>
+</tr>
+<tr>
+<td>2025-12-26</td>
+<td>2.1</td>
+<td>ATS Production Team</td>
+<td>Added smtp4dev email forwarding functionality - monitor can now forward emails from smtp4dev to Telegram, allowing existing email-based code to send notifications to Telegram without code modifications</td>
+</tr>
+<tr>
+<td>2025-12-26</td>
+<td>2.0</td>
+<td>ATS Production Team</td>
+<td>Merged all default monitoring into custom_queries system - no more default checks, everything is now configured as custom queries</td>
+</tr>
+<tr>
+<td>2025-12-26</td>
+<td>1.1</td>
+<td>ATS Production Team</td>
+<td>Added ability to enable/disable individual default monitoring checks (configuration, idle connections, active connections, connection errors)</td>
+</tr>
+<tr>
+<td>2025-12-26</td>
+<td>1.0</td>
+<td>ATS Production Team</td>
+<td>Initial SOP creation with custom query and stored procedure support, table formatting for Telegram</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="notes">Notes</h2>
+<p><strong>WARNING:</strong></p>
+<ul>
+<li>Database credentials are stored in plain text in <code>config.toml</code> - secure this file appropriately</li>
+<li>Custom queries execute with the configured database user's permissions - ensure appropriate access</li>
+<li>Monitor runs continuously - ensure adequate system resources</li>
+<li>Stored procedures may require specific database context or permissions</li>
+<li><strong>You must configure at least one custom query</strong> - there are no default checks anymore</li>
+</ul>
+<p><strong>TIP:</strong></p>
+<ul>
+<li>Use check interval of 300 seconds (5 minutes) for optimal balance</li>
+<li>Test custom queries in SQL Server Management Studio before configuring</li>
+<li>Start with console output enabled to verify monitor is working</li>
+<li>Use descriptive names and descriptions for custom queries</li>
+<li>Remember: Empty results = good (no issue), Results returned = issue to report</li>
+<li>Copy example queries from <code>config.toml.example</code> to get started</li>
+<li>Enable/disable queries individually as needed</li>
+</ul>
+<p><strong>NOTE:</strong></p>
+<ul>
+<li><strong>All monitoring is now done via <code>custom_queries</code></strong> - no default built-in checks</li>
+<li>The monitor supports both SELECT queries and stored procedures (EXEC)</li>
+<li>Custom query results are automatically formatted as tables with headers and aligned columns</li>
+<li>Results are limited to 50 rows for display (with total count if more)</li>
+<li>Column values are truncated to 30 characters for readability</li>
+<li>Date/time values are automatically formatted for better readability</li>
+<li>NULL values are displayed as "NULL"</li>
+<li>Use <code>%s</code> placeholder for database name, <code>%d</code> for <code>idle_threshold_minutes</code> in queries</li>
+<li><strong>Web dashboard requires CGO enabled and C compiler for DuckDB driver</strong></li>
+<li><strong>Dashboard data is stored in DuckDB at <code>C:\ATS\monitor\ats-health-monitor.duckdb</code></strong></li>
+<li><strong>Console mode and web mode are fully backward compatible</strong></li>
+</ul>
+</body>
+</html>

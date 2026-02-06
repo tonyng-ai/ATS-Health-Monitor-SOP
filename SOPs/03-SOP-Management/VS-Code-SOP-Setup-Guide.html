@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>VS Code SOP Setup Guide</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 { border-bottom: 2px solid #3498db; padding-bottom: 0.3em; }
+        h2 { border-bottom: 1px solid #ecf0f1; padding-bottom: 0.2em; }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1em;
+            overflow-x: auto;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 1em 0;
+            padding-left: 1em;
+            color: #666;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 2em 0;
+            padding: 1em;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .pdf-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 8px 16px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .pdf-link:hover {
+            background-color: #c0392b;
+        }
+    </style>
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <p><a href="VS-Code-SOP-Setup-Guide.pdf" class="pdf-link">📄 Download PDF Version</a></p>
+    <h1 id="vs-code-sop-setup-guide">VS Code SOP Setup Guide</h1>
+<h2 id="quick-setup-5-minutes">Quick Setup (5 minutes)</h2>
+<h3 id="step-1-install-vs-code-extensions">Step 1: Install VS Code Extensions</h3>
+<p>Open VS Code and install these extensions:</p>
+<ol>
+<li><strong>Markdown All in One</strong> (by Yu Zhang)</li>
+<li>Press <code>Ctrl+Shift+X</code></li>
+<li>Search: "Markdown All in One"</li>
+<li>
+<p>Install</p>
+</li>
+<li>
+<p><strong>Markdown Preview Enhanced</strong> (by Yiyi Wang) ⭐ <strong>REQUIRED FOR MERMAID</strong></p>
+</li>
+<li>Search: "Markdown Preview Enhanced"</li>
+<li>Install</li>
+<li>
+<p><strong>This renders Mermaid diagrams!</strong></p>
+</li>
+<li>
+<p><strong>Paste Image</strong> (by mushan)</p>
+</li>
+<li>Search: "Paste Image"</li>
+<li>
+<p>Install</p>
+</li>
+<li>
+<p><strong>GitLens</strong> (by GitKraken)</p>
+</li>
+<li>Search: "GitLens"</li>
+<li>Install</li>
+</ol>
+<h3 id="step-2-load-snippets">Step 2: Load Snippets</h3>
+<p>The snippets files are already in <code>.vscode/snippets/</code>:
+- <code>sop-snippets.code-snippets</code> - SOP templates
+- <code>mermaid-snippets.code-snippets</code> - Mermaid diagram templates</p>
+<p><strong>VS Code will automatically load them when you:</strong>
+- Open the workspace folder in VS Code
+- Open any <code>.md</code> file
+- Type in a markdown file</p>
+<p><strong>Note:</strong> If snippets don't appear, reload VS Code:
+- Press <code>Ctrl+Shift+P</code>
+- Type: "Reload Window"
+- Press Enter</p>
+<h3 id="step-3-verify-setup">Step 3: Verify Setup</h3>
+<ol>
+<li>Open any <code>.md</code> file</li>
+<li>Type <code>sop-procedure</code> and press <code>Tab</code></li>
+<li>You should see the full SOP template!</li>
+</ol>
+<h2 id="using-the-snippets">Using the Snippets</h2>
+<h3 id="available-snippets">Available Snippets</h3>
+<table>
+<thead>
+<tr>
+<th>Snippet</th>
+<th>Trigger</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>sop-procedure</code></td>
+<td>Type <code>sop-procedure</code> + Tab</td>
+<td>Complete SOP procedure template</td>
+</tr>
+<tr>
+<td><code>sop-checklist</code></td>
+<td>Type <code>sop-checklist</code> + Tab</td>
+<td>SOP checklist template</td>
+</tr>
+<tr>
+<td><code>sop-step</code></td>
+<td>Type <code>sop-step</code> + Tab</td>
+<td>Add a procedure step</td>
+</tr>
+<tr>
+<td><code>sop-issue</code></td>
+<td>Type <code>sop-issue</code> + Tab</td>
+<td>Add troubleshooting issue</td>
+</tr>
+<tr>
+<td><code>sop-warning</code></td>
+<td>Type <code>sop-warning</code> + Tab</td>
+<td>Warning box</td>
+</tr>
+<tr>
+<td><code>sop-tip</code></td>
+<td>Type <code>sop-tip</code> + Tab</td>
+<td>Tip box</td>
+</tr>
+<tr>
+<td><code>sop-note</code></td>
+<td>Type <code>sop-note</code> + Tab</td>
+<td>Note box</td>
+</tr>
+<tr>
+<td><code>sop-code</code></td>
+<td>Type <code>sop-code</code> + Tab</td>
+<td>Code block</td>
+</tr>
+<tr>
+<td><code>sop-meta</code></td>
+<td>Type <code>sop-meta</code> + Tab</td>
+<td>Metadata section</td>
+</tr>
+</tbody>
+</table>
+<h3 id="mermaid-diagram-snippets">Mermaid Diagram Snippets</h3>
+<table>
+<thead>
+<tr>
+<th>Snippet</th>
+<th>Trigger</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>mermaid-flow</code></td>
+<td>Type <code>mermaid-flow</code> + Tab</td>
+<td>Basic flowchart</td>
+</tr>
+<tr>
+<td><code>mermaid-procedure</code></td>
+<td>Type <code>mermaid-procedure</code> + Tab</td>
+<td>Procedure flowchart</td>
+</tr>
+<tr>
+<td><code>mermaid-seq</code></td>
+<td>Type <code>mermaid-seq</code> + Tab</td>
+<td>Sequence diagram</td>
+</tr>
+<tr>
+<td><code>mermaid-arch</code></td>
+<td>Type <code>mermaid-arch</code> + Tab</td>
+<td>System architecture</td>
+</tr>
+<tr>
+<td><code>mermaid-state</code></td>
+<td>Type <code>mermaid-state</code> + Tab</td>
+<td>State diagram</td>
+</tr>
+<tr>
+<td><code>mermaid-gantt</code></td>
+<td>Type <code>mermaid-gantt</code> + Tab</td>
+<td>Gantt chart</td>
+</tr>
+<tr>
+<td><code>mermaid-pie</code></td>
+<td>Type <code>mermaid-pie</code> + Tab</td>
+<td>Pie chart</td>
+</tr>
+</tbody>
+</table>
+<h3 id="how-to-use">How to Use</h3>
+<ol>
+<li>
+<p><strong>Create New SOP:</strong>
+   <code>powershell
+   .\New-SOP.ps1 -Title "Daily Checks" -Category ServerAdministration</code></p>
+</li>
+<li>
+<p><strong>Open in VS Code:</strong></p>
+</li>
+<li>File will open automatically (if code is in PATH)</li>
+<li>
+<p>Or manually open the file</p>
+</li>
+<li>
+<p><strong>Use Snippets:</strong></p>
+</li>
+<li>Type snippet name (e.g., <code>sop-procedure</code>)</li>
+<li>Press <code>Tab</code> to expand</li>
+<li>Use <code>Tab</code> to move between placeholders</li>
+<li>
+<p>Fill in details</p>
+</li>
+<li>
+<p><strong>Preview:</strong></p>
+</li>
+<li>Press <code>Ctrl+K V</code> for side preview</li>
+<li>Or <code>Ctrl+Shift+V</code> for full preview</li>
+</ol>
+<h2 id="keyboard-shortcuts">Keyboard Shortcuts</h2>
+<table>
+<thead>
+<tr>
+<th>Shortcut</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Ctrl+Shift+V</code></td>
+<td>Toggle Markdown preview</td>
+</tr>
+<tr>
+<td><code>Ctrl+K V</code></td>
+<td>Open preview to side</td>
+</tr>
+<tr>
+<td><code>Alt+Shift+F</code></td>
+<td>Format document</td>
+</tr>
+<tr>
+<td><code>Ctrl+B</code></td>
+<td>Bold text</td>
+</tr>
+<tr>
+<td><code>Ctrl+I</code></td>
+<td>Italic text</td>
+</tr>
+<tr>
+<td><code>Ctrl+Shift+]</code></td>
+<td>Toggle heading level</td>
+</tr>
+<tr>
+<td><code>Tab</code></td>
+<td>Expand snippet / Next placeholder</td>
+</tr>
+<tr>
+<td><code>Shift+Tab</code></td>
+<td>Previous placeholder</td>
+</tr>
+</tbody>
+</table>
+<h2 id="creating-new-sops">Creating New SOPs</h2>
+<h3 id="method-1-using-powershell-script-recommended">Method 1: Using PowerShell Script (Recommended)</h3>
+<pre class="codehilite"><code class="language-powershell"># Create new procedure
+.\New-SOP.ps1 -Title &quot;Daily Server Checks&quot; -Category ServerAdministration -Type Procedure
+
+# Create new checklist
+.\New-SOP.ps1 -Title &quot;Model Deployment&quot; -Category MultichartsModels -Type Checklist
+</code></pre>
+
+<h3 id="method-2-manual-creation">Method 2: Manual Creation</h3>
+<ol>
+<li>Create new <code>.md</code> file in appropriate folder</li>
+<li>Type <code>sop-procedure</code> + <code>Tab</code></li>
+<li>Fill in template</li>
+</ol>
+<h2 id="workflow">Workflow</h2>
+<h3 id="daily-sop-editing">Daily SOP Editing</h3>
+<ol>
+<li>
+<p><strong>Open SOPs folder in VS Code:</strong>
+   <code>File &gt; Open Folder &gt; Select SOPs folder</code></p>
+</li>
+<li>
+<p><strong>Edit with Preview:</strong></p>
+</li>
+<li>Split view: <code>Ctrl+K V</code></li>
+<li>
+<p>Edit on left, preview on right</p>
+</li>
+<li>
+<p><strong>Use Snippets:</strong></p>
+</li>
+<li>Type snippet name</li>
+<li>Press Tab</li>
+<li>
+<p>Fill placeholders</p>
+</li>
+<li>
+<p><strong>Insert Screenshots:</strong></p>
+</li>
+<li>Use Paste Image extension</li>
+<li>
+<p>Or drag to images folder</p>
+</li>
+<li>
+<p><strong>Commit Changes:</strong></p>
+</li>
+<li>Use Git panel (Ctrl+Shift+G)</li>
+<li>Commit with message</li>
+</ol>
+<h2 id="using-mermaid-diagrams">Using Mermaid Diagrams</h2>
+<h3 id="quick-start">Quick Start</h3>
+<ol>
+<li><strong>Type snippet:</strong> <code>mermaid-flow</code> + <code>Tab</code></li>
+<li><strong>Fill in placeholders:</strong> Use <code>Tab</code> to navigate</li>
+<li><strong>Preview:</strong> Press <code>Ctrl+Shift+V</code> to see diagram</li>
+</ol>
+<h3 id="example">Example</h3>
+<pre class="codehilite"><code class="language-markdown">Type: mermaid-procedure + Tab
+
+Result:
+```mermaid
+flowchart TD
+    Start --&gt; Step1 --&gt; Step2 --&gt; End
+</code></pre>
+
+<pre class="codehilite"><code>### See Examples
+
+Check [Mermaid-Examples.md](SOPs/Mermaid-Examples.md) for:
+- Procedure flowcharts
+- Network diagrams
+- Sequence diagrams
+- Troubleshooting trees
+- And more!
+
+### Test Diagrams Online
+
+Use [mermaid.live](https://mermaid.live/) to test diagrams before adding to SOPs.
+
+## Tips
+
+### 1. Customize Snippets
+
+Edit `.vscode/snippets/sop-snippets.code-snippets` to customize:
+- Add your own snippets
+- Modify existing templates
+- Add company-specific sections
+
+### 2. Use Code Snippets
+
+For common PowerShell commands:
+```powershell
+# Create snippet for common commands
+File &gt; Preferences &gt; User Snippets &gt; markdown.json
+</code></pre>
+
+<h3 id="3-organize-with-folders">3. Organize with Folders</h3>
+<p>Keep SOPs organized:
+- Use README.md for navigation
+- Group related SOPs
+- Use consistent naming</p>
+<h3 id="4-use-tags">4. Use Tags</h3>
+<p>Add tags to SOPs for easy searching:</p>
+<pre class="codehilite"><code class="language-markdown">**Tags:** #server #firewall #daily
+</code></pre>
+
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="snippets-not-working">Snippets Not Working</h3>
+<ol>
+<li>Check file is <code>.md</code> (markdown)</li>
+<li>Reload VS Code: <code>Ctrl+Shift+P</code> &gt; "Reload Window"</li>
+<li>Check snippets file exists: <code>.vscode/snippets/sop-snippets.code-snippets</code></li>
+</ol>
+<h3 id="preview-not-showing">Preview Not Showing</h3>
+<ol>
+<li>Install "Markdown All in One" extension</li>
+<li>Press <code>Ctrl+Shift+V</code></li>
+<li>Check file is valid Markdown</li>
+</ol>
+<h3 id="powershell-script-not-found">PowerShell Script Not Found</h3>
+<ol>
+<li>Ensure <code>New-SOP.ps1</code> is in repo root</li>
+<li>Run from repo root directory</li>
+<li>Check execution policy: <code>Set-ExecutionPolicy RemoteSigned</code></li>
+</ol>
+<h2 id="next-steps">Next Steps</h2>
+<ol>
+<li>✅ Install VS Code extensions</li>
+<li>✅ Test snippets (type <code>sop-procedure</code> + Tab)</li>
+<li>✅ Create your first SOP using <code>New-SOP.ps1</code></li>
+<li>✅ Customize snippets for your needs</li>
+<li>✅ Start documenting!</li>
+</ol>
+</body>
+</html>

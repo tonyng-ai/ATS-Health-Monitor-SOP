@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>ATS Health Monitor   Production Deployment Guide</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 { border-bottom: 2px solid #3498db; padding-bottom: 0.3em; }
+        h2 { border-bottom: 1px solid #ecf0f1; padding-bottom: 0.2em; }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1em;
+            overflow-x: auto;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 1em 0;
+            padding-left: 1em;
+            color: #666;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 2em 0;
+            padding: 1em;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .pdf-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 8px 16px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .pdf-link:hover {
+            background-color: #c0392b;
+        }
+    </style>
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <p><a href="ATS Health Monitor - Production Deployment Guide.pdf" class="pdf-link">📄 Download PDF Version</a></p>
+    <h1 id="ats-health-monitor-production-deployment-guide">ATS Health Monitor - Production Deployment Guide</h1>
+<h2 id="metadata">Metadata</h2>
+<p><strong>Category:</strong> Trading System Administration - Deployment
+<strong>Last Updated:</strong> 2025-12-17
+<strong>Author:</strong> ATS Production Team
+<strong>Version:</strong> 1.0
+<strong>Review Date:</strong> 2026-03-17
+<strong>Status:</strong> Active</p>
+<hr />
+<h2 id="purpose">Purpose</h2>
+<p>This procedure provides step-by-step instructions for deploying ATS Health Monitor to production environments, including database migration, version management, and multi-site deployment (NY and HK offices).</p>
+<p><strong>Key Features:</strong>
+- Docker-based deployment for consistency
+- Zero-downtime updates with persistent databases
+- Database migration safety with automatic backups
+- SSH-based remote deployment workflow
+- Multi-site configuration (NY production + HK office)
+- Configuration source of truth: PostgreSQL (TOML for backup only)</p>
+<p><strong>When to Use:</strong></p>
+<ul>
+<li>Initial production deployment</li>
+<li>Version upgrades (e.g., 1.0 → 1.1)</li>
+<li>Deploying to additional sites (HK office)</li>
+<li>Database schema migrations</li>
+<li>Configuration changes requiring restart</li>
+<li>Disaster recovery scenarios</li>
+</ul>
+<hr />
+<h2 id="table-of-contents">Table of Contents</h2>
+<ol>
+<li><a href="#1-prerequisites">Prerequisites</a></li>
+<li><a href="#2-architecture-overview">Architecture Overview</a></li>
+<li><a href="#3-pre-deployment-checklist">Pre-Deployment Checklist</a></li>
+<li><a href="#4-deployment-procedure-ny-production">Deployment Procedure (NY Production)</a></li>
+<li><a href="#5-multi-site-deployment-hk-office">Multi-Site Deployment (HK Office)</a></li>
+<li><a href="#6-database-migration">Database Migration</a></li>
+<li><a href="#7-rollback-procedure">Rollback Procedure</a></li>
+<li><a href="#8-post-deployment-verification">Post-Deployment Verification</a></li>
+<li><a href="#9-common-pitfalls">Common Pitfalls</a></li>
+<li><a href="#10-troubleshooting">Troubleshooting</a></li>
+</ol>
+<hr />
+<h2 id="1-prerequisites">1. Prerequisites</h2>
+<h3 id="database-dependencies">Database Dependencies</h3>
+<h4 id="mssql-ny2">MSSQL (NY2)</h4>
+<p>The following database objects must exist in the <code>fund2</code> database:
+- <strong>View</strong>: <code>fnd.vMegaStockRoundTripLv1</code>
+  - Purpose: Core data source for Round Trip analytics and On-Hand Position matching.
+  - Requirement: Must include <code>EntryDate</code> (DATE) and <code>BrokerAccountCode</code> columns.</p>
+<h4 id="timescaledb-compliance">TimescaleDB (Compliance)</h4>
+<ul>
+<li>Managed via Docker Compose with persistent named volumes.</li>
+<li>Schema is automatically updated via app startup or explicit migration scripts.</li>
+</ul>
+<h3 id="required-access">Required Access</h3>
+<ul>
+<li>[ ] SSH access to production server (Ubuntu VM)</li>
+<li>[ ] Docker permissions on production server</li>
+<li>[ ] Admin account in ATS Health Monitor (for testing)</li>
+<li>[ ] Access to build machine (Windows with Docker)</li>
+</ul>
+<h3 id="required-information">Required Information</h3>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>NY Production</th>
+<th>HK Office</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Server IP</strong></td>
+<td>192.168.168.100</td>
+<td>(TBD - provided by HK IT)</td>
+</tr>
+<tr>
+<td><strong>SSH User</strong></td>
+<td><code>atsadmin</code></td>
+<td><code>atsadmin</code></td>
+</tr>
+<tr>
+<td><strong>SSH Password</strong></td>
+<td><code>@Fund3369Fund</code></td>
+<td>(TBD)</td>
+</tr>
+<tr>
+<td><strong>Docker Network</strong></td>
+<td><code>ats-deploy_default</code></td>
+<td><code>ats-deploy_default</code></td>
+</tr>
+<tr>
+<td><strong>Web Port</strong></td>
+<td>8080</td>
+<td>8080</td>
+</tr>
+<tr>
+<td><strong>Database Port</strong></td>
+<td>5432</td>
+<td>5432</td>
+</tr>
+<tr>
+<td><strong>TimescaleDB User</strong></td>
+<td><code>ats_health_user</code></td>
+<td><code>ats_health_user</code></td>
+</tr>
+<tr>
+<td><strong>TimescaleDB Password</strong></td>
+<td><code>ats_health_2024</code></td>
+<td><code>ats_health_2024</code></td>
+</tr>
+<tr>
+<td><strong>Resync Manager URL</strong></td>
+<td><code>http://192.168.168.2:8090</code></td>
+<td><code>http://192.168.168.2:8090</code> (via VPN)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="version-information">Version Information</h3>
+<p><strong>Current Production Version:</strong> Check with: <code>ssh atsadmin@192.168.168.100 "docker exec ats-health-monitor cat /app/VERSION"</code></p>
+<p><strong>Build Machine Location:</strong> <code>I:\SOP-Management\Scripts\05-Production-ATS-Administration\ATS-Health-Monitor</code></p>
+<hr />
+<h2 id="2-architecture-overview">2. Architecture Overview</h2>
+<h3 id="21-deployment-components">2.1 Deployment Components</h3>
+<pre class="codehilite"><code class="language-mermaid">flowchart TB
+    subgraph BUILD[&quot;Build Machine (Windows)&quot;]
+        SRC[Source Code]
+        DOCKER_BUILD[Docker Build]
+        TAR[Image TAR File]
+    end
+
+    subgraph NY_PROD[&quot;NY Production (192.168.168.100)&quot;]
+        DOCKER_LOAD[Docker Load]
+        COMPOSE[Docker Compose]
+        APP[ats-health-monitor]
+        TSDB[(TimescaleDB&lt;br/&gt;Named Volume)]
+        SMTP[smtp4dev]
+    end
+
+    subgraph HK_OFFICE[&quot;HK Office (TBD IP)&quot;]
+        DOCKER_LOAD_HK[Docker Load]
+        COMPOSE_HK[Docker Compose]
+        APP_HK[ats-health-monitor]
+        TSDB_HK[(TimescaleDB&lt;br/&gt;Named Volume)]
+        SMTP_HK[smtp4dev]
+    end
+
+    subgraph NY2[&quot;NY2 (192.168.168.2)&quot;]
+        RESYNC[resync-manager.exe&lt;br/&gt;HTTP API :8090]
+    end
+
+    SRC --&gt; DOCKER_BUILD
+    DOCKER_BUILD --&gt; TAR
+    TAR --&gt;|SCP| DOCKER_LOAD
+    TAR --&gt;|SCP via VPN| DOCKER_LOAD_HK
+
+    DOCKER_LOAD --&gt; COMPOSE
+    COMPOSE --&gt; APP
+    COMPOSE --&gt; TSDB
+    COMPOSE --&gt; SMTP
+
+    DOCKER_LOAD_HK --&gt; COMPOSE_HK
+    COMPOSE_HK --&gt; APP_HK
+    COMPOSE_HK --&gt; TSDB_HK
+    COMPOSE_HK --&gt; SMTP_HK
+
+    RESYNC --&gt;|HTTP| APP
+    RESYNC --&gt;|HTTP via VPN| APP_HK
+
+    style BUILD fill:#3b82f6,stroke:#60a5fa,color:#fff
+    style NY_PROD fill:#10b981,stroke:#34d399,color:#fff
+    style HK_OFFICE fill:#8b5cf6,stroke:#a78bfa,color:#fff
+    style NY2 fill:#f59e0b,stroke:#fbbf24,color:#000
+</code></pre>
+
+<h3 id="22-data-persistence">2.2 Data Persistence</h3>
+<p><strong>CRITICAL: Docker Named Volumes Ensure Data Safety</strong></p>
+<table>
+<thead>
+<tr>
+<th>Volume</th>
+<th>Purpose</th>
+<th style="text-align: center;">Survives <code>docker compose down</code>?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>timescaledb-data</code></td>
+<td>PostgreSQL database</td>
+<td style="text-align: center;">✅ YES</td>
+</tr>
+<tr>
+<td><code>ats-data</code></td>
+<td>SQLite, state files</td>
+<td style="text-align: center;">✅ YES</td>
+</tr>
+<tr>
+<td><code>ats-logs</code></td>
+<td>Application logs</td>
+<td style="text-align: center;">✅ YES</td>
+</tr>
+<tr>
+<td><code>smtp4dev-data</code></td>
+<td>Email captures</td>
+<td style="text-align: center;">✅ YES</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Key Point:</strong> Running <code>docker compose down</code> stops containers but <strong>DOES NOT</strong> delete volumes. Data is preserved across deployments.</p>
+<h3 id="23-configuration-source-of-truth">2.3 Configuration Source of Truth</h3>
+<p><strong>NEW in Version 1.1+:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Storage</th>
+<th>Purpose</th>
+<th>Deployment Method</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>PostgreSQL</strong></td>
+<td><code>system_config</code> table</td>
+<td><strong>Source of Truth</strong> - All runtime config</td>
+<td>Auto-migrated on startup</td>
+</tr>
+<tr>
+<td><strong>TOML File</strong></td>
+<td><code>/app/config/config.toml</code></td>
+<td>Backup/Import/Export only</td>
+<td>Copied during image build</td>
+</tr>
+</tbody>
+</table>
+<p><strong>What This Means:</strong>
+- ✅ Config changes via GUI are saved to PostgreSQL
+- ✅ PostgreSQL survives container restarts (named volume)
+- ✅ TOML is only used for:
+  - Initial seed (first startup of new database)
+  - Backup exports via GUI
+  - Manual imports for disaster recovery
+- ❌ Editing TOML in production <strong>has no effect</strong> unless you import it</p>
+<hr />
+<h2 id="3-pre-deployment-checklist">3. Pre-Deployment Checklist</h2>
+<h3 id="31-build-verification">3.1 Build Verification</h3>
+<p>On the <strong>build machine</strong> (Windows):</p>
+<pre class="codehilite"><code class="language-powershell">cd I:\SOP-Management\Scripts\05-Production-ATS-Administration\ATS-Health-Monitor
+
+# Check git status
+git status  # Should be clean
+
+# Verify no local changes
+git diff    # Should be empty
+
+# Check current version
+cat VERSION  # Or check /app/VERSION in running container
+</code></pre>
+
+<h3 id="32-testing">3.2 Testing</h3>
+<pre class="codehilite"><code class="language-powershell"># Run unit tests
+go test -v -count=1 ./...
+
+# Build locally
+pwsh build-management/scripts/build-docker.ps1 -Version &quot;1.1.1&quot;
+
+# Test locally (optional)
+docker compose -f deploy/local-test/docker-compose.yml up -d
+# Access: http://localhost:8081
+# Stop: docker compose -f deploy/local-test/docker-compose.yml down
+</code></pre>
+
+<h3 id="33-backup-current-production">3.3 Backup Current Production</h3>
+<p><strong>ALWAYS backup before deploying:</strong></p>
+<pre class="codehilite"><code class="language-bash"># SSH to production
+ssh atsadmin@192.168.168.100
+
+# Backup TimescaleDB
+docker exec timescaledb pg_dump -U ats_health_user -d ats_health_monitor \
+  &gt; ~/backups/ats_health_monitor_$(date +%Y%m%d-%H%M%S).sql
+
+# Verify backup size
+ls -lh ~/backups/*.sql | tail -1
+</code></pre>
+
+<h3 id="34-export-current-configuration">3.4 Export Current Configuration</h3>
+<p><strong>Before deployment, export current config:</strong></p>
+<ol>
+<li>Open production GUI: <code>http://192.168.168.100:8080</code></li>
+<li>Login as <code>admin</code></li>
+<li>Go to <strong>Setup</strong> tab</li>
+<li>Click <strong>📥 Export</strong> button</li>
+<li>Save as <code>config-production-backup-$(date).toml</code></li>
+<li>Store in <code>deploy/VPN1/config/backups/</code></li>
+</ol>
+<hr />
+<h2 id="4-deployment-procedure-ny-production">4. Deployment Procedure (NY Production)</h2>
+<h3 id="step-1-build-docker-image">Step 1: Build Docker Image</h3>
+<p>On <strong>build machine</strong> (Windows):</p>
+<pre class="codehilite"><code class="language-powershell">cd I:\SOP-Management\Scripts\05-Production-ATS-Administration\ATS-Health-Monitor
+
+# Build with version number (e.g., 1.1.1)
+pwsh build-management/scripts/build-docker.ps1 -Version &quot;1.1.1&quot; -SaveTar
+
+# Expected output:
+# - Image built: ats-health-monitor:latest
+# - TAR created: ats-health-monitor.tar (18-20 MB)
+# - Build time: ~60-90 seconds
+</code></pre>
+
+<h3 id="step-2-transfer-image-to-production">Step 2: Transfer Image to Production</h3>
+<pre class="codehilite"><code class="language-powershell"># SCP the TAR file
+scp ats-health-monitor.tar atsadmin@192.168.168.100:~/ats-deploy/
+
+# Expected transfer time: ~5-10 seconds on LAN
+</code></pre>
+
+<h3 id="step-3-load-image-on-production">Step 3: Load Image on Production</h3>
+<pre class="codehilite"><code class="language-bash"># SSH to production
+ssh atsadmin@192.168.168.100
+
+# Navigate to deployment directory
+cd ~/ats-deploy
+
+# Load the new image
+docker load -i ats-health-monitor.tar
+
+# Verify image loaded
+docker images | grep ats-health-monitor
+# Expected: ats-health-monitor   latest   &lt;image_id&gt;   &lt;time&gt;   77MB
+</code></pre>
+
+<h3 id="step-4-database-migration-if-needed">Step 4: Database Migration (if needed)</h3>
+<p><strong>Check if migration scripts exist:</strong></p>
+<pre class="codehilite"><code class="language-bash">ls -la ~/ats-deploy/migrations/
+
+# Common migrations:
+# - add_missing_dashboard_config.sql
+# - v2_fix_schema_complete.sql
+</code></pre>
+
+<p><strong>Apply migration:</strong></p>
+<pre class="codehilite"><code class="language-bash"># Example: Apply missing config defaults
+docker exec timescaledb psql -U ats_health_user -d ats_health_monitor \
+  -f /docker-entrypoint-initdb.d/migrations/add_missing_dashboard_config.sql
+
+# Verify no errors
+echo $?  # Should be 0
+</code></pre>
+
+<p><strong>⚠️ CRITICAL: Database Migration Safety</strong></p>
+<pre class="codehilite"><code class="language-bash"># SAFE: Migrations run INSIDE the container
+# Database is in a named volume (timescaledb-data)
+# Even if container is destroyed, database persists
+
+# To verify database safety:
+docker volume inspect timescaledb-data
+# &quot;Mountpoint&quot;: &quot;/var/lib/docker/volumes/timescaledb-data/_data&quot;
+</code></pre>
+
+<h3 id="step-5-stop-old-container">Step 5: Stop Old Container</h3>
+<pre class="codehilite"><code class="language-bash">cd ~/ats-deploy
+
+# Check current status
+docker compose ps
+
+# Stop and remove old containers (database is SAFE in volume)
+docker compose down
+
+# Verify containers stopped
+docker ps -a | grep ats-health-monitor
+# Should show no running containers
+</code></pre>
+
+<h3 id="step-6-start-new-container">Step 6: Start New Container</h3>
+<pre class="codehilite"><code class="language-bash">cd ~/ats-deploy
+
+# Start all services
+docker compose up -d
+
+# Verify containers started
+docker compose ps
+
+# Expected output:
+# NAME                STATUS           PORTS
+# ats-health-monitor  Up 5 seconds     0.0.0.0:8080-&gt;8080/tcp
+# smtp4dev            Up 10 seconds    0.0.0.0:25-&gt;25/tcp, 0.0.0.0:8025-&gt;80/tcp
+# timescaledb         Up 15 seconds    0.0.0.0:5432-&gt;5432/tcp
+</code></pre>
+
+<h3 id="step-7-verify-startup">Step 7: Verify Startup</h3>
+<pre class="codehilite"><code class="language-bash"># Follow logs (Ctrl+C to exit)
+docker logs ats-health-monitor --tail 50 -f
+
+# Check for success indicators:
+# ✅ &quot;TimescaleDB (compliance database) connected successfully&quot;
+# ✅ &quot;Resync client initialized (manager: http://192.168.168.2:8090, mode: HTTP direct)&quot;
+# ✅ &quot;Web server listening on :8080&quot;
+# ✅ &quot;RBAC enabled: true&quot;
+
+# Check version
+docker exec ats-health-monitor cat /app/VERSION
+
+# Expected output:
+# Version: 1.1.1
+# Built: 2025-12-17T...
+# Commit: &lt;git_hash&gt;
+</code></pre>
+
+<h3 id="step-8-verify-database-connection">Step 8: Verify Database Connection</h3>
+<pre class="codehilite"><code class="language-bash"># Check TimescaleDB tables
+docker exec timescaledb psql -U ats_health_user -d ats_health_monitor -c &quot;\dt&quot;
+
+# Key tables to verify:
+# - system_config (runtime configuration)
+# - rbac_users (user accounts)
+# - rbac_roles (role definitions)
+# - sfc_fix.messages_raw (FIX messages)
+# - sfc_fix.messages_parsed (parsed FIX)
+# - sfc_fix.issues (compliance issues)
+
+# Check record counts
+docker exec timescaledb psql -U ats_health_user -d ats_health_monitor -c &quot;
+  SELECT 'users' as table_name, COUNT(*) FROM rbac_users
+  UNION ALL
+  SELECT 'config_keys', COUNT(*) FROM system_config
+  UNION ALL
+  SELECT 'fix_messages', COUNT(*) FROM sfc_fix.messages_raw;
+&quot;
+</code></pre>
+
+<h3 id="step-9-test-user-login">Step 9: Test User Login</h3>
+<pre class="codehilite"><code class="language-bash"># Test login API
+curl -X POST http://localhost:8080/api/v1/login \
+  -H &quot;Content-Type: application/json&quot; \
+  -d '{&quot;username&quot;:&quot;admin&quot;,&quot;password&quot;:&quot;your_admin_password&quot;}'
+
+# Expected: {&quot;success&quot;:true,&quot;data&quot;:{&quot;username&quot;:&quot;admin&quot;,&quot;roles&quot;:[&quot;admin&quot;],&quot;token&quot;:&quot;...&quot;}}
+</code></pre>
+
+<p><strong>⚠️ CRITICAL: Password Compatibility</strong></p>
+<p><strong>Q: Will existing users need to reset passwords after deployment?</strong></p>
+<p><strong>A: NO!</strong> Bcrypt password hashes are <strong>version-agnostic</strong>. Passwords remain valid across deployments.</p>
+<ul>
+<li>Bcrypt hash format: <code>$2a$10$...</code> (60 characters)</li>
+<li>Same password → same hash verification</li>
+<li>No password reset needed for existing users</li>
+</ul>
+<p><strong>Only reset if:</strong>
+- User forgot password
+- Admin forces password change
+- Security policy requires 90-day rotation</p>
+<hr />
+<h2 id="5-multi-site-deployment-hk-office">5. Multi-Site Deployment (HK Office)</h2>
+<h3 id="51-hk-office-network-setup">5.1 HK Office Network Setup</h3>
+<p><strong>Prerequisites:</strong></p>
+<ol>
+<li><strong>VPN Connection to NY2:</strong></li>
+<li>HK office must have VPN tunnel to <code>192.168.168.2</code> (NY2 Resync Manager)</li>
+<li>Test connectivity: <code>ping 192.168.168.2</code> (from HK server)</li>
+<li>
+<p>Test Resync Manager API: <code>curl http://192.168.168.2:8090/api/status</code></p>
+</li>
+<li>
+<p><strong>HK Server Setup:</strong></p>
+</li>
+<li>Ubuntu 22.04 LTS (same as NY production)</li>
+<li>Docker Engine 24.0+</li>
+<li>Docker Compose v2</li>
+<li>SSH access enabled</li>
+<li>Ports 8080, 5432, 8025 available</li>
+</ol>
+<h3 id="52-initial-hk-deployment">5.2 Initial HK Deployment</h3>
+<p><strong>Step 1: Prepare HK Server</strong></p>
+<pre class="codehilite"><code class="language-bash"># SSH to HK server (replace with actual IP)
+ssh atsadmin@&lt;HK_SERVER_IP&gt;
+
+# Create deployment directory
+mkdir -p ~/ats-deploy/{config,init-scripts,migrations}
+cd ~/ats-deploy
+
+# Create directory structure
+mkdir -p config/backups
+</code></pre>
+
+<p><strong>Step 2: Transfer Deployment Files</strong></p>
+<p>From <strong>build machine</strong>:</p>
+<pre class="codehilite"><code class="language-powershell">cd I:\SOP-Management\Scripts\05-Production-ATS-Administration\ATS-Health-Monitor
+
+# Transfer Docker image
+scp ats-health-monitor.tar atsadmin@&lt;HK_SERVER_IP&gt;:~/ats-deploy/
+
+# Transfer docker-compose.yml
+scp deploy/VPN1/docker-compose.yml atsadmin@&lt;HK_SERVER_IP&gt;:~/ats-deploy/
+
+# Transfer init scripts (database schema)
+scp deploy/VPN1/init-scripts/*.sql atsadmin@&lt;HK_SERVER_IP&gt;:~/ats-deploy/init-scripts/
+
+# Transfer config template
+scp deploy/VPN1/config/config.production.toml atsadmin@&lt;HK_SERVER_IP&gt;:~/ats-deploy/config/config.toml
+</code></pre>
+
+<p><strong>Step 3: Customize HK Configuration</strong></p>
+<pre class="codehilite"><code class="language-bash"># SSH to HK server
+ssh atsadmin@&lt;HK_SERVER_IP&gt;
+
+cd ~/ats-deploy/config
+
+# Edit config for HK-specific settings
+nano config.toml
+</code></pre>
+
+<p><strong>Key HK Configuration Changes:</strong></p>
+<pre class="codehilite"><code class="language-toml"># =============================================================================
+# RESYNC CLIENT - Connects to NY2 Resync Manager via VPN
+# =============================================================================
+[resync]
+enabled = true
+manager_url = &quot;http://192.168.168.2:8090&quot;  # NY2 via VPN
+
+# =============================================================================
+# TIMEZONE - HK Market Hours
+# =============================================================================
+[timezone]
+default_timezone = &quot;Asia/Hong_Kong&quot;
+
+[timezone.markets]
+NYSE = &quot;America/New_York&quot;
+NASDAQ = &quot;America/New_York&quot;
+HKEX = &quot;Asia/Hong_Kong&quot;
+
+# =============================================================================
+# TELEGRAM - HK Trading Alerts
+# =============================================================================
+[telegram]
+enabled = true
+token = &quot;&lt;HK_TELEGRAM_BOT_TOKEN&gt;&quot;
+chat_id = &quot;&lt;HK_TELEGRAM_CHAT_ID&gt;&quot;
+
+# =============================================================================
+# MSSQL DATABASE - Same as NY (readonly access)
+# =============================================================================
+[database]
+server = &quot;192.168.168.2&quot;  # NY2 via VPN
+port = 1433
+database = &quot;Fund2&quot;
+username = &quot;ver2user&quot;
+password = &quot;atsats&quot;
+</code></pre>
+
+<p><strong>Step 4: Load and Start HK Deployment</strong></p>
+<pre class="codehilite"><code class="language-bash">cd ~/ats-deploy
+
+# Load Docker image
+docker load -i ats-health-monitor.tar
+
+# Start services
+docker compose up -d
+
+# Verify startup
+docker compose ps
+docker logs ats-health-monitor --tail 50
+</code></pre>
+
+<p><strong>Step 5: Verify HK Connectivity</strong></p>
+<pre class="codehilite"><code class="language-bash"># Test Resync Manager connection
+docker exec ats-health-monitor curl http://192.168.168.2:8090/api/status
+
+# Expected: {&quot;success&quot;:true,&quot;data&quot;:{&quot;version&quot;:&quot;1.0&quot;,...}}
+
+# Test MSSQL connection
+docker logs ats-health-monitor 2&gt;&amp;1 | grep -i &quot;mssql\|database.*connected&quot;
+
+# Expected: &quot;Database connected to Fund2&quot;
+</code></pre>
+
+<h3 id="53-hk-specific-configuration">5.3 HK-Specific Configuration</h3>
+<p><strong>Subscriber ID (CRITICAL for multi-site):</strong></p>
+<p>Each site MUST have a unique <code>subscriber_id</code> for reliable log feed:</p>
+<pre class="codehilite"><code class="language-toml"># NY Production: subscriber_id = &quot;ny-production&quot;
+# HK Office:     subscriber_id = &quot;hk-office&quot;
+</code></pre>
+
+<p><strong>Why this matters:</strong>
+- Each subscriber tracks its own message sequence
+- Gap detection works independently per site
+- State files are separate (no conflicts)</p>
+<hr />
+<h2 id="6-database-migration">6. Database Migration</h2>
+<h3 id="61-migration-strategy">6.1 Migration Strategy</h3>
+<p><strong>Automatic Migration:</strong></p>
+<p>ATS Health Monitor automatically:
+1. Creates missing tables on startup
+2. Seeds default configuration values
+3. Runs <code>ensureCriticalDefaults()</code> to backfill missing keys</p>
+<p><strong>Manual Migration (for schema changes):</strong></p>
+<pre class="codehilite"><code class="language-bash"># 1. Create migration SQL file
+cat &gt; ~/ats-deploy/migrations/my_migration.sql &lt;&lt; 'EOF'
+-- Add new column example
+ALTER TABLE sfc_fix.issues ADD COLUMN IF NOT EXISTS resolved_by_username TEXT;
+
+-- Add index
+CREATE INDEX IF NOT EXISTS idx_issues_resolved_by ON sfc_fix.issues(resolved_by_username);
+EOF
+
+# 2. Apply migration
+docker exec timescaledb psql -U ats_health_user -d ats_health_monitor \
+  -f /docker-entrypoint-initdb.d/migrations/my_migration.sql
+
+# 3. Verify
+docker exec timescaledb psql -U ats_health_user -d ats_health_monitor -c &quot;\d sfc_fix.issues&quot;
+</code></pre>
+
+<h3 id="62-common-migrations">6.2 Common Migrations</h3>
+<p><strong>Migration 1: Add Missing Dashboard Config</strong></p>
+<pre class="codehilite"><code class="language-bash">docker exec timescaledb psql -U ats_health_user -d ats_health_monitor &lt;&lt; 'EOF'
+INSERT INTO system_config (key, value, category, description, value_type) VALUES
+('order_dashboard.enabled', 'true', 'order_dashboard', 'Enable OnHand order dashboard', 'bool'),
+('order_dashboard.auto_refresh_enabled', 'true', 'order_dashboard', 'Enable auto-refresh', 'bool'),
+('order_dashboard.refresh_interval_ms', '7000', 'order_dashboard', 'Refresh interval (ms)', 'int')
+ON CONFLICT (key) DO NOTHING;
+EOF
+</code></pre>
+
+<p><strong>Migration 2: V2 FIX Schema</strong></p>
+<pre class="codehilite"><code class="language-bash"># Transfer migration file
+scp deploy/migrations/v2_fix_schema_complete.sql atsadmin@192.168.168.100:~/ats-deploy/migrations/
+
+# Apply
+docker exec timescaledb psql -U ats_health_user -d ats_health_monitor \
+  -f /docker-entrypoint-initdb.d/migrations/v2_fix_schema_complete.sql
+
+# Verify
+docker exec timescaledb psql -U ats_health_user -d ats_health_monitor -c &quot;\dt sfc_fix.*&quot;
+
+# Expected tables:
+# - sfc_fix.messages_raw
+# - sfc_fix.messages_parsed
+# - sfc_fix.issues
+# - sfc_fix.issue_messages
+# - sfc_fix.order_states
+</code></pre>
+
+<h3 id="63-migration-rollback">6.3 Migration Rollback</h3>
+<p>If migration fails:</p>
+<pre class="codehilite"><code class="language-bash"># Restore from backup
+docker exec -i timescaledb psql -U ats_health_user -d ats_health_monitor \
+  &lt; ~/backups/ats_health_monitor_&lt;timestamp&gt;.sql
+
+# Restart container
+docker compose restart ats-health-monitor
+</code></pre>
+
+<hr />
+<h2 id="7-rollback-procedure">7. Rollback Procedure</h2>
+<h3 id="71-quick-rollback-same-database">7.1 Quick Rollback (Same Database)</h3>
+<p>If new version has issues but database is compatible:</p>
+<pre class="codehilite"><code class="language-bash"># 1. Stop new version
+docker compose down
+
+# 2. Load old image
+docker load -i ~/ats-deploy/backups/ats-health-monitor-v1.0.tar
+
+# 3. Start old version
+docker compose up -d
+
+# 4. Verify
+docker exec ats-health-monitor cat /app/VERSION
+</code></pre>
+
+<h3 id="72-full-rollback-with-database-restore">7.2 Full Rollback (with Database Restore)</h3>
+<p>If database migration caused issues:</p>
+<pre class="codehilite"><code class="language-bash"># 1. Stop all services
+docker compose down
+
+# 2. Delete database volume (⚠️ DESTRUCTIVE)
+docker volume rm ats-deploy_timescaledb-data
+
+# 3. Recreate volume and restore
+docker compose up -d timescaledb
+sleep 10  # Wait for TimescaleDB to initialize
+
+# 4. Restore backup
+docker exec -i timescaledb psql -U ats_health_user -d ats_health_monitor \
+  &lt; ~/backups/ats_health_monitor_&lt;timestamp&gt;.sql
+
+# 5. Load old image
+docker load -i ~/ats-deploy/backups/ats-health-monitor-v1.0.tar
+
+# 6. Start old version
+docker compose up -d
+
+# 7. Verify
+docker logs ats-health-monitor --tail 50
+</code></pre>
+
+<hr />
+<h2 id="8-post-deployment-verification">8. Post-Deployment Verification</h2>
+<h3 id="81-health-checks">8.1 Health Checks</h3>
+<pre class="codehilite"><code class="language-bash"># 1. Container health
+docker ps
+docker compose ps
+
+# 2. Application logs
+docker logs ats-health-monitor --tail 100
+
+# 3. Database connection
+docker logs ats-health-monitor 2&gt;&amp;1 | grep -i &quot;timescaledb.*connected&quot;
+
+# 4. Resync connection
+docker logs ats-health-monitor 2&gt;&amp;1 | grep -i &quot;resync.*initialized&quot;
+</code></pre>
+
+<h3 id="82-web-dashboard-tests">8.2 Web Dashboard Tests</h3>
+<p>Open browser: <code>http://192.168.168.100:8080</code></p>
+<ul>
+<li>[ ] Login page loads</li>
+<li>[ ] Admin can log in</li>
+<li>[ ] Dashboard displays (no console errors)</li>
+<li>[ ] All tabs load:</li>
+<li>[ ] OnHand Pos</li>
+<li>[ ] Pos History (Round Trip)</li>
+<li>[ ] Order Flow (V2) with sub-tabs</li>
+<li>[ ] ATS Log</li>
+<li>[ ] Database</li>
+<li>[ ] Email</li>
+<li>[ ] Setup</li>
+<li>[ ] Access Control</li>
+<li>[ ] Configuration changes save via GUI</li>
+<li>[ ] Export configuration works</li>
+</ul>
+<h3 id="83-api-tests">8.3 API Tests</h3>
+<pre class="codehilite"><code class="language-bash"># Test login
+curl -X POST http://192.168.168.100:8080/api/v1/login \
+  -H &quot;Content-Type: application/json&quot; \
+  -d '{&quot;username&quot;:&quot;admin&quot;,&quot;password&quot;:&quot;&lt;password&gt;&quot;}'
+
+# Test config endpoint
+curl http://192.168.168.100:8080/api/v1/config/system
+
+# Test V2 FIX messages
+curl http://192.168.168.100:8080/api/v2/messages?limit=10
+
+# Test resync status
+curl http://192.168.168.100:8080/api/v1/resync/status
+</code></pre>
+
+<h3 id="84-resync-test">8.4 Resync Test</h3>
+<ol>
+<li>Open <strong>ATS Log</strong> tab</li>
+<li>Expand <strong>History Sync (Local Log Import)</strong> panel</li>
+<li>Click <strong>🔄 List Available Files</strong></li>
+<li>Verify files are listed from NY2 (e.g., <code>2025-11/app-11-25-2025-1.log.gz</code>)</li>
+<li>Click <strong>▶ Start Resync</strong></li>
+<li>Monitor logs:</li>
+</ol>
+<pre class="codehilite"><code class="language-bash">docker logs ats-health-monitor -f | grep -i &quot;resync\|downloaded\|processed&quot;
+
+# Expected:
+# [Resync HTTP] Downloaded 2025-11\app-11-25-2025-1.log.gz (735016 bytes)
+# [Resync HTTP] Decompressed: 51778 lines
+# [Resync HTTP] Processed: 12058 messages
+</code></pre>
+
+<hr />
+<h2 id="9-common-pitfalls">9. Common Pitfalls</h2>
+<h3 id="pitfall-1-ftp-configuration-removed">Pitfall 1: ❌ FTP Configuration (REMOVED)</h3>
+<p><strong>Problem:</strong> Old config has <code>use_ftp = true</code> but FTP is no longer supported.</p>
+<p><strong>Solution:</strong></p>
+<pre class="codehilite"><code class="language-toml"># OLD (WRONG):
+[resync]
+use_ftp = true
+ftp_host = &quot;192.168.168.100&quot;
+
+# NEW (CORRECT):
+[resync]
+enabled = true
+manager_url = &quot;http://192.168.168.2:8090&quot;
+# HTTP mode is always used (FTP removed in v1.1)
+</code></pre>
+
+<h3 id="pitfall-2-toml-edits-ignored">Pitfall 2: ❌ TOML Edits Ignored</h3>
+<p><strong>Problem:</strong> Editing <code>config.toml</code> in container has no effect.</p>
+<p><strong>Why:</strong> PostgreSQL is the source of truth. TOML is only read on first boot.</p>
+<p><strong>Solution:</strong>
+1. Export current config via GUI
+2. Edit the exported TOML
+3. Import via GUI <strong>📤 Import</strong> button
+4. Or edit directly in <strong>Setup</strong> tab</p>
+<h3 id="pitfall-3-deleting-database-volume">Pitfall 3: ❌ Deleting Database Volume</h3>
+<p><strong>Problem:</strong> Running <code>docker volume rm timescaledb-data</code> deletes all data!</p>
+<p><strong>Why:</strong> Named volumes persist outside containers. Deleting volume = data loss.</p>
+<p><strong>Solution:</strong>
+- ✅ <code>docker compose down</code> - Safe (stops containers, keeps volumes)
+- ✅ <code>docker compose up -d</code> - Safe (uses existing volumes)
+- ❌ <code>docker volume rm</code> - <strong>DESTRUCTIVE!</strong></p>
+<h3 id="pitfall-4-port-conflicts">Pitfall 4: ❌ Port Conflicts</h3>
+<p><strong>Problem:</strong> Port 8080 already in use.</p>
+<pre class="codehilite"><code class="language-bash"># Check port usage
+sudo netstat -tulpn | grep :8080
+
+# Solution 1: Stop conflicting service
+sudo systemctl stop &lt;service_name&gt;
+
+# Solution 2: Change port in docker-compose.yml
+ports:
+  - &quot;8081:8080&quot;  # External:Internal
+</code></pre>
+
+<h3 id="pitfall-5-timescaledb-not-ready">Pitfall 5: ❌ TimescaleDB Not Ready</h3>
+<p><strong>Problem:</strong> App starts before TimescaleDB is ready.</p>
+<p><strong>Why:</strong> <code>depends_on</code> waits for container start, not service ready.</p>
+<p><strong>Solution:</strong> Built-in health check in <code>docker-compose.yml</code>:</p>
+<pre class="codehilite"><code class="language-yaml">ats-health-monitor:
+  depends_on:
+    timescaledb:
+      condition: service_healthy
+</code></pre>
+
+<h3 id="pitfall-6-v2-schema-missing">Pitfall 6: ❌ V2 Schema Missing</h3>
+<p><strong>Problem:</strong> <code>ERROR: relation "sfc_fix.issues" does not exist</code></p>
+<p><strong>Why:</strong> TimescaleDB doesn't allow simple foreign keys on hypertables.</p>
+<p><strong>Solution:</strong> Apply V2 schema migration:</p>
+<pre class="codehilite"><code class="language-bash">scp deploy/migrations/v2_fix_schema_complete.sql atsadmin@192.168.168.100:~/ats-deploy/migrations/
+ssh atsadmin@192.168.168.100
+docker exec timescaledb psql -U ats_health_user -d ats_health_monitor \
+  -f /docker-entrypoint-initdb.d/migrations/v2_fix_schema_complete.sql
+docker compose restart ats-health-monitor
+</code></pre>
+
+<h3 id="pitfall-7-password-hash-mismatch">Pitfall 7: ❌ Password Hash Mismatch</h3>
+<p><strong>Problem:</strong> Can't login after deployment.</p>
+<p><strong>Why:</strong> Bcrypt hash doesn't match.</p>
+<p><strong>Solution:</strong> Reset admin password via PostgreSQL:</p>
+<pre class="codehilite"><code class="language-bash"># Generate new hash
+cd I:\SOP-Management\Scripts\05-Production-ATS-Administration\ATS-Health-Monitor
+go run scripts/hashpassword.go hash YourNewPassword
+
+# Update in database
+docker exec timescaledb psql -U ats_health_user -d ats_health_monitor &lt;&lt; 'EOF'
+UPDATE rbac_users
+SET password_hash = '$2a$10$...'  -- paste hash here
+WHERE username = 'admin';
+EOF
+</code></pre>
+
+<h3 id="pitfall-8-resync-manager-not-reachable">Pitfall 8: ❌ Resync Manager Not Reachable</h3>
+<p><strong>Problem:</strong> "Resync Manager not configured" or "Connection failed"</p>
+<p><strong>Why:</strong> NY2 resync-manager.exe is not running or firewall blocks port 8090.</p>
+<p><strong>Solution:</strong></p>
+<pre class="codehilite"><code class="language-bash"># Test from production
+curl http://192.168.168.2:8090/api/status
+
+# If fails, check NY2:
+# 1. Is resync-manager.exe running?
+# 2. Is port 8090 open in firewall?
+# 3. Can ping 192.168.168.2 from production?
+</code></pre>
+
+<hr />
+<h2 id="10-troubleshooting">10. Troubleshooting</h2>
+<h3 id="issue-1-container-wont-start">Issue 1: Container Won't Start</h3>
+<p><strong>Symptoms:</strong></p>
+<pre class="codehilite"><code class="language-bash">docker compose ps
+# NAME                STATUS
+# ats-health-monitor  Exited (1)
+</code></pre>
+
+<p><strong>Diagnosis:</strong></p>
+<pre class="codehilite"><code class="language-bash">docker logs ats-health-monitor
+# Look for errors
+</code></pre>
+
+<p><strong>Common Causes:</strong>
+1. TimescaleDB not ready
+2. Configuration error
+3. Port already in use
+4. Missing volume permissions</p>
+<h3 id="issue-2-cant-connect-to-timescaledb">Issue 2: Can't Connect to TimescaleDB</h3>
+<p><strong>Symptoms:</strong></p>
+<pre class="codehilite"><code>ERROR: Failed to connect to TimescaleDB: connection refused
+</code></pre>
+
+<p><strong>Solution:</strong></p>
+<pre class="codehilite"><code class="language-bash"># 1. Check TimescaleDB is running
+docker compose ps timescaledb
+
+# 2. Check TimescaleDB logs
+docker logs timescaledb
+
+# 3. Test connection manually
+docker exec timescaledb pg_isready -U ats_health_user
+
+# 4. Verify credentials
+docker exec timescaledb psql -U ats_health_user -d ats_health_monitor -c &quot;SELECT 1&quot;
+</code></pre>
+
+<h3 id="issue-3-dashboard-returns-404">Issue 3: Dashboard Returns 404</h3>
+<p><strong>Symptoms:</strong> Browser shows "404 Not Found" for all routes.</p>
+<p><strong>Cause:</strong> Frontend not built correctly.</p>
+<p><strong>Solution:</strong></p>
+<pre class="codehilite"><code class="language-bash"># Rebuild with explicit frontend build
+pwsh build-management/scripts/build-docker.ps1 -Version &quot;1.1.1&quot; -SaveTar
+
+# Verify frontend exists in image
+docker run --rm ats-health-monitor:latest ls -la /app/frontend/build
+
+# Expected: index.html, assets/
+</code></pre>
+
+<h3 id="issue-4-resync-shows-0-files">Issue 4: Resync Shows 0 Files</h3>
+<p><strong>Symptoms:</strong> "Found 0 files in session" during resync.</p>
+<p><strong>Cause:</strong> HTTP mode is working, but no files available from resync manager.</p>
+<p><strong>Solution:</strong></p>
+<pre class="codehilite"><code class="language-bash"># 1. Check resync manager API
+curl http://192.168.168.2:8090/api/files
+
+# 2. Verify files exist on NY2
+# (From NY2): dir C:\ATS\ats900\run\atslog
+
+# 3. Check resync manager logs on NY2
+</code></pre>
+
+<hr />
+<h2 id="appendix-a-quick-reference-commands">Appendix A: Quick Reference Commands</h2>
+<h3 id="build-commands">Build Commands</h3>
+<pre class="codehilite"><code class="language-powershell"># Development build
+pwsh build-management/scripts/build-docker.ps1 -Version &quot;dev&quot; -DevMode $true
+
+# Production build
+pwsh build-management/scripts/build-docker.ps1 -Version &quot;1.1.1&quot; -SaveTar
+</code></pre>
+
+<h3 id="deployment-commands">Deployment Commands</h3>
+<pre class="codehilite"><code class="language-bash"># Transfer image
+scp ats-health-monitor.tar atsadmin@192.168.168.100:~/ats-deploy/
+
+# Load and deploy
+ssh atsadmin@192.168.168.100
+cd ~/ats-deploy
+docker load -i ats-health-monitor.tar
+docker compose down
+docker compose up -d
+</code></pre>
+
+<h3 id="verification-commands">Verification Commands</h3>
+<pre class="codehilite"><code class="language-bash"># Check version
+docker exec ats-health-monitor cat /app/VERSION
+
+# Check logs
+docker logs ats-health-monitor --tail 100 -f
+
+# Check database
+docker exec timescaledb psql -U ats_health_user -d ats_health_monitor -c &quot;\dt&quot;
+
+# Test API
+curl http://localhost:8080/api/health
+</code></pre>
+
+<h3 id="backup-commands">Backup Commands</h3>
+<pre class="codehilite"><code class="language-bash"># Backup database
+docker exec timescaledb pg_dump -U ats_health_user -d ats_health_monitor \
+  &gt; ~/backups/ats_health_monitor_$(date +%Y%m%d-%H%M%S).sql
+
+# Export configuration
+curl http://localhost:8080/api/v1/config/export &gt; config-backup-$(date +%Y%m%d).toml
+</code></pre>
+
+<hr />
+<h2 id="appendix-b-version-history">Appendix B: Version History</h2>
+<table>
+<thead>
+<tr>
+<th>Version</th>
+<th>Date</th>
+<th>Changes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1.1.1</td>
+<td>2025-12-17</td>
+<td><strong>FTP Removed</strong>: HTTP-only resync. <strong>PostgreSQL Config</strong>: Source of truth. <strong>V2 Schema</strong>: Complete FIX parser tables.</td>
+</tr>
+<tr>
+<td>1.1.0</td>
+<td>2025-12-16</td>
+<td>V2 Dashboard: OnHand Pos, Pos History, Order Flow with sub-tabs (Ghost STP, Multi-Venue, Patterns).</td>
+</tr>
+<tr>
+<td>1.0.0</td>
+<td>2025-12-10</td>
+<td>Initial production release with RBAC, TimescaleDB, Docker deployment.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="support">Support</h2>
+<p>For deployment issues:
+- <strong>System Administrator</strong>: atsadmin@company.com
+- <strong>DevOps Team</strong>: devops@company.com</p>
+<p>For urgent production issues:
+- <strong>Operations Team</strong>: ops-hotline@company.com
+- <strong>Telegram</strong>: ATS Production Alerts channel</p>
+<hr />
+<p><strong>Document Version:</strong> 1.0
+<strong>Last Updated:</strong> 2025-12-17
+<strong>Next Review:</strong> 2026-03-17</p>
+</body>
+</html>

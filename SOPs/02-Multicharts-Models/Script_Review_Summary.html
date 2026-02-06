@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Script Review Summary</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 { border-bottom: 2px solid #3498db; padding-bottom: 0.3em; }
+        h2 { border-bottom: 1px solid #ecf0f1; padding-bottom: 0.2em; }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1em;
+            overflow-x: auto;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 1em 0;
+            padding-left: 1em;
+            color: #666;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 2em 0;
+            padding: 1em;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .pdf-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 8px 16px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .pdf-link:hover {
+            background-color: #c0392b;
+        }
+    </style>
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <p><a href="Script_Review_Summary.pdf" class="pdf-link">📄 Download PDF Version</a></p>
+    <h1 id="quick-summary-script-review-fixes">Quick Summary: Script Review &amp; Fixes</h1>
+<h2 id="critical-fixes-applied">Critical Fixes Applied</h2>
+<h3 id="fixed-issues">✅ Fixed Issues</h3>
+<ol>
+<li><strong>Desktop Heap Duplication</strong> - Removed duplicate <code>SharedSection</code> registry entry in <code>Optimize-MemorySettings</code></li>
+<li><strong>Storage Performance Test</strong> - Fixed array handling for multiple disks (now uses <code>Measure-Object -Maximum</code>)</li>
+<li><strong>Invalid Registry Entries</strong> - Removed <code>ProcessModelSection</code> and <code>SystemPages</code> (not valid Windows registry values)</li>
+<li><strong>IoPageLockLimit</strong> - Reduced from 64MB to 16MB (more conservative, less memory pressure)</li>
+<li><strong>Error Handling</strong> - Added comprehensive try-catch blocks and path validation</li>
+<li><strong>Registry Backup</strong> - Added full registry backup before all changes</li>
+</ol>
+<h3 id="improvements-added">✅ Improvements Added</h3>
+<ol>
+<li><strong>GDI Object Monitoring</strong> - Added to emergency monitor (critical for 40+ GUI apps)</li>
+<li><strong>Power Plan Optimization</strong> - Added High Performance power plan activation</li>
+<li><strong>Enhanced Logging</strong> - Added severity levels (INFO, WARNING, ERROR, CRITICAL)</li>
+<li><strong>Admin Check</strong> - Added privilege verification at startup</li>
+<li><strong>Better Storage Metrics</strong> - Improved disk queue depth and latency detection</li>
+</ol>
+<hr />
+<h2 id="key-recommendations">Key Recommendations</h2>
+<h3 id="immediate-actions">🚨 Immediate Actions</h3>
+<ol>
+<li><strong>Storage I/O is the #1 bottleneck</strong></li>
+<li>Move VM to SSD/NVMe storage</li>
+<li>Use fixed VHDX (not dynamic)</li>
+<li>
+<p>Target: &lt;10ms disk latency</p>
+</li>
+<li>
+<p><strong>Architecture Change Needed</strong></p>
+</li>
+<li>40+ Power BI Desktop instances in one VM is an anti-pattern</li>
+<li>Consider: Windows 10/11 Multi-Session or multiple smaller VMs</li>
+</ol>
+<h3 id="monitoring-priorities">📊 Monitoring Priorities</h3>
+<p>Monitor these metrics (use Emergency-Monitor.ps1):
+- <strong>GDI Objects</strong>: Should be &lt;1000 per PBI process
+- <strong>Handle Count</strong>: Should be &lt;5000 per PBI process<br />
+- <strong>Disk Queue Depth</strong>: Should be &lt;2
+- <strong>Disk Latency</strong>: Should be &lt;10ms</p>
+<h3 id="hyper-v-host-settings">⚙️ Hyper-V Host Settings</h3>
+<pre class="codehilite"><code class="language-powershell"># On Hyper-V Host
+Set-VMProcessor -VMName &quot;YourVM&quot; -Reserve 30 -MaximumPercent 100
+Set-VMMemory -VMName &quot;YourVM&quot; -DynamicMemoryEnabled $false -StartupBytes 90GB
+Set-VMHardDiskDrive -VMName &quot;YourVM&quot; -Path &quot;FixedVHDX.vhdx&quot; -ControllerType SCSI
+</code></pre>
+
+<hr />
+<h2 id="files-created">Files Created</h2>
+<ol>
+<li><strong>PBI_Optimization_Script_Review.md</strong> - Full detailed review</li>
+<li><strong>PBI_Optimization_Script_Fixed.ps1</strong> - Corrected script with all fixes</li>
+<li><strong>Script_Review_Summary.md</strong> - This quick reference</li>
+</ol>
+<hr />
+<h2 id="before-running">Before Running</h2>
+<ol>
+<li>✅ Test on non-production VM first</li>
+<li>✅ Review all registry changes in the review document</li>
+<li>✅ Ensure you have VM backup/snapshot</li>
+<li>✅ Run during maintenance window (reboot required)</li>
+</ol>
+<hr />
+<h2 id="expected-results">Expected Results</h2>
+<p>After applying fixes and rebooting:
+- Desktop heap increased from ~20MB to 200MB
+- Storage I/O optimizations applied
+- Memory settings optimized for applications
+- Power plan set to High Performance</p>
+<p><strong>However</strong>: The fundamental issue (40+ GUI apps in one VM) may still cause problems. Consider architectural changes.</p>
+</body>
+</html>

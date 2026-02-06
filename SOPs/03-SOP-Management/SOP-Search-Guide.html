@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>SOP Search Guide</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 { border-bottom: 2px solid #3498db; padding-bottom: 0.3em; }
+        h2 { border-bottom: 1px solid #ecf0f1; padding-bottom: 0.2em; }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1em;
+            overflow-x: auto;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 1em 0;
+            padding-left: 1em;
+            color: #666;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 2em 0;
+            padding: 1em;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .pdf-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 8px 16px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .pdf-link:hover {
+            background-color: #c0392b;
+        }
+    </style>
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <p><a href="SOP-Search-Guide.pdf" class="pdf-link">📄 Download PDF Version</a></p>
+    <h1 id="sop-search-and-filtering-guide">SOP Search and Filtering Guide</h1>
+<h2 id="overview">Overview</h2>
+<p>This guide explains how to search and filter SOPs using SQL-like queries and various search methods.</p>
+<h2 id="quick-start">Quick Start</h2>
+<h3 id="basic-search">Basic Search</h3>
+<pre class="codehilite"><code class="language-powershell"># Search by category
+.\Search-SOPs.ps1 -Query &quot;Category = 'Server Administration'&quot;
+
+# Search by status
+.\Search-SOPs.ps1 -Query &quot;Status = 'Active'&quot;
+
+# Search by author
+.\Search-SOPs.ps1 -Query &quot;Author = 'John Doe'&quot;
+</code></pre>
+
+<h3 id="advanced-search">Advanced Search</h3>
+<pre class="codehilite"><code class="language-powershell"># Multiple conditions
+.\Search-SOPs.ps1 -Query &quot;Category = 'Server Administration' AND Status = 'Active'&quot;
+
+# Date range
+.\Search-SOPs.ps1 -Query &quot;LastUpdated &gt; '2024-01-01' AND LastUpdated &lt; '2024-12-31'&quot;
+
+# Text search
+.\Search-SOPs.ps1 -Query &quot;Title LIKE '%Firewall%'&quot;
+
+# Complex query
+.\Search-SOPs.ps1 -Query &quot;(Category = 'Server Administration' OR Category = 'Multicharts Models') AND Status = 'Active'&quot;
+</code></pre>
+
+<hr />
+<h2 id="search-methods">Search Methods</h2>
+<h3 id="method-1-powershell-script-sql-like-recommended">Method 1: PowerShell Script (SQL-like) ⭐ <strong>RECOMMENDED</strong></h3>
+<p><strong>Script:</strong> <code>Search-SOPs.ps1</code></p>
+<p><strong>Features:</strong>
+- SQL-like WHERE clauses
+- Field selection
+- Sorting
+- Multiple output formats</p>
+<p><strong>Examples:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Simple search
+.\Search-SOPs.ps1 -Query &quot;Category = 'Server Administration'&quot;
+
+# Select specific fields
+.\Search-SOPs.ps1 -Query &quot;Status = 'Active'&quot; -Select &quot;Title, Category, Author, LastUpdated&quot;
+
+# Sort results
+.\Search-SOPs.ps1 -Query &quot;Category = 'Server Administration'&quot; -OrderBy &quot;LastUpdated DESC&quot;
+
+# Export to JSON
+.\Search-SOPs.ps1 -Query &quot;Status = 'Active'&quot; -OutputFormat JSON &gt; results.json
+
+# Export to CSV
+.\Search-SOPs.ps1 -Query &quot;Category = 'Multicharts Models'&quot; -OutputFormat CSV &gt; results.csv
+</code></pre>
+
+<p><strong>Supported Operators:</strong>
+- <code>=</code> (equals)
+- <code>!=</code> (not equals)
+- <code>LIKE</code> (pattern matching with % and _)
+- <code>&gt;</code> (greater than)
+- <code>&lt;</code> (less than)
+- <code>CONTAINS</code> (text contains)
+- <code>AND</code> (logical AND)
+- <code>OR</code> (logical OR)</p>
+<p><strong>Available Fields:</strong>
+- <code>Title</code> - SOP title
+- <code>Category</code> - Category (Server Administration, etc.)
+- <code>Author</code> - Author name
+- <code>LastUpdated</code> - Last updated date
+- <code>Version</code> - Version number
+- <code>Status</code> - Status (Active, Draft, Deprecated)
+- <code>ReviewDate</code> - Review date
+- <code>FilePath</code> - Full file path
+- <code>FileName</code> - File name
+- <code>WordCount</code> - Word count
+- <code>HasMermaid</code> - Has Mermaid diagrams (true/false)
+- <code>HasCodeBlocks</code> - Has code blocks (true/false)
+- <code>HasImages</code> - Has images (true/false)</p>
+<hr />
+<h3 id="method-2-github-search">Method 2: GitHub Search</h3>
+<p><strong>Built-in GitHub search</strong> works for SOPs in your repository.</p>
+<p><strong>Search Syntax:</strong></p>
+<pre class="codehilite"><code># Search in repository
+path:SOPs &quot;firewall&quot;
+
+# Search by file type
+path:SOPs extension:md &quot;Server Administration&quot;
+
+# Search in specific folder
+path:SOPs/01-Server-Administration
+
+# Search by content
+&quot;Status: Active&quot; path:SOPs
+</code></pre>
+
+<p><strong>GitHub Advanced Search:</strong>
+- Go to your repository
+- Click "Search or jump to..."
+- Type your search query
+- Use filters for file type, path, etc.</p>
+<hr />
+<h3 id="method-3-vs-code-search">Method 3: VS Code Search</h3>
+<p><strong>Built-in VS Code search</strong> works across all files.</p>
+<p><strong>Usage:</strong>
+1. Press <code>Ctrl+Shift+F</code> (Search in Files)
+2. Enter search term
+3. Use filters:
+   - File pattern: <code>SOPs/**/*.md</code>
+   - Include/exclude patterns
+   - Case sensitive toggle
+   - Regex toggle</p>
+<p><strong>Advanced:</strong>
+- Use regex for complex patterns
+- Search and replace across files
+- Save search queries</p>
+<hr />
+<h3 id="method-4-powershell-select-string">Method 4: PowerShell Select-String</h3>
+<p><strong>Quick content search:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Search for text in all SOPs
+Get-ChildItem -Path SOPs -Filter &quot;*.md&quot; -Recurse |
+    Select-String -Pattern &quot;firewall&quot; -CaseSensitive:$false
+
+# Search with context
+Get-ChildItem -Path SOPs -Filter &quot;*.md&quot; -Recurse |
+    Select-String -Pattern &quot;Status.*Active&quot; -Context 2,2
+
+# Search multiple patterns
+Get-ChildItem -Path SOPs -Filter &quot;*.md&quot; -Recurse |
+    Select-String -Pattern &quot;firewall|network|security&quot;
+</code></pre>
+
+<hr />
+<h3 id="method-5-build-index-for-fast-search">Method 5: Build Index for Fast Search</h3>
+<p><strong>Create searchable index:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Build index
+.\Build-SOP-Index.ps1
+
+# Index saved to: SOPs\sop-index.json
+</code></pre>
+
+<p><strong>Use index for fast searches:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Load and search index
+$index = Get-Content &quot;SOPs\sop-index.json&quot; | ConvertFrom-Json
+$index.SOPs | Where-Object { $_.Category -eq &quot;Server Administration&quot; }
+</code></pre>
+
+<hr />
+<h2 id="common-search-queries">Common Search Queries</h2>
+<h3 id="find-all-active-sops">Find All Active SOPs</h3>
+<pre class="codehilite"><code class="language-powershell">.\Search-SOPs.ps1 -Query &quot;Status = 'Active'&quot;
+</code></pre>
+
+<h3 id="find-sops-needing-review">Find SOPs Needing Review</h3>
+<pre class="codehilite"><code class="language-powershell">.\Search-SOPs.ps1 -Query &quot;ReviewDate &lt; '2024-01-15' AND Status = 'Active'&quot;
+</code></pre>
+
+<h3 id="find-sops-by-category">Find SOPs by Category</h3>
+<pre class="codehilite"><code class="language-powershell">.\Search-SOPs.ps1 -Query &quot;Category = 'Server Administration'&quot;
+</code></pre>
+
+<h3 id="find-sops-with-mermaid-diagrams">Find SOPs with Mermaid Diagrams</h3>
+<pre class="codehilite"><code class="language-powershell">.\Search-SOPs.ps1 -Query &quot;HasMermaid = 'True'&quot;
+</code></pre>
+
+<h3 id="find-sops-by-author">Find SOPs by Author</h3>
+<pre class="codehilite"><code class="language-powershell">.\Search-SOPs.ps1 -Query &quot;Author = 'John Doe'&quot;
+</code></pre>
+
+<h3 id="find-sops-updated-recently">Find SOPs Updated Recently</h3>
+<pre class="codehilite"><code class="language-powershell">.\Search-SOPs.ps1 -Query &quot;LastUpdated &gt; '2024-01-01'&quot; -OrderBy &quot;LastUpdated DESC&quot;
+</code></pre>
+
+<h3 id="search-by-title-pattern">Search by Title Pattern</h3>
+<pre class="codehilite"><code class="language-powershell">.\Search-SOPs.ps1 -Query &quot;Title LIKE '%Firewall%'&quot;
+</code></pre>
+
+<h3 id="complex-query">Complex Query</h3>
+<pre class="codehilite"><code class="language-powershell">.\Search-SOPs.ps1 -Query &quot;(Category = 'Server Administration' OR Category = 'Multicharts Models') AND Status = 'Active' AND LastUpdated &gt; '2024-01-01'&quot;
+</code></pre>
+
+<hr />
+<h2 id="output-formats">Output Formats</h2>
+<h3 id="table-default">Table (Default)</h3>
+<pre class="codehilite"><code class="language-powershell">.\Search-SOPs.ps1 -Query &quot;Status = 'Active'&quot;
+</code></pre>
+
+<h3 id="json">JSON</h3>
+<pre class="codehilite"><code class="language-powershell">.\Search-SOPs.ps1 -Query &quot;Category = 'Server Administration'&quot; -OutputFormat JSON
+</code></pre>
+
+<h3 id="csv">CSV</h3>
+<pre class="codehilite"><code class="language-powershell">.\Search-SOPs.ps1 -Query &quot;Status = 'Active'&quot; -OutputFormat CSV | Out-File results.csv
+</code></pre>
+
+<h3 id="markdown">Markdown</h3>
+<pre class="codehilite"><code class="language-powershell">.\Search-SOPs.ps1 -Query &quot;Category = 'Server Administration'&quot; -OutputFormat Markdown
+</code></pre>
+
+<hr />
+<h2 id="advanced-usage">Advanced Usage</h2>
+<h3 id="combine-with-other-tools">Combine with Other Tools</h3>
+<pre class="codehilite"><code class="language-powershell"># Search and open results in VS Code
+$results = .\Search-SOPs.ps1 -Query &quot;Status = 'Active'&quot; -OutputFormat JSON | ConvertFrom-Json
+$results | ForEach-Object { code $_.FilePath }
+</code></pre>
+
+<h3 id="generate-report">Generate Report</h3>
+<pre class="codehilite"><code class="language-powershell"># Generate HTML report
+$results = .\Search-SOPs.ps1 -Query &quot;Status = 'Active'&quot; -OutputFormat JSON | ConvertFrom-Json
+$html = $results | ConvertTo-Html -Property Title, Category, Author, LastUpdated
+$html | Out-File &quot;sop-report.html&quot;
+</code></pre>
+
+<h3 id="export-to-database">Export to Database</h3>
+<pre class="codehilite"><code class="language-powershell"># Export to SQLite (requires SQLite module)
+$results = .\Search-SOPs.ps1 -Query &quot;*&quot; -OutputFormat JSON | ConvertFrom-Json
+# Import to SQLite database for advanced queries
+</code></pre>
+
+<hr />
+<h2 id="integration-with-github">Integration with GitHub</h2>
+<h3 id="github-actions-for-indexing">GitHub Actions for Indexing</h3>
+<p>Create <code>.github/workflows/sop-index.yml</code>:</p>
+<pre class="codehilite"><code class="language-yaml">name: Build SOP Index
+on:
+  push:
+    paths:
+      - 'SOPs/**/*.md'
+jobs:
+  index:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build Index
+        run: .\Build-SOP-Index.ps1
+      - name: Commit Index
+        run: |
+          git config user.name &quot;GitHub Actions&quot;
+          git config user.email &quot;actions@github.com&quot;
+          git add SOPs/sop-index.json
+          git commit -m &quot;Update SOP index&quot; || exit 0
+          git push
+</code></pre>
+
+<hr />
+<h2 id="web-interface-future-enhancement">Web Interface (Future Enhancement)</h2>
+<h3 id="option-1-github-pages">Option 1: GitHub Pages</h3>
+<p>Host a simple HTML page that:
+- Loads <code>sop-index.json</code>
+- Provides search interface
+- Filters and displays results</p>
+<h3 id="option-2-simple-web-server">Option 2: Simple Web Server</h3>
+<pre class="codehilite"><code class="language-powershell"># Simple HTTP server for SOP search
+# Use Python: python -m http.server 8000
+# Or PowerShell: Start-Process &quot;http://localhost:8000&quot;
+</code></pre>
+
+<hr />
+<h2 id="best-practices">Best Practices</h2>
+<ol>
+<li>
+<p><strong>Build Index Regularly:</strong>
+   <code>powershell
+   # Add to scheduled task
+   .\Build-SOP-Index.ps1</code></p>
+</li>
+<li>
+<p><strong>Use Specific Queries:</strong></p>
+</li>
+<li>Better performance</li>
+<li>
+<p>More accurate results</p>
+</li>
+<li>
+<p><strong>Export Results:</strong></p>
+</li>
+<li>Save search results</li>
+<li>Share with team</li>
+<li>
+<p>Track changes</p>
+</li>
+<li>
+<p><strong>Combine Methods:</strong></p>
+</li>
+<li>Use PowerShell for structured queries</li>
+<li>Use GitHub search for content search</li>
+<li>Use VS Code for editing</li>
+</ol>
+<hr />
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="issue-query-not-working">Issue: Query Not Working</h3>
+<p><strong>Solution:</strong>
+- Check field names (case-sensitive)
+- Use quotes for text values
+- Check operator syntax</p>
+<h3 id="issue-no-results">Issue: No Results</h3>
+<p><strong>Solution:</strong>
+- Verify SOPs exist in path
+- Check query syntax
+- Try simpler query first</p>
+<h3 id="issue-slow-performance">Issue: Slow Performance</h3>
+<p><strong>Solution:</strong>
+- Build index first: <code>.\Build-SOP-Index.ps1</code>
+- Use more specific queries
+- Limit result set</p>
+<hr />
+<h2 id="examples">Examples</h2>
+<h3 id="example-1-find-all-firewall-related-sops">Example 1: Find All Firewall-Related SOPs</h3>
+<pre class="codehilite"><code class="language-powershell">.\Search-SOPs.ps1 -Query &quot;Title LIKE '%Firewall%' OR Category = 'Server Administration'&quot;
+</code></pre>
+
+<h3 id="example-2-generate-status-report">Example 2: Generate Status Report</h3>
+<pre class="codehilite"><code class="language-powershell">.\Search-SOPs.ps1 -Query &quot;*&quot; -Select &quot;Title, Category, Status, LastUpdated&quot; -OrderBy &quot;Category, LastUpdated DESC&quot; -OutputFormat Markdown
+</code></pre>
+
+<h3 id="example-3-find-outdated-sops">Example 3: Find Outdated SOPs</h3>
+<pre class="codehilite"><code class="language-powershell">.\Search-SOPs.ps1 -Query &quot;LastUpdated &lt; '2023-01-01' AND Status = 'Active'&quot;
+</code></pre>
+
+<hr />
+<h2 id="summary">Summary</h2>
+<p><strong>Best Method:</strong> Use <code>Search-SOPs.ps1</code> for SQL-like queries</p>
+<p><strong>Quick Search:</strong> Use GitHub search or VS Code search</p>
+<p><strong>Fast Search:</strong> Build index with <code>Build-SOP-Index.ps1</code></p>
+<p><strong>Team Sharing:</strong> Export results to JSON/CSV/Markdown</p>
+</body>
+</html>

@@ -1,0 +1,478 @@
+# ATS Health Monitor - Cursor Rules
+# Source of Truth for AI Agents
+
+## Project Overview
+
+ATS Health Monitor is a Golang/React trading surveillance system for Hong Kong SFC compliance.
+- **Backend**: Go 1.23 + Gin framework
+- **Frontend**: React 18 + Vite
+- **Database**: TimescaleDB (PostgreSQL 14)
+- **Deployment**: Docker
+
+---
+
+## CRITICAL RULES
+
+### 0. Follow Coding Instructions Precisely (CRITICAL - Prevent Hidden Bugs)
+
+**🚨 CRITICAL: Hidden bugs have been introduced in the past by not following specific coding instructions.**
+
+**MANDATORY RULES**:
+
+1. **Follow ALL coding instructions EXACTLY as specified**
+   - Read and understand EVERY instruction before making changes
+   - Do NOT make assumptions about what the user wants
+   - Do NOT deviate from the specified approach
+   - If instructions are unclear, ASK for clarification before proceeding
+
+2. **Verify Against Existing Patterns**:
+   - ✅ **MUST DO**: Check existing code patterns before making changes
+   - ✅ **MUST DO**: Match the style and approach of similar code in the codebase
+   - ✅ **MUST DO**: Verify your changes don't break existing functionality
+   - ❌ **FORBIDDEN**: Introducing new patterns without checking existing code first
+
+3. **Test Assumptions**:
+   - ✅ **MUST DO**: Verify database schema before adding column references
+   - ✅ **MUST DO**: Check API response structures before modifying queries
+   - ✅ **MUST DO**: Verify field names match exactly (case-sensitive)
+   - ❌ **FORBIDDEN**: Assuming column/field names without verification
+
+4. **Code Review Checklist** (Before every change):
+   - [ ] Did I read ALL instructions completely?
+   - [ ] Did I verify the existing code pattern?
+   - [ ] Did I check database schema/API structure?
+   - [ ] Did I match existing naming conventions?
+   - [ ] Did I test my assumptions?
+   - [ ] Am I following the exact approach specified?
+
+**Enforcement**: If you're unsure about ANY aspect of the instructions, STOP and ask for clarification. Hidden bugs are worse than asking questions.
+
+### 1. Focus on Requested Changes Only (CRITICAL - No Extra Code)
+
+**🚨 FORBIDDEN: Creating extra code, files, or documentation that was not explicitly requested.**
+
+**CRITICAL RULES**:
+
+1. **ONLY implement what the user explicitly asks for**
+   - Do NOT create migration SQL files unless the user asks for them
+   - Do NOT create documentation files unless explicitly requested
+   - Do NOT modify documentation files unless explicitly requested
+   - Do NOT add extra features or optimizations beyond what was requested
+
+2. **Migration Files**:
+   - ❌ **FORBIDDEN**: Creating SQL migration files in `deploy/migrations/` unless explicitly requested
+   - ✅ **CORRECT**: Schema changes in `db_manager.go` are automatically applied - no separate migration files needed unless user requests them
+   - ✅ **ALLOWED**: Only when user explicitly asks to create a migration file
+
+3. **Documentation Updates**:
+   - ❌ **FORBIDDEN**: Updating migration order docs, README files, or other documentation unless explicitly requested
+   - ✅ **CORRECT**: Focus only on the code changes requested
+   - ✅ **ALLOWED**: Only update documentation when user explicitly asks
+
+4. **Code Changes**:
+   - ✅ **CORRECT**: Make only the specific changes requested
+   - ❌ **FORBIDDEN**: Adding "helpful" extra features, optimizations, or related changes that weren't asked for
+   - ❌ **FORBIDDEN**: Creating supporting files, scripts, or utilities unless explicitly requested
+
+**Enforcement**: Before creating any file or making any change, ask: "Did the user explicitly request this?" If the answer is NO, do NOT create it.
+
+### 1. Documentation Governance (Prevent Doc/SOP Sprawl)
+
+**Default rule: DO NOT create new documentation files.**
+
+- ❌ **FORBIDDEN by default**: creating new `*.md` files anywhere (including `SOPs/`, `AI-Arch/`, `AI-History/`, `Scripts/**/docs/`, etc.).
+- ✅ **ALLOWED**: updating existing “control docs” only (see list below).
+- ✅ **ALLOWED**: adding new docs **only** when the user explicitly asks for a new doc/SOP file *by name or by clearly requesting a new document*.
+
+#### Canonical “control docs” (update these, don’t create new ones)
+
+- **Rules / governance**: `.cursorrules`
+- **Architecture (repo-wide)**: `AI-Arch/README.md` and other existing `AI-Arch/*.md`
+- **Session history index**: `AI-History/README.md`
+- **Project onboarding contexts**: `Scripts/05-Production-ATS-Administration/ATS-Health-Monitor/AI-Agent-Context/*`
+- **Project-local architecture index**: `Scripts/05-Production-ATS-Administration/ATS-Health-Monitor/AI-Arch/README.md`
+- **SOPs (customer-facing)**: update existing SOPs in `SOPs/` only; do not create new SOP files unless explicitly requested.
+
+#### Where “new writing” is allowed (rare)
+
+- **AI-History**: only add a new `AI-History/YYYY-MM-DD-*.md` session file when the user explicitly asks to record a session or produce a new history entry.
+
+### 2. UTC Timestamps (Bug #1 Prevention)
+
+**Use the `pkg/timez` standard library for all timestamp handling.**
+See: `AI-Arch/timezone_standard.md` for full documentation.
+
+```go
+// ✅ ALWAYS use timez package
+import "github.com/your-org/ats-health-monitor/pkg/timez"
+t, err := timez.ParseFIX(timeStr)  // Parses as UTC
+apiStr := timez.ToAPI(t)           // "2025-12-15T20:55:07.322Z"
+
+// ❌ NEVER use time.Parse() - causes local timezone interpretation
+t, err := time.Parse("20060102-15:04:05.000", timeStr)  // WRONG!
+```
+
+### 3. V2 Parser Priority
+
+- Use V2 FIX parser (`fix_parser_v2.go`) for all new features
+- V1 parser is legacy - Strangler Fig pattern
+- Schema: `sfc_fix.messages_raw`, `sfc_fix.messages_parsed`, `sfc_fix.issues`
+
+### 4. Issue Aggregation (Search-Before-Insert)
+
+```go
+// ✅ CORRECT: Search for existing issue, then link message
+existingIssue := findIssueByKey(symbol, issueType, sessionID)
+if existingIssue != nil {
+    linkMessageToIssue(existingIssue.ID, messageID)  // 1:N relationship
+} else {
+    newIssue := createIssue(...)
+    linkMessageToIssue(newIssue.ID, messageID)
+}
+
+// ❌ WRONG: Creating 1 issue per message (1:1)
+issue := createIssue(...)  // Creates duplicate issues!
+```
+
+### 5. Database Schema Migration (CRITICAL - Bug #2 Prevention)
+
+**NEVER modify `db_manager.go` schema without creating migration scripts.**
+
+**The Solution:**
+1. Create Migration Script in `deploy/migrations/` FIRST.
+2. Test Migration Locally.
+3. Update `db_manager.go` ONLY after migration is verified.
+
+### 6. V2 Schema Initialization (TimescaleDB Hypertable Constraints)
+
+The `db_manager.go` **now creates ALL V2 tables** on startup via `initV2FixSchema()`:
+
+| Schema | Table | Type | Purpose |
+|--------|-------|------|---------|
+| `sfc_fix` | `messages_raw` | Hypertable | Raw FIX audit trail |
+| `sfc_fix` | `messages_parsed` | Hypertable | Normalized parsed messages |
+| `sfc_fix` | `issues` | Regular | SFC compliance issues |
+| `sfc_fix` | `issue_messages` | Regular | Issue-to-message links (1:N) |
+| `sfc_fix` | `order_states` | Regular | GTC STP order tracking |
+| `sfc_fix` | `orders` | Regular | Parent order records |
+| `sfc_fix` | `executions` | Regular | Child execution records |
+
+**TimescaleDB Constraint**: Hypertables require composite PKs including the partitioning column.
+- FK references to hypertables are **NOT supported** (use soft references via IDs instead).
+- If `db_manager.go` fails silently, run migrations manually: `deploy/migrations/v2_fix_schema_complete.sql`
+
+**Troubleshooting V2 Schema**:
+```sql
+-- Verify V2 tables exist
+\dt sfc_fix.*
+
+-- If missing, run migration manually:
+-- PowerShell: Get-Content migration.sql | docker exec -i timescaledb-dev psql -U user -d db
+```
+
+### 7. LogReceiver → ReliableReceiver Migration (CRITICAL - Bug #3 Prevention)
+
+**🚨 MAJOR BUG: This fix has been reverted multiple times. DO NOT REVERT.**
+
+**Problem**: `appConfig.LogReceiver` is **DEPRECATED** and no longer used at runtime. The system uses `appConfig.ReliableReceiver` for all log receiver functionality.
+
+**CRITICAL RULE**: In `api_service.go`, the `/api/v1/config/full` (GET) and `/api/v1/config` (PUT) endpoints **MUST** use `appConfig.ReliableReceiver`, NOT `appConfig.LogReceiver`.
+
+```go
+// ✅ CORRECT - MUST USE THIS:
+"log_receiver": func() map[string]interface{} {
+    // MUST use appConfig.ReliableReceiver (not LogReceiver)
+    return map[string]interface{}{
+        "enabled":    appConfig.ReliableReceiver.Enabled,
+        "publishers": publishers, // from ReliableReceiver.Publishers
+    }
+}()
+
+// PUT endpoint
+if v, ok := valuesMap["enabled"].(bool); ok {
+    appConfig.ReliableReceiver.Enabled = v  // MUST save to ReliableReceiver
+}
+
+// ❌ FORBIDDEN - DO NOT USE:
+appConfig.LogReceiver.Enabled
+appConfig.LogReceiver.Publishers
+```
+
+**Why This Matters**:
+- Setup page reads/writes via `"log_receiver"` key for backward compatibility
+- But runtime system uses `ReliableReceiver` exclusively
+- Using `LogReceiver` causes: config loss, "disabled" status when receiver is active, settings lost on restart
+
+**Verification**:
+- See `CRITICAL_FIXES.md` for full details and regression tests
+- Run `scripts/validate-critical-fixes.ps1` before committing
+- If you see `appConfig.LogReceiver` in `api_service.go` (outside comments), **STOP** and fix it
+
+**Files Affected**:
+- `api_service.go` - GET/PUT endpoints (lines ~646, ~1197)
+- `connection_tests.go` - Already uses ReliableReceiver (correct)
+
+---
+
+### 8. PROTECTED FILES & ENGINES (Require User Confirmation)
+
+The following files and logic are core infrastructure. They are **IMMUTABLE** and **MUST NOT** be modified without explicit user confirmation:
+
+| Component | Target File(s) | Reason |
+|:---|:---|:---|
+| **FIX Parsing Engine** | `fix_parser_v2.go` | Core parsing logic is validated and sensitive. Changes cause data corruption. |
+| **Canonical Spec** | `AI-Arch/v2_fix_parser_canonical.md` | Defines the source of truth for timestamp ranking and logic. |
+| **Build Infrastructure** | `build-management/scripts/build-docker.ps1` | Controls image creation, versioning, and dev mode. |
+| **Database Schema** | `db_manager.go` | Schema changes require production migrations. |
+| **AI Rules** | `.cursorrules` | Defines agent behavior across sessions. |
+
+**Agent Rule**: Before modifying ANY of the above components:
+1. Explain exactly what you want to change and **why** the existing "Production Ready" logic is insufficient.
+2. Show the proposed code diff.
+3. **Wait for explicit user approval** before applying.
+
+---
+
+### 9. NO HARDCODED VALUES (CRITICAL - Configuration Management)
+
+**🚨 FORBIDDEN: Hardcoding production-specific values in source code.**
+
+**Problem**: Hardcoded IPs, URLs, timeouts, and other configuration values break deployments in different environments and prevent proper configuration management.
+
+**CRITICAL RULES**:
+
+1. **ALL configuration values MUST come from PostgreSQL `system_config` table**
+   - Defaults are defined in `config_postgres.go` → `seedDefaults()`
+   - Critical defaults are ensured via `ensureCriticalDefaults()`
+   - Values are loaded via `configManager.GetConfig(key)`
+
+2. **FORBIDDEN Hardcoded Values**:
+   ```go
+   // ❌ FORBIDDEN - Hardcoded IP addresses
+   brokers := "192.168.168.100:19092"
+   ny2Host := "192.168.168.2"
+
+   // ❌ FORBIDDEN - Hardcoded URLs
+   url := "http://localhost:5000"
+   baseURL := "http://localhost:8000"
+
+   // ❌ FORBIDDEN - Hardcoded timeouts/ports (unless reasonable defaults)
+   timeout := 60
+   port := 8091
+   ```
+
+3. **✅ CORRECT Pattern**:
+   ```go
+   // ✅ CORRECT - Get from DB config with fallback to DB default
+   brokers, _ := configManager.GetConfig("log_receiver.brokers")
+   if brokers == "" {
+       brokers = "192.168.168.100:19092" // DB default (ensureCriticalDefaults)
+   }
+
+   // ✅ CORRECT - Use appConfig (loaded from DB)
+   ny2Host := appConfig.Resync.NY2Host
+   if ny2Host == "" {
+       ny2Host = "192.168.168.2" // DB default (ensureCriticalDefaults)
+   }
+   ```
+
+4. **Build-Time Values** (injected via ldflags):
+   ```go
+   // ✅ ALLOWED - Build-time injection (via Dockerfile ldflags)
+   var BuildVersion = buildVersionDefault // Set via -X main.BuildVersion=${BUILD_VERSION}
+   var BuildDate = "unknown"              // Set via -X main.BuildDate=${BUILD_DATE}
+   ```
+
+5. **Acceptable Fallbacks** (must match DB defaults):
+   - Fallback values are ONLY acceptable if they match the DB defaults exactly
+   - Must include comment: `// DB default (ensureCriticalDefaults)` or `// Fallback - will be overridden by DB config`
+   - Fallbacks should only be used if `configManager.GetConfig()` fails
+
+6. **Adding New Configuration**:
+   - Add default to `config_postgres.go` → `seedDefaults()` array
+   - Add to `ensureCriticalDefaults()` if it's critical for startup
+   - Add loading logic in `LoadConfigFromPostgres()` switch statement
+   - Update struct fields if needed (e.g., `ResyncConfig.NY2Host`)
+
+**Files to Check Before Committing**:
+- `main.go` - Check for hardcoded IPs, URLs, timeouts
+- `api_service.go` - Check for hardcoded host IPs
+- `connection_tests.go` - Check for hardcoded host IPs
+- `cmd/redpanda-log-agent/main.go` - Check for hardcoded broker IPs
+- Any file with hardcoded `"192.168."`, `"localhost"`, or production URLs
+
+**Verification**:
+- Search codebase for: `"192.168."`, `"localhost:5000"`, `"localhost:8000"`
+- Ensure all found values are either:
+  - Loaded from DB config
+  - Fallbacks that match DB defaults exactly
+  - Build-time injected values (ldflags)
+
+---
+
+### 10. Backend Rules (Golang/Gin)
+
+### Route Naming
+```go
+// Pattern: /api/v1/{resource}/{action} or /api/v2/{resource}
+```
+
+### API Response Structure
+```go
+type APIResponse struct {
+    Success bool        `json:"success"`
+    Data    interface{} `json:"data,omitempty"`
+    Error   string      `json:"error,omitempty"`
+}
+```
+
+---
+
+### 11. Frontend Rules (React)
+
+### Table Component
+- ✅ MANDATORY: Use `CustomTable` wrapper.
+- ❌ FORBIDDEN: Direct TanStack import.
+
+---
+
+### 12. MCP Server Tools (MANDATORY - Use Available Tools)
+
+#### Installed MCP Servers:
+1. **memory-bank** - Project context and state management
+2. **ast-grep** - Structural code search and pattern matching
+3. **redis** - Redis data operations and caching
+4. **kafka-schema-reg-mcp** - Kafka/Redpanda Schema Registry operations
+5. **sequential-thinking** - Complex reasoning and multi-step planning
+6. **filesystem** - Bulk file operations and directory management
+7. **docker** - Docker container command execution
+
+#### Core Rules:
+- ❌ FORBIDDEN: Using `grep` for structural code analysis when `ast-grep` is available
+- ❌ FORBIDDEN: Re-creating existing functionality or tools when MCP servers provide the capability
+- ❌ FORBIDDEN: Creating new test programs or scripts when existing tools can
+- ❌ FORBIDDEN: Using `read_file` for multiple files when `filesystem` MCP is available
+- ❌ FORBIDDEN: Starting work without reading `memory-bank` at session start
+- ❌ FORBIDDEN: Using `docker exec` terminal commands when `docker` MCP is available
+- ❌ FORBIDDEN: Manually querying Schema Registry when `kafka-schema-reg-mcp` is available
+
+You are an expert developer with access to specialized MCP tools. You MUST use them according to these rules:
+
+#### 10.1. Project Context & State (Memory Bank) - MANDATORY SESSION START
+- **Tool**: `memory-bank`
+- **Rule**: **FIRST ACTION** at the start of EVERY session: Call `mcp_memory-bank_read_memory_bank_file("active-context.md")` to read project state.
+- **Rule**: Update the Memory Bank (activeContext.md, decisionLog.md) after any significant architectural change or task completion.
+- **Rule**: If you forget to read memory-bank at session start, you MUST read it immediately when reminded.
+- **Enforcement**: No code changes or analysis should happen before reading active-context.md
+- **Available Functions**: `read_memory_bank_file`, `write_memory_bank_file`, `track_progress`, `log_decision`, `update_active_context`
+
+#### 10.2. Structural Search (ast-grep) - ALWAYS USE FOR CODE STRUCTURE
+- **Tool**: `ast-grep`
+- **Rule**: **NEVER use `grep` for code structure** - ALWAYS use `ast-grep` for:
+  - Finding function calls, class definitions, method invocations
+  - Finding patterns in code structure (not just text)
+  - Any search that involves syntax or code structure
+  - Pattern matching with AST nodes (not regex)
+- **Rule**: Use `grep` ONLY for simple text search in non-code files (docs, configs)
+- **Rule**: If you catch yourself using `grep` for code, STOP and use `ast-grep` instead
+- **Enforcement**: Every code search must start with `ast-grep`, fall back to `grep` only if ast-grep fails
+- **Available Functions**: `mcp_ast-grep_ast-grep` (pattern-based AST search)
+
+#### 10.3. Persistent Data (Redis)
+- **Tool**: `redis`
+- **Rule**: Use this for managing any technical data state, caching strategies, or analyzing session-based data stored in the project's Redis instance.
+- **Rule**: The data is mapped to `I:/AITools/redis`, ensure persistence is handled via this volume.
+- **Use Cases**: Session state, caching, temporary data storage, cross-request data sharing
+- **Available Functions**: `hset`, `hget`, `hgetall`, `set`, `get`, `json_set`, `json_get`, `scan_keys`, `vector_search_hash`, etc.
+
+#### 10.4. Schema Registry (Kafka/Redpanda) - USE FOR SCHEMA OPERATIONS
+- **Tool**: `kafka-schema-reg-mcp`
+- **Rule**: **ALWAYS use this** for Schema Registry operations instead of manual HTTP calls:
+  - Listing subjects/schemas
+  - Retrieving schema versions
+  - Checking schema compatibility
+  - Managing Avro/Protobuf schemas
+- **Rule**: Configured for Redpanda Schema Registry at `http://localhost:18081`
+- **Enforcement**: If you need Schema Registry data, use this MCP server instead of `wget`/`curl` commands
+- **Available Functions**: Subject listing, schema retrieval, version management
+
+#### 10.5. Reasoning (Sequential Thinking) - MANDATORY FOR COMPLEX TASKS
+- **Tool**: `sequential-thinking`
+- **Rule**: **MUST use `sequential-thinking`** for:
+  - Any task with 3+ steps
+  - Multi-step bug fixes
+  - System architecture changes
+  - Refactoring that affects multiple files
+  - Any task requiring planning or reasoning
+  - Complex debugging scenarios
+- **Rule**: Break down your plan into steps and validate each step before proceeding to the next code edit.
+- **Enforcement**: If a task is complex, you MUST use sequential-thinking BEFORE making code changes
+- **Available Functions**: `mcp_sequential-thinking_sequentialthinking` (multi-step reasoning with revision capability)
+
+#### 10.6. File Operations (Filesystem) - USE FOR BULK OPERATIONS
+- **Tool**: `filesystem`
+- **Rule**: **ALWAYS use `filesystem` MCP** for:
+  - Reading multiple files (use `read_multiple_files`)
+  - Writing files outside active editor
+  - Listing directories
+  - Bulk file operations
+  - Directory tree navigation
+  - File metadata operations
+- **Rule**: Use `read_file` ONLY for single files in active editor context
+- **Rule**: The workspace is mapped to `/workspace` inside the container; always use paths relative to this root.
+- **Enforcement**: If reading 2+ files, use filesystem MCP instead of multiple `read_file` calls
+- **Available Functions**: `read_text_file`, `read_multiple_files`, `write_file`, `edit_file`, `list_directory`, `directory_tree`, `search_files`, etc.
+
+#### 10.7. Docker Container Operations - USE FOR CONTAINER COMMANDS
+- **Tool**: `docker`
+- **Rule**: **ALWAYS use `docker` MCP** for executing commands inside Docker containers:
+  - Running commands in `ats-health-monitor` container
+  - Running commands in `timescaledb` container
+  - Running commands in `gotify` container
+  - Running commands in `smtp4dev` container
+  - Checking container status, logs, or internal state
+- **Rule**: **NEVER use** `docker exec` terminal commands when this MCP is available
+- **Rule**: Configured for `deploy/local-test/docker-compose.yml` with allowed services: `ats-health-monitor`, `timescaledb`, `gotify`, `smtp4dev`
+- **Enforcement**: If you need to run a command in a container, use `mcp_docker_run_command` instead of terminal `docker exec`
+- **Available Functions**: `mcp_docker_run_command` (execute commands in specified service)
+
+#### General Instruction
+If a task can be solved or improved by one of these tools, you are REQUIRED to invoke it before asking the user for more information.
+
+#### MCP Usage Checklist (Self-Enforcement)
+Before starting any task, ask yourself:
+1. ✅ Did I read memory-bank active-context.md at session start?
+2. ✅ Am I using ast-grep (not grep) for code structure searches?
+3. ✅ Am I using sequential-thinking for complex/multi-step tasks?
+4. ✅ Am I using filesystem MCP for bulk file operations?
+5. ✅ Am I using docker MCP (not docker exec) for container commands?
+6. ✅ Am I using kafka-schema-reg-mcp for Schema Registry operations?
+7. ✅ Am I using redis MCP for data operations when applicable?
+8. ✅ Am I updating memory-bank after significant changes?
+
+If any answer is NO, fix it immediately before proceeding.
+
+---
+
+## DO NOT
+
+- ❌ Modify `fix_parser_v2.go` logic without confirmation.
+- ❌ Use `time.Parse()` for FIX timestamps (causes timezone bugs).
+- ❌ Create 1 issue per message (violates aggregation).
+- ❌ Modify `db_manager.go` schema without migration scripts.
+- ❌ Default security booleans to `false`.
+- ❌ **USE `appConfig.LogReceiver` in `api_service.go`** - Use `appConfig.ReliableReceiver` instead (see Rule #6).
+- ❌ **Re-create existing functionality** - Always check MCP servers and existing codebase before building new tools.
+- ❌ **Create new test programs** - Use existing test infrastructure and MCP tools instead of writing new scanning/analysis scripts.
+- ❌ **Ignore available MCP servers** - All 7 installed MCP servers must be utilized when applicable:
+  - memory-bank (project context)
+  - ast-grep (code structure)
+  - redis (data operations)
+  - kafka-schema-reg-mcp (Schema Registry)
+  - sequential-thinking (complex reasoning)
+  - filesystem (bulk file ops)
+  - docker (container commands)
+- ❌ **Use terminal docker exec** - Always use `mcp_docker_run_command` instead of `docker exec` terminal commands.
+- ❌ **Create extra documentation files** - Do NOT create `.md` files to explain things. Explain directly in console/response. Only create documentation files when explicitly requested by the user.
+- ❌ **Delete compiled artifacts** - NEVER delete `.exe`, `.dll`, `.so`, or other build outputs after compiling. The user needs these files for deployment. Only clean up build artifacts if explicitly requested.
+- ❌ **Create extra code/files** - Do NOT create migration SQL files, update documentation, or add extra features unless explicitly requested. Focus ONLY on what the user asks for.

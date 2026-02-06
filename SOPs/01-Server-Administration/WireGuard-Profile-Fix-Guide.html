@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>WireGuard Profile Fix Guide</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 { border-bottom: 2px solid #3498db; padding-bottom: 0.3em; }
+        h2 { border-bottom: 1px solid #ecf0f1; padding-bottom: 0.2em; }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1em;
+            overflow-x: auto;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 1em 0;
+            padding-left: 1em;
+            color: #666;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 2em 0;
+            padding: 1em;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .pdf-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 8px 16px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .pdf-link:hover {
+            background-color: #c0392b;
+        }
+    </style>
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <p><a href="WireGuard-Profile-Fix-Guide.pdf" class="pdf-link">📄 Download PDF Version</a></p>
+    <h1 id="wireguard-network-profile-fix-guide">WireGuard Network Profile Fix Guide</h1>
+<h2 id="problem-description">Problem Description</h2>
+<p>Windows sometimes incorrectly categorizes the WireGuard VPN adapter as "Public" instead of "Private", causing:
+- Firewall rules to not apply correctly
+- Connection loss
+- Need to use IPMI to manually fix the network profile</p>
+<h2 id="solution-overview">Solution Overview</h2>
+<p>This solution provides:
+1. <strong>One-time fix script</strong> - Immediately fixes the profile
+2. <strong>Monitoring script</strong> - Continuously monitors and fixes
+3. <strong>Scheduled task</strong> - Automatically runs the fix periodically (recommended)</p>
+<h2 id="quick-start">Quick Start</h2>
+<h3 id="option-1-one-time-fix-manual">Option 1: One-Time Fix (Manual)</h3>
+<pre class="codehilite"><code class="language-powershell"># Run as Administrator
+.\Fix-WireGuard-NetworkProfile.ps1 -FixOnce
+</code></pre>
+
+<h3 id="option-2-continuous-monitoring-interactive">Option 2: Continuous Monitoring (Interactive)</h3>
+<pre class="codehilite"><code class="language-powershell"># Run as Administrator
+.\Fix-WireGuard-NetworkProfile.ps1 -Monitor -Interval 30
+</code></pre>
+
+<p>This will check every 30 seconds and fix if needed. Press Ctrl+C to stop.</p>
+<h3 id="option-3-scheduled-task-recommended-automatic">Option 3: Scheduled Task (Recommended - Automatic)</h3>
+<pre class="codehilite"><code class="language-powershell"># Install scheduled task (runs every 2 minutes automatically)
+.\Install-WireGuard-Profile-Monitor.ps1
+
+# Or customize the interval (every 5 minutes)
+.\Install-WireGuard-Profile-Monitor.ps1 -IntervalMinutes 5
+</code></pre>
+
+<h2 id="detailed-usage">Detailed Usage</h2>
+<h3 id="fix-wireguard-networkprofileps1">Fix-WireGuard-NetworkProfile.ps1</h3>
+<p><strong>Parameters:</strong>
+- <code>-AdapterName</code> - Name pattern to search for (default: "WireGuard")
+- <code>-Monitor</code> - Run in continuous monitoring mode
+- <code>-Interval</code> - Check interval in seconds when monitoring (default: 30)
+- <code>-LogPath</code> - Path for log file
+- <code>-FixOnce</code> - Just fix once and exit (default)</p>
+<p><strong>Examples:</strong></p>
+<p>Find and fix WireGuard adapter:</p>
+<pre class="codehilite"><code class="language-powershell">.\Fix-WireGuard-NetworkProfile.ps1 -FixOnce
+</code></pre>
+
+<p>Monitor with custom adapter name:</p>
+<pre class="codehilite"><code class="language-powershell">.\Fix-WireGuard-NetworkProfile.ps1 -AdapterName &quot;wg0&quot; -Monitor -Interval 60
+</code></pre>
+
+<p>Custom log location:</p>
+<pre class="codehilite"><code class="language-powershell">.\Fix-WireGuard-NetworkProfile.ps1 -LogPath &quot;C:\Logs\wireguard_fix.log&quot; -Monitor
+</code></pre>
+
+<h3 id="install-wireguard-profile-monitorps1">Install-WireGuard-Profile-Monitor.ps1</h3>
+<p><strong>Parameters:</strong>
+- <code>-TaskName</code> - Name for scheduled task (default: "WireGuard-Profile-Monitor")
+- <code>-ScriptPath</code> - Path to Fix-WireGuard-NetworkProfile.ps1
+- <code>-IntervalMinutes</code> - How often to run (default: 2)
+- <code>-Uninstall</code> - Remove the scheduled task</p>
+<p><strong>Examples:</strong></p>
+<p>Install with default settings (runs every 2 minutes):</p>
+<pre class="codehilite"><code class="language-powershell">.\Install-WireGuard-Profile-Monitor.ps1
+</code></pre>
+
+<p>Install with custom interval (every 5 minutes):</p>
+<pre class="codehilite"><code class="language-powershell">.\Install-WireGuard-Profile-Monitor.ps1 -IntervalMinutes 5
+</code></pre>
+
+<p>Uninstall the scheduled task:</p>
+<pre class="codehilite"><code class="language-powershell">.\Install-WireGuard-Profile-Monitor.ps1 -Uninstall
+</code></pre>
+
+<h2 id="verification">Verification</h2>
+<h3 id="check-current-network-profile">Check Current Network Profile</h3>
+<pre class="codehilite"><code class="language-powershell"># Find WireGuard adapter
+$adapter = Get-NetAdapter | Where-Object { $_.Name -like &quot;*WireGuard*&quot; }
+
+# Get network profile
+Get-NetConnectionProfile -InterfaceIndex $adapter.InterfaceIndex
+</code></pre>
+
+<h3 id="check-scheduled-task-status">Check Scheduled Task Status</h3>
+<pre class="codehilite"><code class="language-powershell"># View task details
+Get-ScheduledTask -TaskName &quot;WireGuard-Profile-Monitor&quot; | Format-List
+
+# Check last run time
+Get-ScheduledTask -TaskName &quot;WireGuard-Profile-Monitor&quot; | Get-ScheduledTaskInfo
+
+# View task history
+Get-WinEvent -LogName Microsoft-Windows-TaskScheduler/Operational |
+    Where-Object { $_.Message -like '*WireGuard-Profile-Monitor*' } |
+    Select-Object -First 10 TimeCreated, Message
+</code></pre>
+
+<h3 id="view-logs">View Logs</h3>
+<pre class="codehilite"><code class="language-powershell"># View recent log entries
+Get-Content &quot;wireguard_profile_fix.log&quot; -Tail 20
+
+# Search for fixes
+Select-String -Path &quot;wireguard_profile_fix.log&quot; -Pattern &quot;Fixed network profile&quot;
+</code></pre>
+
+<h2 id="recommended-setup">Recommended Setup</h2>
+<h3 id="production-environment">Production Environment</h3>
+<ol>
+<li>
+<p><strong>Install Scheduled Task</strong> (runs automatically):
+   <code>powershell
+   .\Install-WireGuard-Profile-Monitor.ps1 -IntervalMinutes 2</code></p>
+</li>
+<li>
+<p><strong>Verify it's running</strong>:
+   <code>powershell
+   Get-ScheduledTask -TaskName "WireGuard-Profile-Monitor"</code></p>
+</li>
+<li>
+<p><strong>Monitor logs periodically</strong>:
+   <code>powershell
+   Get-Content "wireguard_profile_fix.log" -Tail 50</code></p>
+</li>
+</ol>
+<h3 id="why-scheduled-task-is-recommended">Why Scheduled Task is Recommended</h3>
+<ul>
+<li><strong>Automatic</strong>: Runs in background, no manual intervention</li>
+<li><strong>Reliable</strong>: Uses SYSTEM account with highest privileges</li>
+<li><strong>Persistent</strong>: Survives reboots</li>
+<li><strong>Low overhead</strong>: Only runs every 2-5 minutes</li>
+<li><strong>Logging</strong>: All actions are logged</li>
+</ul>
+<h2 id="additional-recommendations">Additional Recommendations</h2>
+<h3 id="1-registry-lock-additional-protection">1. Registry Lock (Additional Protection)</h3>
+<p>The script attempts to lock the profile in the registry, but you can also manually set it:</p>
+<pre class="codehilite"><code class="language-powershell"># Get adapter GUID
+$adapter = Get-NetAdapter | Where-Object { $_.Name -like &quot;*WireGuard*&quot; }
+$guid = $adapter.InterfaceGuid
+
+# Set registry to prevent auto-detection
+$regPath = &quot;HKLM:\SYSTEM\CurrentControlSet\Control\Network\{4D36E972-E325-11CE-BFC1-08002BE10318}\$guid\Connection&quot;
+Set-ItemProperty -Path $regPath -Name &quot;MediaSubType&quot; -Value 1
+</code></pre>
+
+<h3 id="2-group-policy-if-available">2. Group Policy (If Available)</h3>
+<p>If you have Group Policy available:
+- Navigate to: Computer Configuration → Policies → Administrative Templates → Network → Network Connections
+- Enable: "Prohibit access to properties of a LAN connection"
+- This can help prevent accidental changes</p>
+<h3 id="3-network-location-awareness-service">3. Network Location Awareness Service</h3>
+<p>Ensure the Network Location Awareness service is running:</p>
+<pre class="codehilite"><code class="language-powershell">Get-Service -Name NlaSvc
+Start-Service -Name NlaSvc
+Set-Service -Name NlaSvc -StartupType Automatic
+</code></pre>
+
+<h3 id="4-firewall-rule-update">4. Firewall Rule Update</h3>
+<p>Update your firewall rules script to also check and fix the profile:</p>
+<pre class="codehilite"><code class="language-powershell"># Add this to your firewall configuration script
+$wireguardAdapter = Get-NetAdapter | Where-Object { $_.Name -like &quot;*WireGuard*&quot; }
+if ($wireguardAdapter) {
+    $profile = Get-NetConnectionProfile -InterfaceIndex $wireguardAdapter.InterfaceIndex
+    if ($profile.NetworkCategory -ne &quot;Private&quot;) {
+        Set-NetConnectionProfile -InterfaceIndex $wireguardAdapter.InterfaceIndex -NetworkCategory Private
+        Write-Host &quot;Fixed WireGuard profile to Private&quot;
+    }
+}
+</code></pre>
+
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="issue-script-cant-find-wireguard-adapter">Issue: Script can't find WireGuard adapter</h3>
+<p><strong>Solution:</strong>
+1. Check adapter name: <code>Get-NetAdapter | Select-Object Name, InterfaceDescription</code>
+2. Use exact name: <code>.\Fix-WireGuard-NetworkProfile.ps1 -AdapterName "ExactAdapterName"</code></p>
+<h3 id="issue-scheduled-task-not-running">Issue: Scheduled task not running</h3>
+<p><strong>Solution:</strong>
+1. Check task status: <code>Get-ScheduledTask -TaskName "WireGuard-Profile-Monitor"</code>
+2. Check task history: <code>Get-WinEvent -LogName Microsoft-Windows-TaskScheduler/Operational</code>
+3. Reinstall task: <code>.\Install-WireGuard-Profile-Monitor.ps1 -Uninstall</code> then reinstall</p>
+<h3 id="issue-profile-keeps-changing-despite-script">Issue: Profile keeps changing despite script</h3>
+<p><strong>Solution:</strong>
+1. Check if script is actually running (check logs)
+2. Increase monitoring frequency: <code>-IntervalMinutes 1</code>
+3. Check for other scripts/services changing the profile
+4. Verify registry locks are applied</p>
+<h3 id="issue-access-denied-errors">Issue: Access denied errors</h3>
+<p><strong>Solution:</strong>
+- Ensure running as Administrator
+- Check if UAC is blocking the script
+- Verify scheduled task is running as SYSTEM</p>
+<h2 id="best-practices">Best Practices</h2>
+<ol>
+<li><strong>Use Scheduled Task</strong>: Most reliable solution for production</li>
+<li><strong>Monitor Logs</strong>: Check logs weekly to ensure it's working</li>
+<li><strong>Test After Updates</strong>: After Windows updates, verify the task still works</li>
+<li><strong>Document IPMI Access</strong>: Keep IPMI access info in case manual intervention needed</li>
+<li><strong>Backup Configuration</strong>: Export scheduled task: <code>Export-ScheduledTask -TaskName "WireGuard-Profile-Monitor" -Path "task_backup.xml"</code></li>
+</ol>
+<h2 id="integration-with-firewall-script">Integration with Firewall Script</h2>
+<p>You can integrate this into your firewall configuration script:</p>
+<pre class="codehilite"><code class="language-powershell"># At the start of Configure-Production-Firewall.ps1, add:
+$wireguardAdapter = Get-NetAdapter | Where-Object { $_.Name -like &quot;*WireGuard*&quot; }
+if ($wireguardAdapter) {
+    $profile = Get-NetConnectionProfile -InterfaceIndex $wireguardAdapter.InterfaceIndex
+    if ($profile.NetworkCategory -ne &quot;Private&quot;) {
+        Set-NetConnectionProfile -InterfaceIndex $wireguardAdapter.InterfaceIndex -NetworkCategory Private
+        Write-Log &quot;Fixed WireGuard profile to Private before configuring firewall&quot; &quot;Yellow&quot; &quot;WARNING&quot;
+    }
+}
+</code></pre>
+
+<p>This ensures the profile is correct before firewall rules are applied.</p>
+<h2 id="summary">Summary</h2>
+<p>The recommended solution is to:
+1. Install the scheduled task: <code>.\Install-WireGuard-Profile-Monitor.ps1</code>
+2. Verify it's running: <code>Get-ScheduledTask -TaskName "WireGuard-Profile-Monitor"</code>
+3. Monitor logs periodically: <code>Get-Content "wireguard_profile_fix.log" -Tail 20</code></p>
+<p>This provides automatic, reliable protection against the profile switching issue.</p>
+</body>
+</html>

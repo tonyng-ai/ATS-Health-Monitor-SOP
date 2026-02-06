@@ -1,0 +1,47 @@
+[33mcommit 66e7bef715f9555a59c979c5e57703632902d377[m
+Author: tim <tim>
+Date:   Mon Dec 8 07:15:56 2025 -0800
+
+    feat(ats-health-monitor): Migrate from ChaiSQL to SQLite + state file tracking
+    
+    BREAKING CHANGES:
+    - Replaced ChaiSQL (TEXT-only storage) with SQLite (pure Go, strong typing)
+    - SQLite provides reliable date range queries (>=, <=, BETWEEN)
+    
+    New Features:
+    - Log state file (.log_reader_state.toml) to track processed files
+    - Prevents redundant scanning on restart
+    - Singleton lock file prevents duplicate instances
+    - Unique index on fix_order_events for deduplication
+    
+    Performance:
+    - Removed verbose DEBUG log statements
+    - WAL mode for concurrent reads
+    - 64MB cache for better performance
+
+ AI-Agent-Context/ATS-Health-Monitor-Context.md     | 292 [32m+++++++[m[31m----[m
+ .../topic-specific/TIMEZONE-HANDLING.md            | 149 [32m+++++[m[31m-[m
+ AI-Agent-Context/versions/v1.3.0-2025-12-08.md     | 100 [32m++++[m
+ .../ATS-Health-Monitor/api_service.go              |  88 [32m++[m[31m--[m
+ .../ATS-Health-Monitor/ats_log_issue_matrix.go     |   8 [32m+[m[31m-[m
+ .../ATS-Health-Monitor/compliance_storage.go       |   8 [32m+[m[31m-[m
+ .../ATS-Health-Monitor/database.go                 |  20 [32m+[m[31m-[m
+ .../ATS-Health-Monitor/database_issue_matrix.go    |  14 [32m+[m[31m-[m
+ .../database_issue_matrix_safe.go                  |  14 [32m+[m[31m-[m
+ .../ATS-Health-Monitor/db_manager.go               |  18 [32m+[m[31m-[m
+ .../ATS-Health-Monitor/fix_storage.go              |   6 [32m+[m[31m-[m
+ .../ATS-Health-Monitor/frontend/build/index.html   |   2 [32m+[m[31m-[m
+ .../src/components/OrderHistoryDashboard.jsx       |  59 [32m++[m[31m-[m
+ .../frontend/src/components/TradingDashboard.jsx   | 490 [32m+++++++++++++++[m[31m---[m
+ .../frontend/src/services/api.js                   |   7 [32m+[m[31m-[m
+ .../ATS-Health-Monitor/go.mod                      |  12 [32m+[m[31m-[m
+ .../ATS-Health-Monitor/go.sum                      |  20 [32m+[m
+ .../ATS-Health-Monitor/history_sync.go             |   2 [32m+[m[31m-[m
+ .../ATS-Health-Monitor/log_state.go                | 111 [32m++++[m
+ .../ATS-Health-Monitor/main.go                     |  32 [32m+[m[31m-[m
+ .../ATS-Health-Monitor/order_aggregation.go        |   9 [32m+[m[31m-[m
+ .../ATS-Health-Monitor/roundtrips_db.go            | 303 [32m+++[m[31m--------[m
+ .../ATS-Health-Monitor/seed_test_data.go           |   4 [32m+[m[31m-[m
+ .../ATS-Health-Monitor/timezone.go                 |  55 [31m--[m
+ .../ATS-Health-Monitor/unified_log_reader.go       | 571 [32m++++++++++[m[31m-----------[m
+ 25 files changed, 1475 insertions(+), 919 deletions(-)

@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Setup Dummy Mail Server</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 { border-bottom: 2px solid #3498db; padding-bottom: 0.3em; }
+        h2 { border-bottom: 1px solid #ecf0f1; padding-bottom: 0.2em; }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1em;
+            overflow-x: auto;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 1em 0;
+            padding-left: 1em;
+            color: #666;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 2em 0;
+            padding: 1em;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .pdf-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 8px 16px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .pdf-link:hover {
+            background-color: #c0392b;
+        }
+    </style>
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <p><a href="Setup-Dummy-Mail-Server.pdf" class="pdf-link">📄 Download PDF Version</a></p>
+    <h1 id="setup-dummy-mail-server-to-bypass-gtec-issues">Setup Dummy Mail Server to Bypass GTEC Issues</h1>
+<h2 id="metadata">Metadata</h2>
+<p><strong>Category:</strong> Production Administration
+<strong>Last Updated:</strong> 2024-11-25
+<strong>Author:</strong> System Administrator
+<strong>Version:</strong> 1.1
+<strong>Review Date:</strong> 2024-04-15
+<strong>Status:</strong> Active</p>
+<p><strong>⚠️ CRITICAL:</strong> This guide is for smtp4dev v3.x. The old <code>install --port</code> command <strong>DOES NOT WORK</strong>. You must use <code>sc.exe create</code> method as shown in this guide.</p>
+<hr />
+<h2 id="purpose">Purpose</h2>
+<p>This procedure covers setting up a dummy/fake SMTP server to bypass GTEC mail profile issues. The dummy server captures all emails without actually sending them, allowing code to run without errors.</p>
+<p><strong>When to Use:</strong>
+- GTEC mail profile is broken or missing
+- Need to test code without sending real emails
+- Development/testing environments
+- Temporary workaround for mail issues
+- Code depends on GTEC but mail server is unavailable</p>
+<p><strong>Portability:</strong>
+- Scripts can be run from any directory
+- No folder dependencies required
+- SQL scripts are automatically saved to current directory
+- Can be copied to any location and run immediately</p>
+<hr />
+<h2 id="prerequisites">Prerequisites</h2>
+<h3 id="required-access">Required Access</h3>
+<ul>
+<li>[x] SQL Server sysadmin or dbmail_admin role</li>
+<li>[x] Administrator privileges (for installing smtp4dev service)</li>
+<li>[x] Access to msdb database</li>
+</ul>
+<h3 id="required-tools">Required Tools</h3>
+<ul>
+<li>[x] PowerShell (Administrator)</li>
+<li>[x] SQL Server Management Studio (SSMS)</li>
+<li>[x] Script: <code>Scripts\04-Production-Administration\Setup-Dummy-Mail-Server.ps1</code> - Main setup script</li>
+<li>[x] Script: <code>Scripts\04-Production-Administration\Install-smtp4dev-Service.ps1</code> - Install smtp4dev as Windows service (v3.x method)</li>
+<li>[x] Script: <code>Scripts\04-Production-Administration\Create-Dummy-Mail-Profile.sql</code> - SQL mail profile configuration</li>
+</ul>
+<hr />
+<h2 id="quick-setup-automated">Quick Setup (Automated)</h2>
+<h3 id="step-1-install-smtp4dev-service">Step 1: Install smtp4dev Service</h3>
+<p><strong>Action (Run PowerShell as Administrator):</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Can be run from any directory - no need to cd to script folder
+.\Install-smtp4dev-Service.ps1
+
+# Or with full path:
+C:\Path\To\Script\Install-smtp4dev-Service.ps1
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- smtp4dev service created and started
+- Service name: <code>Smtp4dev</code>
+- Listening on port 25 (SMTP) and 5000 (Web UI)</p>
+<p><strong>Alternative Manual Installation:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Based on help output: &quot;To register service: sc.exe create Smtp4dev binPath= &quot;PathToExe --service&quot;&quot;
+sc.exe create Smtp4dev binPath= &quot;C:\Program Files\smtp4dev\Rnwood.Smtp4dev.exe --service --smtpport 25 --urls http://localhost:5000&quot; start= auto
+Start-Service Smtp4dev
+</code></pre>
+
+<p><strong>⚠️ Important:</strong> The old <code>install --port</code> command does NOT work in smtp4dev v3.x. You must use <code>sc.exe create</code> method.</p>
+<hr />
+<h3 id="step-2-run-setup-script-for-sql-profile">Step 2: Run Setup Script for SQL Profile</h3>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Script can be run from ANY directory - no folder dependencies required
+.\Setup-Dummy-Mail-Server.ps1 -ProfileName &quot;GTEC&quot; -SmtpPort 25
+
+# Or with full path from anywhere:
+C:\Path\To\Script\Setup-Dummy-Mail-Server.ps1 -ProfileName &quot;GTEC&quot; -SmtpPort 25
+</code></pre>
+
+<p><strong>Note:</strong> The script is portable and can be copied to any location. SQL scripts are saved to the current directory (where you run the script) for reference.</p>
+<p><strong>Expected Result:</strong>
+- SQL Server mail profile created
+- Profile points to localhost:25
+- Test email sent successfully</p>
+<hr />
+<h2 id="manual-setup-options">Manual Setup Options</h2>
+<h3 id="option-1-smtp4dev-recommended-windows-service">Option 1: smtp4dev (Recommended - Windows Service)</h3>
+<p><strong>Advantages:</strong>
+- Runs as Windows service (starts automatically)
+- Web interface to view emails
+- No GUI needed
+- Professional solution</p>
+<p><strong>Steps:</strong></p>
+<ol>
+<li><strong>Download smtp4dev:</strong></li>
+<li>Go to: https://github.com/rnwood/smtp4dev/releases</li>
+<li>Download: <code>smtp4dev-win-x64.zip</code></li>
+<li>
+<p>Extract to: <code>C:\Program Files\smtp4dev\</code></p>
+</li>
+<li>
+<p><strong>Install as Service (Run PowerShell as Administrator):</strong></p>
+</li>
+</ol>
+<p><strong>⚠️ IMPORTANT:</strong> smtp4dev v3.x does NOT support <code>install</code> command. You must use <code>sc.exe</code> to create the service.</p>
+<p><strong>Option A: Use the provided script (Recommended):</strong>
+   ```powershell
+   # Can be run from any directory
+   .\Install-smtp4dev-Service.ps1</p>
+<p># Or with full path:
+   C:\Path\To\Script\Install-smtp4dev-Service.ps1
+   ```</p>
+<p><strong>Option B: Manual installation using sc.exe:</strong>
+   <code>powershell
+   # The help output shows: "To register service: sc.exe create Smtp4dev binPath= "PathToExe --service""
+   sc.exe create Smtp4dev binPath= "C:\Program Files\smtp4dev\Rnwood.Smtp4dev.exe --service --smtpport 25 --urls http://localhost:5000" start= auto</code></p>
+<p><strong>Key Points:</strong>
+   - ❌ Old method: <code>.\Rnwood.Smtp4dev.exe install --port 25</code> <strong>DOES NOT WORK</strong> in v3.x
+   - ✅ New method: Use <code>sc.exe create</code> with <code>--service</code> flag
+   - ✅ Use <code>--smtpport</code> (not <code>--port</code>)
+   - ✅ Service name is <code>Smtp4dev</code> (capital S)</p>
+<ol>
+<li><strong>Start Service:</strong>
+   <code>powershell
+   Start-Service Smtp4dev</code></li>
+</ol>
+<p><strong>Note:</strong> Service name is <code>Smtp4dev</code> (capital S), not <code>smtp4dev</code></p>
+<ol>
+<li><strong>Access Web UI:</strong></li>
+<li>Open browser: http://localhost:5000</li>
+<li>
+<p>All captured emails will appear here</p>
+</li>
+<li>
+<p><strong>Create SQL Mail Profile:</strong>
+   <code>powershell
+   # Script can be run from any directory
+   .\Setup-Dummy-Mail-Server.ps1 -ProfileName "GTEC" -SmtpPort 25</code></p>
+</li>
+</ol>
+<p><strong>Expected Result:</strong>
+- Service running and listening on port 25
+- Web UI accessible
+- SQL profile created</p>
+<hr />
+<h3 id="option-2-papercut-smtp-simpler-gui-application">Option 2: Papercut SMTP (Simpler - GUI Application)</h3>
+<p><strong>Advantages:</strong>
+- No installation needed
+- Simple GUI to view emails
+- Easy to use
+- Portable executable</p>
+<p><strong>Steps:</strong></p>
+<ol>
+<li><strong>Download Papercut:</strong></li>
+<li>Go to: https://github.com/ChangemakerStudios/Papercut-SMTP/releases</li>
+<li>Download: <code>Papercut.exe</code></li>
+<li>
+<p>Save to any folder</p>
+</li>
+<li>
+<p><strong>Run Papercut:</strong></p>
+</li>
+<li>Double-click <code>Papercut.exe</code></li>
+<li>Window opens showing captured emails</li>
+<li>
+<p>Listens on port 25 by default</p>
+</li>
+<li>
+<p><strong>Create SQL Mail Profile:</strong>
+   <code>powershell
+   .\Setup-Dummy-Mail-Server.ps1 -ProfileName "GTEC" -SmtpPort 25</code></p>
+</li>
+</ol>
+<p><strong>Expected Result:</strong>
+- Papercut window open
+- Shows all captured emails in real-time
+- SQL profile created</p>
+<hr />
+<h3 id="option-3-fakesmtp-java-based">Option 3: FakeSMTP (Java-based)</h3>
+<p><strong>Advantages:</strong>
+- Cross-platform (Java)
+- Simple interface
+- Good for testing</p>
+<p><strong>Steps:</strong></p>
+<ol>
+<li><strong>Download FakeSMTP:</strong></li>
+<li>Go to: http://nilhcem.com/FakeSMTP/</li>
+<li>
+<p>Download the JAR file</p>
+</li>
+<li>
+<p><strong>Run FakeSMTP:</strong>
+   <code>powershell
+   java -jar fakeSMTP.jar -s -p 25</code></p>
+</li>
+<li>
+<p><strong>Create SQL Mail Profile:</strong>
+   <code>powershell
+   # Script can be run from any directory
+   .\Setup-Dummy-Mail-Server.ps1 -ProfileName "GTEC" -SmtpPort 25</code></p>
+</li>
+</ol>
+<hr />
+<h2 id="sql-server-configuration">SQL Server Configuration</h2>
+<h3 id="manual-sql-script">Manual SQL Script</h3>
+<p>If you prefer to run SQL manually:</p>
+<p><strong>Action:</strong>
+1. Open SSMS
+2. Connect to your SQL Server instance
+3. Open the SQL script from one of these locations:
+   - <strong>Standalone script:</strong> <code>Scripts\04-Production-Administration\Create-Dummy-Mail-Profile.sql</code>
+   - <strong>Generated script:</strong> <code>Create-Dummy-Mail-Profile-{ProfileName}.sql</code> (created in the current directory when you run <code>Setup-Dummy-Mail-Server.ps1</code>)
+4. Modify if needed:
+   - <code>@ProfileName = 'GTEC'</code> (change if different) - appears in multiple batches
+   - <code>@SmtpPort = 25</code> (change if using different port) - in Batch 3
+5. Execute the script</p>
+<p><strong>Note:</strong>
+- The standalone script is located at: <code>Scripts\04-Production-Administration\Create-Dummy-Mail-Profile.sql</code>
+- When running <code>Setup-Dummy-Mail-Server.ps1</code>, a customized SQL script is saved to the current directory (where you run the script) as <code>Create-Dummy-Mail-Profile-{ProfileName}.sql</code> for reference
+- Both scripts work the same way - the standalone version requires manual editing of profile name and port in each batch</p>
+<p><strong>Expected Result:</strong>
+- Mail account created
+- Mail profile created
+- Account associated with profile
+- Permissions granted</p>
+<hr />
+<h2 id="verification">Verification</h2>
+<h3 id="step-1-check-dummy-smtp-server">Step 1: Check Dummy SMTP Server</h3>
+<p><strong>For smtp4dev:</strong>
+- Check service is running:
+  <code>powershell
+  Get-Service Smtp4dev  # Note: Capital S</code>
+- Open: http://localhost:5000
+- Should see web interface with captured emails</p>
+<p><strong>For Papercut:</strong>
+- Check Papercut window
+- Should be running and listening</p>
+<p><strong>For FakeSMTP:</strong>
+- Check FakeSMTP window
+- Should show "Server started on port 25"</p>
+<hr />
+<h3 id="step-2-test-email-from-sql-server">Step 2: Test Email from SQL Server</h3>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-sql">USE msdb;
+GO
+
+EXEC msdb.dbo.sp_send_dbmail
+    @profile_name = 'GTEC',
+    @recipients = 'test@example.com',
+    @subject = 'Test Email',
+    @body = 'This is a test email from dummy server.';
+GO
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- Email appears in dummy SMTP server interface
+- No errors in SQL Server
+- Email captured (not sent)</p>
+<hr />
+<h3 id="step-3-verify-profile-configuration">Step 3: Verify Profile Configuration</h3>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-sql">SELECT
+    p.name AS ProfileName,
+    a.account_name AS AccountName,
+    a.mailserver_name AS MailServer,
+    a.port AS Port,
+    a.email_address AS EmailAddress
+FROM msdb.dbo.sysmail_profile p
+INNER JOIN msdb.dbo.sysmail_profileaccount pa ON p.profile_id = pa.profile_id
+INNER JOIN msdb.dbo.sysmail_account a ON pa.account_id = a.account_id
+WHERE p.name = 'GTEC';
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- Profile exists
+- Mail server: <code>localhost</code>
+- Port: <code>25</code> (or your configured port)
+- Account configured correctly</p>
+<hr />
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="issue-1-port-already-in-use">Issue 1: Port Already in Use</h3>
+<p><strong>Symptoms:</strong>
+- Error: "Port 25 is already in use"
+- Service fails to start</p>
+<p><strong>Solution:</strong>
+1. Check what's using port 25:
+   <code>powershell
+   netstat -ano | findstr :25</code></p>
+<ol>
+<li>
+<p>Stop the service and recreate with different port:
+   <code>powershell
+   Stop-Service Smtp4dev
+   sc.exe delete Smtp4dev
+   .\Install-smtp4dev-Service.ps1 -SmtpPort 2525</code></p>
+</li>
+<li>
+<p>Update SQL profile to use new port:
+   <code>sql
+   UPDATE msdb.dbo.sysmail_account
+   SET port = 2525
+   WHERE name = 'GTEC_DummyAccount';</code></p>
+</li>
+</ol>
+<hr />
+<h3 id="issue-2-sql-server-cant-connect-to-dummy-server">Issue 2: SQL Server Can't Connect to Dummy Server</h3>
+<p><strong>Symptoms:</strong>
+- Email fails with connection error
+- "Cannot connect to mail server"</p>
+<p><strong>Solution:</strong>
+1. Verify dummy server is running:
+   <code>powershell
+   Get-Service Smtp4dev  # Note: Capital S - service name is Smtp4dev
+   # Should show Status: Running
+   # Or check Papercut/FakeSMTP window</code></p>
+<ol>
+<li>
+<p>If service is not running, start it:
+   <code>powershell
+   Start-Service Smtp4dev</code></p>
+</li>
+<li>
+<p>Check service logs if it fails to start:
+   <code>powershell
+   Get-EventLog -LogName Application -Source Smtp4dev -Newest 10</code></p>
+</li>
+<li>
+<p>Test connection:
+   <code>powershell
+   Test-NetConnection -ComputerName localhost -Port 25</code></p>
+</li>
+<li>
+<p>Check firewall:
+   <code>powershell
+   Get-NetFirewallRule | Where-Object {$_.DisplayName -like "*SMTP*"}</code></p>
+</li>
+<li>
+<p>Ensure SQL Server can access localhost:</p>
+</li>
+<li>Usually not an issue, but verify network settings</li>
+</ol>
+<hr />
+<h3 id="issue-3-emails-not-appearing-in-dummy-server">Issue 3: Emails Not Appearing in Dummy Server</h3>
+<p><strong>Symptoms:</strong>
+- SQL reports success
+- No email in dummy server interface</p>
+<p><strong>Solution:</strong>
+1. Check mail queue:
+   <code>sql
+   SELECT TOP 10 *
+   FROM msdb.dbo.sysmail_mailitems
+   ORDER BY sent_date DESC;</code></p>
+<ol>
+<li>
+<p>Check for errors:
+   <code>sql
+   SELECT *
+   FROM msdb.dbo.sysmail_event_log
+   WHERE event_type = 'error'
+   ORDER BY log_date DESC;</code></p>
+</li>
+<li>
+<p>Verify profile name matches:
+   <code>sql
+   SELECT name FROM msdb.dbo.sysmail_profile;</code></p>
+</li>
+</ol>
+<hr />
+<h2 id="usage-in-code">Usage in Code</h2>
+<h3 id="original-code-fails-if-gtec-broken">Original Code (Fails if GTEC Broken):</h3>
+<pre class="codehilite"><code class="language-sql">EXEC msdb.dbo.sp_send_dbmail
+    @profile_name='GTEC',
+    @recipients='tonyng.tonyng@gmail.com',
+    @subject=@subjectstr,
+    @body=@bodystr
+</code></pre>
+
+<h3 id="with-dummy-server-always-works">With Dummy Server (Always Works):</h3>
+<pre class="codehilite"><code class="language-sql">-- Same code, but now GTEC points to dummy server
+EXEC msdb.dbo.sp_send_dbmail
+    @profile_name='GTEC',
+    @recipients='tonyng.tonyng@gmail.com',
+    @subject=@subjectstr,
+    @body=@bodystr
+-- Email is captured by dummy server, not sent
+</code></pre>
+
+<p><strong>No code changes needed!</strong> The dummy server makes GTEC work without modifying your code.</p>
+<hr />
+<h2 id="related-scripts">Related Scripts</h2>
+<ul>
+<li><a href="../../Scripts/04-Production-Administration/Setup-Dummy-Mail-Server.ps1">Setup-Dummy-Mail-Server.ps1</a> - Automated setup script</li>
+<li><a href="../../Scripts/04-Production-Administration/Create-Dummy-Mail-Profile.sql">Create-Dummy-Mail-Profile.sql</a> - SQL configuration script</li>
+<li><a href="../../Scripts/04-Production-Administration/Bypass-GTEC-Mail.ps1">Bypass-GTEC-Mail.ps1</a> - Alternative bypass methods</li>
+</ul>
+<hr />
+<h2 id="best-practices">Best Practices</h2>
+<ol>
+<li><strong>Use smtp4dev for production-like environments</strong> (runs as service)</li>
+<li><strong>Use Papercut for quick testing</strong> (simple, no installation)</li>
+<li><strong>Keep dummy server running</strong> when code depends on GTEC</li>
+<li><strong>Monitor captured emails</strong> to verify code is working</li>
+<li><strong>Document which environment uses dummy server</strong> (dev/test only)</li>
+</ol>
+<hr />
+<h2 id="notes">Notes</h2>
+<p><strong>⚠️ WARNING:</strong>
+- Dummy server is for development/testing only
+- Do NOT use in production (emails won't be delivered)
+- Always verify real mail server works before production deployment</p>
+<p><strong>💡 TIP:</strong>
+- smtp4dev web UI is great for viewing email content and headers
+- Papercut is perfect for quick visual verification
+- Both can run simultaneously on different ports if needed</p>
+<p><strong>📝 NOTE:</strong>
+- Dummy server captures ALL emails sent to it
+- No actual email delivery occurs
+- Perfect for testing without spamming real email addresses
+- Can run 24/7 as Windows service (smtp4dev)
+- <strong>CRITICAL:</strong> smtp4dev v3.x uses <code>sc.exe create</code> method, NOT <code>install</code> command
+- <strong>Service name:</strong> <code>Smtp4dev</code> (capital S) - use this when checking/starting service
+- <strong>Help output shows:</strong> "To register service: sc.exe create Smtp4dev binPath= "PathToExe --service""
+- <strong>Portability:</strong> <code>Setup-Dummy-Mail-Server.ps1</code> can be run from any directory - no folder dependencies
+- <strong>SQL Scripts:</strong> Automatically saved to current directory (<code>Create-Dummy-Mail-Profile-{ProfileName}.sql</code>) where you run the script</p>
+</body>
+</html>

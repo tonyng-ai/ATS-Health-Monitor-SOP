@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Sync to Distribution Repository</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 { border-bottom: 2px solid #3498db; padding-bottom: 0.3em; }
+        h2 { border-bottom: 1px solid #ecf0f1; padding-bottom: 0.2em; }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1em;
+            overflow-x: auto;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 1em 0;
+            padding-left: 1em;
+            color: #666;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 2em 0;
+            padding: 1em;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .pdf-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 8px 16px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .pdf-link:hover {
+            background-color: #c0392b;
+        }
+    </style>
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <p><a href="Sync-to-Distribution-Repository.pdf" class="pdf-link">📄 Download PDF Version</a></p>
+    <h1 id="sync-to-distribution-repository">Sync to Distribution Repository</h1>
+<h2 id="metadata">Metadata</h2>
+<p><strong>Category:</strong> SOP Management
+<strong>Last Updated:</strong> 2024-11-29
+<strong>Author:</strong> System Administrator
+<strong>Version:</strong> 1.0
+<strong>Review Date:</strong> 2025-02-28
+<strong>Status:</strong> Active</p>
+<hr />
+<h2 id="purpose">Purpose</h2>
+<p>This procedure covers syncing the SOP-Management project to a distribution repository, converting source files to distribution-ready formats using a TOML configuration file.</p>
+<p><strong>When to Use:</strong>
+- Creating a distribution-ready version of the project
+- Publishing SOPs and scripts to end users
+- Converting markdown to PDF for documentation
+- Compiling source code to executables
+- Maintaining a separate repository for distribution</p>
+<h3 id="procedure-overview">Procedure Overview</h3>
+<pre class="codehilite"><code class="language-mermaid">flowchart TD
+    Start([Start]) --&gt; CheckConfig{Config File Exists?}
+    CheckConfig --&gt;|No| CreateConfig[Create sync-config.toml]
+    CheckConfig --&gt;|Yes| LoadConfig[Load Configuration]
+    CreateConfig --&gt; LoadConfig
+    LoadConfig --&gt; Validate{Validate Config}
+    Validate --&gt;|Invalid| Error[Error: Fix Config]
+    Validate --&gt;|Valid| SetupRepo[Setup Distribution Repo]
+    SetupRepo --&gt; SyncFiles[Sync Files Based on Config]
+    SyncFiles --&gt; ConvertMD[Convert .md to PDF]
+    ConvertMD --&gt; CompileGo[Compile Go Programs]
+    CompileGo --&gt; CompilePy[Compile Python Scripts]
+    CompilePy --&gt; CopyPS1[Copy PowerShell Scripts]
+    CopyPS1 --&gt; Commit[Commit Changes]
+    Commit --&gt; Push[Push to Repository]
+    Push --&gt; End([Complete])
+    Error --&gt; End
+
+    style Start fill:#90EE90
+    style End fill:#90EE90
+    style Error fill:#FFB6C1
+    style Validate fill:#FFD700
+</code></pre>
+
+<hr />
+<h2 id="prerequisites">Prerequisites</h2>
+<h3 id="required-access">Required Access</h3>
+<ul>
+<li>[x] Write access to source repository</li>
+<li>[x] Write access to distribution repository</li>
+<li>[x] Git credentials for distribution repository</li>
+<li>[x] PowerShell execution permissions</li>
+</ul>
+<h3 id="required-tools">Required Tools</h3>
+<ul>
+<li>[x] Python 3.8+ installed and in PATH</li>
+<li>[x] Go compiler (for compiling Go programs)</li>
+<li>[x] Git installed and configured</li>
+<li>[x] Script: <code>Sync-to-Projection-Repo\Scripts\Sync-To-Distribution-Repo.py</code></li>
+<li>[x] Script: <code>Sync-to-Projection-Repo\Scripts\Sync-To-Distribution-Repo.ps1</code></li>
+</ul>
+<h3 id="required-information">Required Information</h3>
+<ul>
+<li>[x] Distribution repository URL</li>
+<li>[x] Local directory path for distribution repository</li>
+<li>[x] TOML configuration file (optional, defaults used if not provided)</li>
+</ul>
+<h3 id="pre-conditions">Pre-Conditions</h3>
+<ul>
+<li>[x] Windows PowerShell 5.1+ or PowerShell Core</li>
+<li>[x] Internet connection (for downloading dependencies)</li>
+<li>[x] GitHub account (for creating distribution repository)</li>
+<li>[x] Source repository is accessible</li>
+</ul>
+<hr />
+<h2 id="procedure-steps">Procedure Steps</h2>
+<h3 id="step-1-verify-environment-recommended-first-step">Step 1: Verify Environment (Recommended First Step)</h3>
+<p><strong>Action:</strong>
+Run the verification script to check all prerequisites:</p>
+<pre class="codehilite"><code class="language-powershell">cd Sync-to-Projection-Repo\Scripts
+.\Verify-Sync-Environment.ps1
+</code></pre>
+
+<p><strong>For detailed output:</strong></p>
+<pre class="codehilite"><code class="language-powershell">.\Verify-Sync-Environment.ps1 -Detailed
+</code></pre>
+
+<p><strong>To test with distribution repository:</strong></p>
+<pre class="codehilite"><code class="language-powershell">.\Verify-Sync-Environment.ps1 -DistRepo &quot;https://github.com/your-username/repo.git&quot;
+</code></pre>
+
+<p><strong>What the script checks:</strong>
+1. Python installation and version (3.8+)
+2. Python dependencies (markdown, gitpython, pyinstaller, weasyprint/pdfkit)
+3. Go installation (for compiling Go programs)
+4. Git installation and configuration
+5. Required script files
+6. Configuration file validity
+7. Source directory access and permissions
+8. Distribution repository access (if provided)
+9. Network connectivity
+10. File system permissions</p>
+<p><strong>Expected Result:</strong>
+- All critical checks pass (green ✓)
+- Warnings may appear for optional items (yellow ⚠)
+- Errors must be fixed before proceeding (red ✗)</p>
+<p><strong>If errors are found:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Attempt automatic fixes
+.\Verify-Sync-Environment.ps1 -FixIssues
+
+# Or run setup script
+.\Setup-Python-Environment.ps1
+</code></pre>
+
+<hr />
+<h3 id="step-2-deploy-python-environment">Step 2: Deploy Python Environment</h3>
+<p><strong>Action:</strong>
+Run the PowerShell setup script to install and configure Python:</p>
+<pre class="codehilite"><code class="language-powershell">cd Sync-to-Projection-Repo\Scripts
+.\Setup-Python-Environment.ps1
+</code></pre>
+
+<p><strong>If Python is not installed, use:</strong></p>
+<pre class="codehilite"><code class="language-powershell">.\Setup-Python-Environment.ps1 -InstallPython
+</code></pre>
+
+<p><strong>What the script does:</strong>
+1. Checks if Python 3.8+ is installed
+2. Verifies Python version meets requirements
+3. Checks for pip and upgrades if needed
+4. Installs all required Python packages from <code>sync-requirements.txt</code>
+5. Verifies all modules are installed correctly</p>
+<p><strong>Expected Result:</strong>
+- Python 3.8+ installed and in PATH
+- pip installed and upgraded
+- All required packages installed:
+  - <code>markdown</code> - For markdown processing
+  - <code>weasyprint</code> or <code>pdfkit</code> - For PDF conversion
+  - <code>pyinstaller</code> - For Python to EXE compilation
+  - <code>gitpython</code> - For Git operations
+  - <code>tomli</code> - For TOML parsing (Python &lt; 3.11)</p>
+<p><strong>Verification:</strong></p>
+<pre class="codehilite"><code class="language-powershell">python --version
+pip --version
+python -c &quot;import markdown, git, PyInstaller; print('OK')&quot;
+</code></pre>
+
+<p><strong>Troubleshooting:</strong>
+- If Python is not found, the script will provide download instructions
+- If pip installation fails, run: <code>python -m ensurepip --upgrade</code>
+- If packages fail to install, check internet connection and try: <code>pip install --upgrade pip</code></p>
+<hr />
+<h3 id="step-3-create-github-distribution-repository">Step 3: Create GitHub Distribution Repository</h3>
+<p><strong>Action:</strong>
+Use the PowerShell script to create a GitHub repository:</p>
+<pre class="codehilite"><code class="language-powershell">cd Sync-to-Projection-Repo\Scripts
+.\Create-GitHub-Repository.ps1 -RepoName &quot;sop-management-distribution&quot; -Description &quot;SOP Management Distribution Repository&quot; -Visibility private
+</code></pre>
+
+<p><strong>Parameters:</strong>
+- <code>-RepoName</code> - Repository name (required)
+- <code>-Description</code> - Repository description (optional)
+- <code>-Visibility</code> - <code>public</code>, <code>private</code>, or <code>internal</code> (default: <code>private</code>)
+- <code>-UseCLI</code> - Use GitHub CLI if available
+- <code>-Organization</code> - Organization name (if creating under an organization)</p>
+<p><strong>Option 1: Using GitHub CLI (Recommended)</strong></p>
+<p>If you have GitHub CLI installed:</p>
+<pre class="codehilite"><code class="language-powershell"># Install GitHub CLI (if not installed)
+winget install GitHub.cli
+
+# Authenticate
+gh auth login
+
+# Create repository
+.\Create-GitHub-Repository.ps1 -RepoName &quot;sop-distribution&quot; -UseCLI
+</code></pre>
+
+<p><strong>Option 2: Manual Creation via Web Interface</strong></p>
+<p>The script will provide instructions, or:
+1. Go to: https://github.com/new
+2. Repository name: <code>sop-management-distribution</code>
+3. Description: <code>SOP Management Distribution Repository</code>
+4. Visibility: <code>Private</code> (recommended)
+5. <strong>DO NOT</strong> initialize with README, .gitignore, or license
+6. Click "Create repository"</p>
+<p><strong>Option 3: Using GitHub API</strong></p>
+<p>The script provides PowerShell code to use the GitHub API with a personal access token.</p>
+<p><strong>Expected Result:</strong>
+- GitHub repository created
+- Repository URL obtained (e.g., <code>https://github.com/username/sop-management-distribution.git</code>)
+- Repository is empty and ready for first sync</p>
+<p><strong>Verification:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Test repository access
+git ls-remote https://github.com/YOUR_USERNAME/sop-management-distribution.git
+</code></pre>
+
+<p><strong>Note:</strong> Save the repository URL for use in Step 4.</p>
+<hr />
+<h3 id="step-4-install-dependencies-alternative-method">Step 4: Install Dependencies (Alternative Method)</h3>
+<p><strong>Action (if Step 1 script didn't work):</strong>
+Manually install Python dependencies:</p>
+<pre class="codehilite"><code class="language-powershell">cd Sync-to-Projection-Repo\Scripts
+pip install -r sync-requirements.txt
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+All required Python packages are installed:
+- <code>markdown</code> - For markdown processing
+- <code>weasyprint</code> or <code>pdfkit</code> - For PDF conversion
+- <code>pyinstaller</code> - For Python to EXE compilation
+- <code>gitpython</code> - For Git operations
+- <code>tomli</code> - For TOML parsing (Python &lt; 3.11)</p>
+<p><strong>Verification:</strong></p>
+<pre class="codehilite"><code class="language-powershell">python -c &quot;import markdown, git, PyInstaller; print('OK')&quot;
+</code></pre>
+
+<hr />
+<h3 id="step-5-create-configuration-file-optional">Step 5: Create Configuration File (Optional)</h3>
+<p><strong>Action:</strong>
+Copy the example configuration file and customize:</p>
+<pre class="codehilite"><code class="language-powershell">cd Sync-to-Projection-Repo\Scripts
+Copy-Item sync-config.toml.example sync-config.toml
+# Edit sync-config.toml with your preferences
+</code></pre>
+
+<p><strong>Configuration Structure:</strong></p>
+<p>The TOML file allows you to control:
+- <strong>Directories to sync</strong> - Which folders to include/exclude
+- <strong>Default file handling</strong> - What to do with code, markdown, PowerShell, etc.
+- <strong>Include/Exclude patterns</strong> - Glob patterns for fine-grained control
+- <strong>Exceptions</strong> - Specific files or directories to include/exclude
+- <strong>File handling actions</strong> - Convert, compile, copy, or exclude
+- <strong>Compilation settings</strong> - Which Go/Python programs to compile</p>
+<p><strong>Example Configuration:</strong></p>
+<pre class="codehilite"><code class="language-toml"># Defaults: exclude code and markdown by default
+[defaults]
+include_code = false          # .go, .py source files
+include_markdown = false      # .md files
+include_powershell = true     # .ps1 files
+include_config = true         # .json, .toml, .sql, etc.
+include_docs = true           # .txt, .html, .bat, etc.
+
+# Exceptions: include specific files
+[exceptions.include]
+files = [
+    &quot;README.md&quot;,                # Include root README
+    &quot;SOPs/**/*.md&quot;              # Include all SOP markdown files
+]
+
+# File handling: what to do with each type
+[file_handling.markdown]
+action = &quot;convert&quot;           # Convert .md to .pdf
+
+[file_handling.go]
+action = &quot;compile&quot;           # Compile .go to .exe
+
+[file_handling.python]
+action = &quot;compile&quot;           # Compile .py to .exe
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+Configuration file created with your custom settings. If no config file exists, defaults are used (exclude code and markdown by default).</p>
+<hr />
+<h3 id="step-6-verify-configuration-optional">Step 6: Verify Configuration (Optional)</h3>
+<p><strong>Action:</strong>
+Re-run verification with your configuration:</p>
+<pre class="codehilite"><code class="language-powershell">.\Verify-Sync-Environment.ps1 -ConfigFile &quot;sync-config.toml&quot; -DistRepo &quot;https://github.com/user/repo.git&quot; -Detailed
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- Configuration file is valid
+- All prerequisites still pass
+- Repository is accessible</p>
+<hr />
+<h3 id="step-7-test-configuration-dry-run">Step 7: Test Configuration (Dry Run)</h3>
+<p><strong>Action:</strong>
+Run a dry run to see what would be synced without making changes:</p>
+<pre class="codehilite"><code class="language-powershell">cd Sync-to-Projection-Repo\Scripts
+.\Sync-To-Distribution-Repo.ps1 `
+    -DistRepo &quot;https://github.com/your-username/distribution-repo.git&quot; `
+    -DistDir &quot;.\distribution-repo&quot; `
+    -DryRun
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- Script shows what files would be:
+  - Converted (markdown to PDF)
+  - Compiled (Go/Python to EXE)
+  - Copied (PowerShell, config files)
+  - Excluded (based on config)
+- No actual changes are made
+- Statistics are displayed</p>
+<p><strong>Example Output:</strong></p>
+<pre class="codehilite"><code>=== SOP-Management Distribution Sync ===
+Source directory: I:\SOP-Management
+Distribution directory: .\distribution-repo
+[DRY RUN] Would convert: README.md -&gt; README.pdf
+[DRY RUN] Would compile: smtp4dev-forwarder -&gt; smtp4dev-forwarder.exe
+...
+SYNC STATISTICS
+============================================================
+Markdown files converted to PDF: 45
+Go programs compiled: 3
+Python scripts compiled: 1
+PowerShell scripts copied: 25
+Other files copied: 12
+Files excluded: 150
+Errors: 0
+</code></pre>
+
+<hr />
+<h3 id="step-8-perform-actual-sync">Step 8: Perform Actual Sync</h3>
+<p><strong>Action:</strong>
+Run the sync script without <code>-DryRun</code>. Use the repository URL from Step 2:</p>
+<pre class="codehilite"><code class="language-powershell">cd Sync-to-Projection-Repo\Scripts
+.\Sync-To-Distribution-Repo.ps1 `
+    -DistRepo &quot;https://github.com/your-username/sop-management-distribution.git&quot; `
+    -DistDir &quot;.\distribution-repo&quot;
+</code></pre>
+
+<p><strong>Replace <code>your-username</code> with your GitHub username and <code>sop-management-distribution</code> with your repository name from Step 2.</strong></p>
+<p><strong>Alternative (Python Direct):</strong></p>
+<pre class="codehilite"><code class="language-powershell">python Sync-To-Distribution-Repo.py `
+    --dist-repo https://github.com/your-username/distribution-repo.git `
+    --dist-dir .\distribution-repo `
+    --config sync-config.toml
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+1. Distribution repository is cloned/updated
+2. Markdown files are converted to PDF
+3. Go programs are compiled to <code>.exe</code>
+4. Python scripts are compiled to <code>.exe</code>
+5. PowerShell scripts are copied as-is
+6. Configuration files are copied
+7. Changes are committed and pushed to distribution repository</p>
+<hr />
+<h3 id="step-9-verify-sync-results">Step 9: Verify Sync Results</h3>
+<p><strong>Action:</strong>
+Check the distribution repository:</p>
+<pre class="codehilite"><code class="language-powershell">cd .\distribution-repo
+git log --oneline -5
+git status
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- New commit with sync changes
+- PDF files in place of markdown files
+- Executable files (.exe) for compiled programs
+- PowerShell scripts (.ps1) copied
+- Directory structure preserved</p>
+<p><strong>Check Statistics:</strong>
+Review the log file:</p>
+<pre class="codehilite"><code class="language-powershell">cat sync-distribution.log
+</code></pre>
+
+<hr />
+<h2 id="configuration-reference">Configuration Reference</h2>
+<h3 id="default-behavior">Default Behavior</h3>
+<p>By default (without config file):
+- ❌ <strong>Code files</strong> (<code>.go</code>, <code>.py</code>) are <strong>excluded</strong>
+- ❌ <strong>Markdown files</strong> (<code>.md</code>) are <strong>excluded</strong>
+- ✅ <strong>PowerShell scripts</strong> (<code>.ps1</code>) are <strong>copied</strong>
+- ✅ <strong>Config files</strong> (<code>.json</code>, <code>.toml</code>, <code>.sql</code>) are <strong>copied</strong>
+- ✅ <strong>Documentation</strong> (<code>.txt</code>, <code>.html</code>, <code>.bat</code>) are <strong>copied</strong></p>
+<h3 id="configuration-sections">Configuration Sections</h3>
+<h4 id="1-directories">1. Directories</h4>
+<pre class="codehilite"><code class="language-toml">[directories]
+include = [&quot;Scripts&quot;, &quot;SOPs&quot;, &quot;Templates&quot;]  # Only sync these
+exclude = [&quot;.git&quot;, &quot;node_modules&quot;]           # Exclude these
+</code></pre>
+
+<h4 id="2-defaults">2. Defaults</h4>
+<pre class="codehilite"><code class="language-toml">[defaults]
+include_code = false          # Exclude .go, .py by default
+include_markdown = false      # Exclude .md by default
+include_powershell = true     # Include .ps1 by default
+include_config = true         # Include config files
+include_docs = true           # Include docs
+</code></pre>
+
+<h4 id="3-include-patterns">3. Include Patterns</h4>
+<pre class="codehilite"><code class="language-toml">[include_patterns]
+patterns = [
+    &quot;Scripts/**/*.ps1&quot;,        # Include all PowerShell scripts
+    &quot;SOPs/**/*.md&quot;             # Include all markdown files
+]
+</code></pre>
+
+<h4 id="4-exclude-patterns">4. Exclude Patterns</h4>
+<pre class="codehilite"><code class="language-toml">[exclude_patterns]
+patterns = [
+    &quot;**/*.log&quot;,                # Exclude all log files
+    &quot;**/test*.ps1&quot;             # Exclude test scripts
+]
+</code></pre>
+
+<h4 id="5-exceptions">5. Exceptions</h4>
+<pre class="codehilite"><code class="language-toml">[exceptions.include]
+files = [
+    &quot;README.md&quot;,               # Include specific file
+    &quot;Scripts/03-SOP-Management/**&quot;  # Include entire directory
+]
+
+[exceptions.exclude]
+files = [
+    &quot;Scripts/05-Production-ATS-Administration/ATS_Launcher_Wrapper.bat&quot;
+]
+directories = [
+    &quot;Scripts/01-Server-Administration&quot;  # Exclude entire directory
+]
+</code></pre>
+
+<h4 id="6-file-handling">6. File Handling</h4>
+<pre class="codehilite"><code class="language-toml">[file_handling.markdown]
+action = &quot;convert&quot;    # Options: &quot;convert&quot;, &quot;copy&quot;, &quot;exclude&quot;
+
+[file_handling.go]
+action = &quot;compile&quot;    # Options: &quot;compile&quot;, &quot;exclude&quot;
+
+[file_handling.python]
+action = &quot;compile&quot;    # Options: &quot;compile&quot;, &quot;exclude&quot;
+
+[file_handling.powershell]
+action = &quot;copy&quot;       # Options: &quot;copy&quot;, &quot;exclude&quot;
+</code></pre>
+
+<h4 id="7-compilation-settings">7. Compilation Settings</h4>
+<pre class="codehilite"><code class="language-toml">[compilation.go]
+directories = [
+    &quot;Scripts/04-Production-Administration/smtp4dev-forwarder&quot;,
+    &quot;Scripts/05-Production-ATS-Administration/ATS-Health-Monitor&quot;
+]
+
+[compilation.python]
+files = [
+    &quot;Scripts/04-Production-Administration/Forward-smtp4dev-to-Telegram.py&quot;
+]
+</code></pre>
+
+<hr />
+<h2 id="verification">Verification</h2>
+<h3 id="how-to-verify-success">How to Verify Success</h3>
+<ol>
+<li><strong>Check Statistics:</strong></li>
+<li>Review sync statistics in console output</li>
+<li>
+<p>Verify expected number of files converted/compiled/copied</p>
+</li>
+<li>
+<p><strong>Check Distribution Repository:</strong>
+   <code>powershell
+   cd .\distribution-repo
+   git log --oneline -1
+   git status</code></p>
+</li>
+<li>
+<p><strong>Verify File Types:</strong></p>
+</li>
+<li>PDF files exist (converted from markdown)</li>
+<li>EXE files exist (compiled from Go/Python)</li>
+<li>PowerShell scripts are present</li>
+<li>
+<p>Source code files (.go, .py) are NOT present (unless explicitly included)</p>
+</li>
+<li>
+<p><strong>Check Log File:</strong>
+   <code>powershell
+   cat sync-distribution.log</code></p>
+</li>
+</ol>
+<h3 id="success-criteria">Success Criteria</h3>
+<ul>
+<li>[x] All configured files are synced</li>
+<li>[x] Markdown files converted to PDF (if configured)</li>
+<li>[x] Go programs compiled to EXE (if configured)</li>
+<li>[x] Python scripts compiled to EXE (if configured)</li>
+<li>[x] PowerShell scripts copied</li>
+<li>[x] Changes committed to distribution repository</li>
+<li>[x] Changes pushed to remote repository</li>
+<li>[x] No errors in log file</li>
+</ul>
+<hr />
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="common-issues">Common Issues</h3>
+<h4 id="issue-1-config-file-not-found">Issue 1: "Config file not found"</h4>
+<p><strong>Symptoms:</strong>
+- Warning message about missing config file
+- Default behavior is used</p>
+<p><strong>Solution:</strong>
+1. Copy example config: <code>Copy-Item sync-config.toml.example sync-config.toml</code>
+2. Customize as needed
+3. Re-run sync</p>
+<p><strong>Prevention:</strong>
+- Always create config file before first sync
+- Keep config file in <code>Sync-to-Projection-Repo\Scripts\</code> directory</p>
+<hr />
+<h4 id="issue-5-python-dependencies-not-installed">Issue 5: "Python dependencies not installed"</h4>
+<p><strong>Symptoms:</strong>
+- Import errors when running script
+- Missing module errors</p>
+<p><strong>Solution:</strong></p>
+<pre class="codehilite"><code class="language-powershell">cd Sync-to-Projection-Repo\Scripts
+pip install -r sync-requirements.txt
+</code></pre>
+
+<p><strong>Verification:</strong></p>
+<pre class="codehilite"><code class="language-powershell">python -c &quot;import markdown, git, PyInstaller; print('OK')&quot;
+</code></pre>
+
+<hr />
+<h4 id="issue-6-go-is-not-installed-when-compiling-go-programs">Issue 6: "Go is not installed" (when compiling Go programs)</h4>
+<p><strong>Symptoms:</strong>
+- Error: "Go is not installed or not in PATH"
+- Go programs not compiled</p>
+<p><strong>Solution:</strong>
+1. Install Go from https://golang.org/dl/
+2. Add Go to PATH
+3. Verify: <code>go version</code></p>
+<hr />
+<h4 id="issue-7-pdf-conversion-fails">Issue 7: "PDF conversion fails"</h4>
+<p><strong>Symptoms:</strong>
+- Error: "No PDF conversion library available"
+- Markdown files not converted</p>
+<p><strong>Solution:</strong></p>
+<pre class="codehilite"><code class="language-powershell">pip install weasyprint
+# OR
+pip install pdfkit  # (requires wkhtmltopdf binary)
+</code></pre>
+
+<hr />
+<h4 id="issue-8-git-push-fails">Issue 8: "Git push fails"</h4>
+<p><strong>Symptoms:</strong>
+- Error during Git push
+- Changes not pushed to remote</p>
+<p><strong>Solution:</strong>
+1. Check Git credentials: <code>git config --list</code>
+2. Verify repository permissions
+3. Test push manually: <code>cd distribution-repo; git push</code>
+4. Use <code>--skip-git</code> to skip Git operations if needed</p>
+<hr />
+<h4 id="issue-9-files-not-syncing-as-expected">Issue 9: "Files not syncing as expected"</h4>
+<p><strong>Symptoms:</strong>
+- Files that should be included are excluded
+- Files that should be excluded are included</p>
+<p><strong>Solution:</strong>
+1. Review configuration file
+2. Check exception rules (exceptions take precedence)
+3. Verify pattern matching (use <code>--dry-run</code> to test)
+4. Check log file for details</p>
+<p><strong>Debug Steps:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Run with dry-run to see what would happen
+.\Sync-To-Distribution-Repo.ps1 -DistRepo &quot;...&quot; -DistDir &quot;...&quot; -DryRun
+
+# Check specific file
+# Add to exceptions.include.files in config
+</code></pre>
+
+<hr />
+<h4 id="issue-10-compilation-errors">Issue 10: "Compilation errors"</h4>
+<p><strong>Symptoms:</strong>
+- Go/Python programs fail to compile
+- Executables not created</p>
+<p><strong>Solution:</strong>
+1. <strong>For Go:</strong>
+   - Ensure <code>go.mod</code> exists in Go program directory
+   - Check dependencies: <code>cd go-program; go mod tidy</code>
+   - Verify Go version: <code>go version</code></p>
+<ol>
+<li><strong>For Python:</strong></li>
+<li>Ensure PyInstaller is installed: <code>pip install pyinstaller</code></li>
+<li>Check Python script dependencies</li>
+<li>Review PyInstaller output for errors</li>
+</ol>
+<hr />
+<h2 id="github-actions-automation">GitHub Actions Automation</h2>
+<h3 id="overview">Overview</h3>
+<p>GitHub Actions can automatically sync your repository to the distribution repository whenever changes are pushed. This eliminates the need for manual syncing and ensures the distribution repository is always up-to-date.</p>
+<h3 id="benefits">Benefits</h3>
+<ul>
+<li><strong>Automatic syncing</strong> - No manual intervention required</li>
+<li><strong>Consistent updates</strong> - Distribution repo stays in sync with source</li>
+<li><strong>Audit trail</strong> - All syncs are logged in GitHub Actions</li>
+<li><strong>Error handling</strong> - Failed syncs are reported via GitHub notifications</li>
+</ul>
+<hr />
+<h3 id="step-10-set-up-github-actions">Step 10: Set Up GitHub Actions</h3>
+<h4 id="prerequisites_1">Prerequisites</h4>
+<ul>
+<li>Source repository is on GitHub</li>
+<li>Distribution repository exists (can be on GitHub or elsewhere)</li>
+<li>GitHub Actions enabled for your repository</li>
+</ul>
+<h4 id="step-101-create-github-secrets">Step 10.1: Create GitHub Secrets</h4>
+<p><strong>Action:</strong>
+1. Go to your source repository on GitHub
+2. Navigate to: <strong>Settings</strong> → <strong>Secrets and variables</strong> → <strong>Actions</strong>
+3. Click <strong>New repository secret</strong></p>
+<p><strong>Required Secrets:</strong></p>
+<ol>
+<li><strong><code>DISTRIBUTION_REPO_URL</code></strong></li>
+<li><strong>Value:</strong> Full URL to distribution repository</li>
+<li><strong>Example:</strong> <code>https://github.com/your-username/sop-management-distribution.git</code></li>
+<li>
+<p><strong>Description:</strong> URL of the distribution repository</p>
+</li>
+<li>
+<p><strong><code>DISTRIBUTION_REPO_TOKEN</code></strong> (if distribution repo is private or requires authentication)</p>
+</li>
+<li><strong>Value:</strong> Personal Access Token (PAT) with <code>repo</code> scope</li>
+<li><strong>How to create:</strong><ul>
+<li>Go to GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic)</li>
+<li>Generate new token with <code>repo</code> scope</li>
+<li>Copy the token (you won't see it again)</li>
+</ul>
+</li>
+<li><strong>Description:</strong> Token for pushing to distribution repository</li>
+</ol>
+<p><strong>Note:</strong> If distribution repository is public and doesn't require authentication, you may not need the token.</p>
+<h4 id="step-102-add-workflow-file">Step 10.2: Add Workflow File</h4>
+<p><strong>Option A: Use Setup Script (Recommended)</strong></p>
+<p><strong>Action:</strong>
+Run the automated setup script:</p>
+<pre class="codehilite"><code class="language-powershell">cd Sync-to-Projection-Repo\Scripts
+.\Setup-GitHub-Actions.ps1 -DistRepoUrl &quot;https://github.com/your-username/distribution-repo.git&quot;
+</code></pre>
+
+<p><strong>To also set up secrets automatically (requires GitHub CLI):</strong></p>
+<pre class="codehilite"><code class="language-powershell">.\Setup-GitHub-Actions.ps1 -DistRepoUrl &quot;https://github.com/your-username/distribution-repo.git&quot; -CreateSecrets
+</code></pre>
+
+<p><strong>Option B: Manual Setup</strong></p>
+<p><strong>Action:</strong>
+The workflow file is already created at:</p>
+<pre class="codehilite"><code>.github/workflows/sync-to-distribution.yml
+</code></pre>
+
+<p><strong>Verify the workflow file exists:</strong></p>
+<pre class="codehilite"><code class="language-powershell">Test-Path .github\workflows\sync-to-distribution.yml
+</code></pre>
+
+<p><strong>If it doesn't exist, create it:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Create directory
+New-Item -ItemType Directory -Force -Path .github\workflows
+
+# The workflow file should be at the repository root
+# If missing, copy from template or create manually
+</code></pre>
+
+<h4 id="step-103-configure-workflow-triggers">Step 10.3: Configure Workflow Triggers</h4>
+<p>The workflow is configured to trigger on:</p>
+<ol>
+<li><strong>Push to main/master branch</strong> - Automatically syncs when changes are pushed</li>
+<li><strong>Manual trigger</strong> - Can be run manually from GitHub Actions tab</li>
+</ol>
+<p><strong>To modify triggers, edit <code>.github/workflows/sync-to-distribution.yml</code>:</strong></p>
+<pre class="codehilite"><code class="language-yaml">on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - 'Scripts/**'      # Only sync when these paths change
+      - 'SOPs/**'
+      - 'Templates/**'
+  workflow_dispatch:     # Allow manual trigger
+</code></pre>
+
+<h4 id="step-104-commit-and-push-workflow">Step 10.4: Commit and Push Workflow</h4>
+<p><strong>Action:</strong></p>
+<pre class="codehilite"><code class="language-powershell">git add .github/workflows/sync-to-distribution.yml
+git commit -m &quot;Add GitHub Actions workflow for distribution sync&quot;
+git push
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- Workflow file is committed to repository
+- GitHub Actions will be available in the Actions tab</p>
+<hr />
+<h3 id="step-11-test-github-actions-workflow">Step 11: Test GitHub Actions Workflow</h3>
+<h4 id="step-111-manual-trigger-test">Step 11.1: Manual Trigger Test</h4>
+<p><strong>Action:</strong>
+1. Go to your repository on GitHub
+2. Click <strong>Actions</strong> tab
+3. Select <strong>Sync to Distribution Repository</strong> workflow
+4. Click <strong>Run workflow</strong>
+5. Select branch (usually <code>main</code>)
+6. Click <strong>Run workflow</strong> button</p>
+<p><strong>Expected Result:</strong>
+- Workflow starts running
+- You can see progress in real-time
+- Check logs for any errors</p>
+<h4 id="step-112-automatic-trigger-test">Step 11.2: Automatic Trigger Test</h4>
+<p><strong>Action:</strong>
+Make a small change and push:</p>
+<pre class="codehilite"><code class="language-powershell"># Make a test change
+echo &quot;# Test&quot; &gt;&gt; README.md
+git add README.md
+git commit -m &quot;Test GitHub Actions sync&quot;
+git push
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- Workflow automatically triggers
+- Syncs changes to distribution repository
+- Distribution repository is updated</p>
+<h4 id="step-113-verify-sync-results">Step 11.3: Verify Sync Results</h4>
+<p><strong>Action:</strong>
+1. Check GitHub Actions tab for workflow run status
+2. Verify distribution repository has new commit
+3. Check that files are synced correctly</p>
+<p><strong>View workflow logs:</strong>
+- Click on the workflow run
+- Expand each step to see detailed logs
+- Download artifacts (sync log) if available</p>
+<hr />
+<h3 id="github-actions-workflow-configuration">GitHub Actions Workflow Configuration</h3>
+<h4 id="workflow-file-location">Workflow File Location</h4>
+<pre class="codehilite"><code>.github/workflows/sync-to-distribution.yml
+</code></pre>
+
+<h4 id="key-features">Key Features</h4>
+<ol>
+<li><strong>Automatic Triggering</strong></li>
+<li>Triggers on push to main/master</li>
+<li>Only when specific paths change (Scripts, SOPs, Templates)</li>
+<li>
+<p>Can be triggered manually</p>
+</li>
+<li>
+<p><strong>Environment Setup</strong></p>
+</li>
+<li>Python 3.11 installed automatically</li>
+<li>Go 1.21 installed (if needed for compilation)</li>
+<li>
+<p>All dependencies installed from requirements.txt</p>
+</li>
+<li>
+<p><strong>Sync Process</strong></p>
+</li>
+<li>Checks out source repository</li>
+<li>Runs sync script</li>
+<li>
+<p>Commits and pushes to distribution repository</p>
+</li>
+<li>
+<p><strong>Error Handling</strong></p>
+</li>
+<li>Logs are saved as artifacts</li>
+<li>Failed runs are reported</li>
+<li>Can be configured to send notifications</li>
+</ol>
+<h4 id="customizing-the-workflow">Customizing the Workflow</h4>
+<p><strong>Skip Go Compilation:</strong></p>
+<pre class="codehilite"><code class="language-yaml"># In workflow_dispatch inputs
+skip_go_compile: true
+</code></pre>
+
+<p><strong>Skip Python Compilation:</strong></p>
+<pre class="codehilite"><code class="language-yaml"># In workflow_dispatch inputs
+skip_python_compile: true
+</code></pre>
+
+<p><strong>Change Python Version:</strong></p>
+<pre class="codehilite"><code class="language-yaml">- name: Set up Python
+  uses: actions/setup-python@v5
+  with:
+    python-version: '3.10'  # Change version here
+</code></pre>
+
+<p><strong>Change Trigger Paths:</strong></p>
+<pre class="codehilite"><code class="language-yaml">on:
+  push:
+    paths:
+      - 'Scripts/**'
+      - 'SOPs/**'
+      # Add or remove paths as needed
+</code></pre>
+
+<hr />
+<h3 id="troubleshooting-github-actions">Troubleshooting GitHub Actions</h3>
+<h4 id="issue-workflow-not-triggering">Issue: "Workflow not triggering"</h4>
+<p><strong>Symptoms:</strong>
+- Workflow doesn't run on push
+- No workflow appears in Actions tab</p>
+<p><strong>Solution:</strong>
+1. Verify workflow file is in <code>.github/workflows/</code> directory
+2. Check file name ends with <code>.yml</code> or <code>.yaml</code>
+3. Verify YAML syntax is correct
+4. Check that paths in <code>on.push.paths</code> match your changes
+5. Ensure you're pushing to the correct branch (main/master)</p>
+<hr />
+<h4 id="issue-secret-not-found">Issue: "Secret not found"</h4>
+<p><strong>Symptoms:</strong>
+- Error: "Secret DISTRIBUTION_REPO_URL not found"
+- Workflow fails with authentication errors</p>
+<p><strong>Solution:</strong>
+1. Go to repository Settings → Secrets and variables → Actions
+2. Verify <code>DISTRIBUTION_REPO_URL</code> secret exists
+3. Verify <code>DISTRIBUTION_REPO_TOKEN</code> secret exists (if needed)
+4. Check secret names match exactly (case-sensitive)
+5. Re-run the workflow after adding secrets</p>
+<hr />
+<h4 id="issue-permission-denied-when-pushing">Issue: "Permission denied" when pushing</h4>
+<p><strong>Symptoms:</strong>
+- Error: "Permission denied (publickey)"
+- Cannot push to distribution repository</p>
+<p><strong>Solution:</strong>
+1. <strong>If using Personal Access Token:</strong>
+   - Verify token has <code>repo</code> scope
+   - Check token hasn't expired
+   - Regenerate token if needed</p>
+<ol>
+<li><strong>If distribution repo is in different organization:</strong></li>
+<li>Use a token with access to both repositories</li>
+<li>
+<p>Or use a GitHub App with appropriate permissions</p>
+</li>
+<li>
+<p><strong>If using SSH URL:</strong></p>
+</li>
+<li>Switch to HTTPS URL with token</li>
+<li>Or configure SSH keys in GitHub Actions</li>
+</ol>
+<hr />
+<h4 id="issue-python-dependencies-fail-to-install">Issue: "Python dependencies fail to install"</h4>
+<p><strong>Symptoms:</strong>
+- Error installing Python packages
+- Workflow fails at dependency installation step</p>
+<p><strong>Solution:</strong>
+1. Check <code>sync-requirements.txt</code> is present
+2. Verify Python version compatibility
+3. Review dependency versions in requirements file
+4. Check workflow logs for specific package errors</p>
+<hr />
+<h4 id="issue-no-changes-to-commit">Issue: "No changes to commit"</h4>
+<p><strong>Symptoms:</strong>
+- Workflow runs but reports "No changes to commit"
+- Distribution repository not updated</p>
+<p><strong>Solution:</strong>
+1. Verify files are actually being synced (check logs)
+2. Check configuration file excludes files you expect
+3. Review sync statistics in workflow logs
+4. Test locally with same configuration</p>
+<hr />
+<h3 id="monitoring-github-actions">Monitoring GitHub Actions</h3>
+<h4 id="view-workflow-runs">View Workflow Runs</h4>
+<ol>
+<li>Go to repository → <strong>Actions</strong> tab</li>
+<li>Click on <strong>Sync to Distribution Repository</strong> workflow</li>
+<li>View run history and status</li>
+</ol>
+<h4 id="view-logs">View Logs</h4>
+<ol>
+<li>Click on a workflow run</li>
+<li>Expand steps to see detailed logs</li>
+<li>Download artifacts (sync log) for detailed analysis</li>
+</ol>
+<h4 id="set-up-notifications">Set Up Notifications</h4>
+<ol>
+<li>Go to repository → <strong>Settings</strong> → <strong>Notifications</strong></li>
+<li>Configure email/Slack notifications for workflow failures</li>
+<li>Or use GitHub's built-in notification system</li>
+</ol>
+<hr />
+<h3 id="best-practices">Best Practices</h3>
+<ol>
+<li><strong>Test First</strong></li>
+<li>Always test workflow manually before relying on automatic triggers</li>
+<li>
+<p>Use <code>workflow_dispatch</code> for testing</p>
+</li>
+<li>
+<p><strong>Monitor Regularly</strong></p>
+</li>
+<li>Check workflow runs weekly</li>
+<li>
+<p>Review any failures promptly</p>
+</li>
+<li>
+<p><strong>Keep Secrets Secure</strong></p>
+</li>
+<li>Never commit secrets to repository</li>
+<li>Rotate tokens periodically</li>
+<li>
+<p>Use least-privilege tokens</p>
+</li>
+<li>
+<p><strong>Version Control</strong></p>
+</li>
+<li>Keep workflow file in repository</li>
+<li>Document any customizations</li>
+<li>
+<p>Review workflow changes before merging</p>
+</li>
+<li>
+<p><strong>Error Handling</strong></p>
+</li>
+<li>Configure notifications for failures</li>
+<li>Review logs regularly</li>
+<li>Have a manual sync process as backup</li>
+</ol>
+<hr />
+<h2 id="advanced-usage">Advanced Usage</h2>
+<h3 id="custom-source-directory">Custom Source Directory</h3>
+<pre class="codehilite"><code class="language-powershell">.\Sync-To-Distribution-Repo.ps1 `
+    -SourceDir &quot;I:\SOP-Management&quot; `
+    -DistRepo &quot;https://github.com/user/repo.git&quot; `
+    -DistDir &quot;.\dist-repo&quot;
+</code></pre>
+
+<h3 id="skip-git-operations">Skip Git Operations</h3>
+<pre class="codehilite"><code class="language-powershell">.\Sync-To-Distribution-Repo.ps1 `
+    -DistRepo &quot;https://github.com/user/repo.git&quot; `
+    -DistDir &quot;.\dist-repo&quot; `
+    -SkipGit
+</code></pre>
+
+<h3 id="custom-commit-message">Custom Commit Message</h3>
+<pre class="codehilite"><code class="language-powershell">.\Sync-To-Distribution-Repo.ps1 `
+    -DistRepo &quot;https://github.com/user/repo.git&quot; `
+    -DistDir &quot;.\dist-repo&quot; `
+    -CommitMessage &quot;Sync $(Get-Date -Format 'yyyy-MM-dd HH:mm')&quot;
+</code></pre>
+
+<h3 id="custom-config-file">Custom Config File</h3>
+<pre class="codehilite"><code class="language-powershell">python Sync-To-Distribution-Repo.py `
+    --dist-repo https://github.com/user/repo.git `
+    --dist-dir .\dist-repo `
+    --config &quot;C:\Custom\Path\sync-config.toml&quot;
+</code></pre>
+
+<hr />
+<h2 id="automation">Automation</h2>
+<h3 id="scheduled-sync-windows-task-scheduler">Scheduled Sync (Windows Task Scheduler)</h3>
+<p>Create a scheduled task to run sync automatically:</p>
+<pre class="codehilite"><code class="language-powershell">$action = New-ScheduledTaskAction -Execute &quot;python&quot; `
+    -Argument &quot;I:\SOP-Management\Sync-to-Projection-Repo\Scripts\Sync-To-Distribution-Repo.py --dist-repo https://github.com/user/repo.git --dist-dir I:\distribution-repo --config I:\SOP-Management\Sync-to-Projection-Repo\Scripts\sync-config.toml&quot; `
+    -WorkingDirectory &quot;I:\SOP-Management\Sync-to-Projection-Repo\Scripts&quot;
+
+$trigger = New-ScheduledTaskTrigger -Daily -At &quot;02:00&quot;
+
+Register-ScheduledTask -TaskName &quot;Sync-Distribution-Repo&quot; `
+    -Action $action `
+    -Trigger $trigger `
+    -Description &quot;Sync SOP-Management to distribution repository&quot;
+</code></pre>
+
+<p><strong>Note:</strong> For cloud-based repositories, GitHub Actions (see Step 10 above) is recommended over local scheduled tasks as it provides better integration, logging, and error handling.</p>
+<hr />
+<h2 id="related-procedures">Related Procedures</h2>
+<ul>
+<li><a href="Create-New-SOP.md">Create New SOP</a> - Creating new SOPs</li>
+<li><a href="SOP-Search-Guide.md">SOP Search Guide</a> - Searching SOPs</li>
+</ul>
+<h2 id="related-scripts">Related Scripts</h2>
+<ul>
+<li><a href="../../Sync-to-Projection-Repo/Scripts/Sync-To-Distribution-Repo.py">Sync-To-Distribution-Repo.py</a> - Main Python sync script</li>
+<li><a href="../../Sync-to-Projection-Repo/Scripts/Sync-To-Distribution-Repo.ps1">Sync-To-Distribution-Repo.ps1</a> - PowerShell wrapper</li>
+<li><a href="../../Sync-to-Projection-Repo/Scripts/Verify-Sync-Environment.ps1">Verify-Sync-Environment.ps1</a> - Environment verification and error reporting</li>
+<li><a href="../../Sync-to-Projection-Repo/Scripts/Setup-Python-Environment.ps1">Setup-Python-Environment.ps1</a> - Python environment setup script</li>
+<li><a href="../../Sync-to-Projection-Repo/Scripts/Create-GitHub-Repository.ps1">Create-GitHub-Repository.ps1</a> - GitHub repository creation script</li>
+<li><a href="../../Sync-to-Projection-Repo/Scripts/Setup-GitHub-Actions.ps1">Setup-GitHub-Actions.ps1</a> - GitHub Actions workflow setup script</li>
+</ul>
+<h2 id="references">References</h2>
+<ul>
+<li><a href="../../Sync-to-Projection-Repo/SOPs/SYNC-DISTRIBUTION-README.md">Sync Distribution README</a> - Complete documentation</li>
+<li><a href="../../Sync-to-Projection-Repo/SOPs/SYNC-QUICK-START.md">Sync Quick Start</a> - Quick reference</li>
+<li><a href="https://toml.io/">TOML Specification</a> - TOML configuration format</li>
+</ul>
+<h2 id="change-log">Change Log</h2>
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Version</th>
+<th>Author</th>
+<th>Changes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2024-11-29</td>
+<td>1.0</td>
+<td>System Administrator</td>
+<td>Initial version with TOML configuration support</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="notes">Notes</h2>
+<p><strong>⚠️ WARNING:</strong>
+- The sync process will overwrite files in the distribution repository
+- Always test with <code>--dry-run</code> first
+- Review configuration file carefully before syncing</p>
+<p><strong>💡 TIP:</strong>
+- Use exceptions in config file for fine-grained control
+- Keep config file in version control
+- Document your configuration choices</p>
+<p><strong>📝 NOTE:</strong>
+- By default, code files (<code>.go</code>, <code>.py</code>) and markdown files (<code>.md</code>) are excluded
+- Use exceptions in TOML config to include specific files
+- The sync script preserves directory structure from source to distribution</p>
+<p><strong>Configuration Priority:</strong>
+1. Exception excludes (highest priority)
+2. Exception includes
+3. Exclude patterns
+4. Include patterns
+5. Default file type rules (lowest priority)</p>
+</body>
+</html>

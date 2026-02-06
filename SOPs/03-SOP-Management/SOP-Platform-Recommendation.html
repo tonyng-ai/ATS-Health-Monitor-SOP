@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>SOP Platform Recommendation</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 { border-bottom: 2px solid #3498db; padding-bottom: 0.3em; }
+        h2 { border-bottom: 1px solid #ecf0f1; padding-bottom: 0.2em; }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1em;
+            overflow-x: auto;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 1em 0;
+            padding-left: 1em;
+            color: #666;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 2em 0;
+            padding: 1em;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .pdf-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 8px 16px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .pdf-link:hover {
+            background-color: #c0392b;
+        }
+    </style>
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <p><a href="SOP-Platform-Recommendation.pdf" class="pdf-link">📄 Download PDF Version</a></p>
+    <h1 id="standard-operating-procedures-sop-platform-recommendation">Standard Operating Procedures (SOP) Platform Recommendation</h1>
+<h2 id="your-requirements">Your Requirements</h2>
+<p><strong>Topics to Document:</strong>
+1. PowerShell Server Administration
+2. Creating Models for Multicharts
+3. MSSQL Trading Daily Routine
+4. Administering Trading Results</p>
+<p><strong>Considerations:</strong>
+- Version control
+- Collaboration
+- Searchability
+- Integration with code
+- Maintenance ease
+- Accessibility</p>
+<h2 id="platform-comparison">Platform Comparison</h2>
+<h3 id="option-1-github-with-markdown-recommended">Option 1: GitHub with Markdown (Recommended) ⭐</h3>
+<p><strong>Pros:</strong>
+- ✅ <strong>Version Control</strong>: Full Git history, see who changed what and when
+- ✅ <strong>Code Integration</strong>: SOPs live alongside your scripts in same repo
+- ✅ <strong>Search</strong>: GitHub's search works across all files
+- ✅ <strong>Free</strong>: No cost
+- ✅ <strong>Markdown</strong>: Easy to write, supports code blocks, tables, diagrams
+- ✅ <strong>Pull Requests</strong>: Review process for SOP changes
+- ✅ <strong>Issues</strong>: Link SOPs to issues/tickets
+- ✅ <strong>Wiki</strong>: Can use GitHub Wiki for additional documentation
+- ✅ <strong>Backup</strong>: Automatically backed up
+- ✅ <strong>Access Control</strong>: Team permissions via GitHub</p>
+<p><strong>Cons:</strong>
+- ❌ Less visual than Google Sheets
+- ❌ Requires Git knowledge (minimal)
+- ❌ No real-time collaboration (but PRs work well)</p>
+<p><strong>Best For:</strong>
+- Technical documentation
+- Procedures with code examples
+- Version-controlled processes
+- Integration with scripts</p>
+<p><strong>Example Structure:</strong></p>
+<pre class="codehilite"><code>repository/
+├── Scripts/
+│   ├── PowerShell/
+│   ├── Multicharts/
+│   └── SQL/
+├── SOPs/
+│   ├── 01-Server-Administration/
+│   │   ├── Daily-Checks.md
+│   │   ├── Firewall-Management.md
+│   │   └── Backup-Procedures.md
+│   ├── 02-Multicharts-Models/
+│   │   ├── Creating-Models.md
+│   │   ├── Model-Testing.md
+│   │   └── Deployment.md
+│   ├── 03-MSSQL-Trading/
+│   │   ├── Daily-Routine.md
+│   │   ├── Data-Import.md
+│   │   └── Performance-Monitoring.md
+│   └── 04-Trading-Results/
+│       ├── Result-Administration.md
+│       ├── Reporting.md
+│       └── Troubleshooting.md
+└── README.md (Index of all SOPs)
+</code></pre>
+
+<hr />
+<h3 id="option-2-google-sheets">Option 2: Google Sheets</h3>
+<p><strong>Pros:</strong>
+- ✅ <strong>Easy to Use</strong>: Familiar interface
+- ✅ <strong>Real-time Collaboration</strong>: Multiple people editing simultaneously
+- ✅ <strong>Visual</strong>: Tables, charts, conditional formatting
+- ✅ <strong>Accessible</strong>: Works in browser, mobile-friendly
+- ✅ <strong>Sharing</strong>: Easy link sharing
+- ✅ <strong>Comments</strong>: Built-in commenting system</p>
+<p><strong>Cons:</strong>
+- ❌ <strong>No Version Control</strong>: Hard to track changes
+- ❌ <strong>Limited Formatting</strong>: Not great for code examples
+- ❌ <strong>Search Limitations</strong>: Basic search only
+- ❌ <strong>No Integration</strong>: Can't link to code directly
+- ❌ <strong>Backup</strong>: Manual backup required
+- ❌ <strong>Structure</strong>: Gets messy with complex procedures</p>
+<p><strong>Best For:</strong>
+- Simple checklists
+- Quick reference tables
+- Non-technical procedures
+- One-page procedures</p>
+<hr />
+<h3 id="option-3-open-source-platforms">Option 3: Open Source Platforms</h3>
+<h4 id="3a-mkdocs-material-for-mkdocs">3a. MkDocs / Material for MkDocs</h4>
+<p><strong>Pros:</strong>
+- ✅ <strong>Beautiful Documentation</strong>: Professional look
+- ✅ <strong>Search</strong>: Built-in search functionality
+- ✅ <strong>Markdown</strong>: Easy to write
+- ✅ <strong>Versioning</strong>: Can version docs
+- ✅ <strong>Hosting</strong>: GitHub Pages, Netlify, etc.
+- ✅ <strong>Navigation</strong>: Automatic navigation
+- ✅ <strong>Themes</strong>: Multiple themes available</p>
+<p><strong>Cons:</strong>
+- ❌ <strong>Setup Required</strong>: Need to configure
+- ❌ <strong>Hosting</strong>: Need to set up hosting
+- ❌ <strong>Maintenance</strong>: More complex than GitHub</p>
+<p><strong>Best For:</strong>
+- Public-facing documentation
+- Large documentation sites
+- When you need a polished look</p>
+<h4 id="3b-dokuwiki">3b. DokuWiki</h4>
+<p><strong>Pros:</strong>
+- ✅ <strong>Self-hosted</strong>: Full control
+- ✅ <strong>Versioning</strong>: Built-in version control
+- ✅ <strong>Plugins</strong>: Extensible
+- ✅ <strong>Search</strong>: Good search functionality</p>
+<p><strong>Cons:</strong>
+- ❌ <strong>Setup Complexity</strong>: Requires server setup
+- ❌ <strong>Maintenance</strong>: Server maintenance needed
+- ❌ <strong>Learning Curve</strong>: Wiki syntax</p>
+<p><strong>Best For:</strong>
+- Internal wiki
+- When you need self-hosted solution
+- Team collaboration wiki</p>
+<h4 id="3c-gitbook">3c. GitBook</h4>
+<p><strong>Pros:</strong>
+- ✅ <strong>Beautiful UI</strong>: Professional documentation
+- ✅ <strong>Version Control</strong>: Git-based
+- ✅ <strong>Collaboration</strong>: Team features
+- ✅ <strong>Search</strong>: Excellent search
+- ✅ <strong>Integration</strong>: GitHub integration</p>
+<p><strong>Cons:</strong>
+- ❌ <strong>Cost</strong>: Free tier limited, paid for teams
+- ❌ <strong>Vendor Lock-in</strong>: Proprietary platform</p>
+<p><strong>Best For:</strong>
+- When budget allows
+- Need polished documentation
+- Team collaboration</p>
+<hr />
+<h2 id="recommendation-github-markdown-wiki-hybrid-approach">Recommendation: <strong>GitHub + Markdown + Wiki</strong> (Hybrid Approach)</h2>
+<h3 id="why-this-works-best-for-you">Why This Works Best for You:</h3>
+<ol>
+<li><strong>You Already Use GitHub</strong>: Your scripts are there</li>
+<li><strong>Code Integration</strong>: SOPs can reference actual scripts</li>
+<li><strong>Version Control</strong>: Track all changes</li>
+<li><strong>Free</strong>: No additional cost</li>
+<li><strong>Searchable</strong>: GitHub search works well</li>
+<li><strong>Collaboration</strong>: Pull requests for review</li>
+<li><strong>Backup</strong>: Automatic</li>
+</ol>
+<h3 id="recommended-structure">Recommended Structure:</h3>
+<pre class="codehilite"><code>HyperV_PowerScript_Optimazation/
+├── Scripts/                    # Your existing scripts
+│   ├── PowerShell/
+│   ├── Multicharts/
+│   └── SQL/
+├── SOPs/                       # Standard Operating Procedures
+│   ├── README.md              # SOP Index/Navigation
+│   ├── 01-Server-Administration/
+│   │   ├── README.md
+│   │   ├── Daily-Checks.md
+│   │   ├── Firewall-Management.md
+│   │   ├── Backup-Procedures.md
+│   │   └── Emergency-Procedures.md
+│   ├── 02-Multicharts-Models/
+│   │   ├── README.md
+│   │   ├── Creating-Models.md
+│   │   ├── Model-Testing.md
+│   │   ├── Deployment.md
+│   │   └── Troubleshooting.md
+│   ├── 03-MSSQL-Trading/
+│   │   ├── README.md
+│   │   ├── Daily-Routine.md
+│   │   ├── Data-Import.md
+│   │   ├── Performance-Monitoring.md
+│   │   └── Maintenance.md
+│   └── 04-Trading-Results/
+│       ├── README.md
+│       ├── Result-Administration.md
+│       ├── Reporting.md
+│       ├── Analysis.md
+│       └── Troubleshooting.md
+└── Templates/                  # SOP Templates
+    ├── Procedure-Template.md
+    └── Checklist-Template.md
+</code></pre>
+
+<h3 id="enhanced-with-github-wiki">Enhanced with GitHub Wiki:</h3>
+<p>Use GitHub Wiki for:
+- <strong>Quick Reference</strong>: One-page cheat sheets
+- <strong>Glossary</strong>: Terms and definitions
+- <strong>FAQ</strong>: Common questions
+- <strong>Troubleshooting</strong>: Quick fixes</p>
+<hr />
+<h2 id="implementation-plan">Implementation Plan</h2>
+<h3 id="phase-1-setup-week-1">Phase 1: Setup (Week 1)</h3>
+<ol>
+<li>
+<p><strong>Create SOP Directory Structure</strong>
+   <code>powershell
+   # Create folder structure
+   New-Item -ItemType Directory -Path "SOPs" -Force
+   New-Item -ItemType Directory -Path "SOPs/01-Server-Administration" -Force
+   New-Item -ItemType Directory -Path "SOPs/02-Multicharts-Models" -Force
+   New-Item -ItemType Directory -Path "SOPs/03-MSSQL-Trading" -Force
+   New-Item -ItemType Directory -Path "SOPs/04-Trading-Results" -Force</code></p>
+</li>
+<li>
+<p><strong>Create SOP Index (README.md)</strong></p>
+</li>
+<li>Navigation to all SOPs</li>
+<li>Quick links</li>
+<li>
+<p>Last updated dates</p>
+</li>
+<li>
+<p><strong>Create Templates</strong></p>
+</li>
+<li>Standard procedure template</li>
+<li>Checklist template</li>
+<li>Troubleshooting template</li>
+</ol>
+<h3 id="phase-2-document-existing-procedures-week-2-4">Phase 2: Document Existing Procedures (Week 2-4)</h3>
+<ol>
+<li><strong>Server Administration SOPs</strong></li>
+<li>Document current procedures</li>
+<li>Add screenshots/commands</li>
+<li>
+<p>Link to scripts</p>
+</li>
+<li>
+<p><strong>Multicharts Model SOPs</strong></p>
+</li>
+<li>Step-by-step model creation</li>
+<li>Testing procedures</li>
+<li>
+<p>Deployment process</p>
+</li>
+<li>
+<p><strong>MSSQL Trading SOPs</strong></p>
+</li>
+<li>Daily routine checklist</li>
+<li>Data import procedures</li>
+<li>
+<p>Monitoring procedures</p>
+</li>
+<li>
+<p><strong>Trading Results SOPs</strong></p>
+</li>
+<li>Administration procedures</li>
+<li>Reporting procedures</li>
+<li>Analysis procedures</li>
+</ol>
+<h3 id="phase-3-enhance-ongoing">Phase 3: Enhance (Ongoing)</h3>
+<ol>
+<li><strong>Add Screenshots</strong>: Visual guides</li>
+<li><strong>Add Code Examples</strong>: Link to scripts</li>
+<li><strong>Add Checklists</strong>: Quick reference</li>
+<li><strong>Add Troubleshooting</strong>: Common issues</li>
+<li><strong>Regular Updates</strong>: Keep current</li>
+</ol>
+<hr />
+<h2 id="best-practices-for-sop-documentation">Best Practices for SOP Documentation</h2>
+<h3 id="1-use-consistent-structure">1. <strong>Use Consistent Structure</strong></h3>
+<pre class="codehilite"><code class="language-markdown"># Procedure Title
+
+## Purpose
+Why this procedure exists
+
+## Prerequisites
+- What's needed before starting
+- Required access/permissions
+- Required tools
+
+## Procedure Steps
+1. Step 1
+2. Step 2
+3. Step 3
+
+## Verification
+How to verify it worked
+
+## Troubleshooting
+Common issues and solutions
+
+## Related Procedures
+Links to related SOPs
+
+## Last Updated
+Date and author
+</code></pre>
+
+<h3 id="2-include-code-examples">2. <strong>Include Code Examples</strong></h3>
+<pre class="codehilite"><code class="language-markdown">## Running the Script
+
+```powershell
+.\Configure-Production-Firewall.ps1 `
+    -Action Apply `
+    -WireGuardIPRange &quot;10.10.0.0/24&quot;
+</code></pre>
+
+<pre class="codehilite"><code>### 3. **Add Screenshots**
+
+- Use tools like ShareX, Greenshot
+- Store in `SOPs/images/` folder
+- Reference in markdown: `![Description](images/screenshot.png)`
+
+### 4. **Use Checklists**
+
+```markdown
+## Daily Checklist
+
+- [ ] Check server status
+- [ ] Review firewall logs
+- [ ] Verify backups
+- [ ] Check trading results
+</code></pre>
+
+<h3 id="5-link-to-scripts">5. <strong>Link to Scripts</strong></h3>
+<pre class="codehilite"><code class="language-markdown">See script: [Configure-Production-Firewall.ps1](../Scripts/PowerShell/Configure-Production-Firewall.ps1)
+</code></pre>
+
+<h3 id="6-version-information">6. <strong>Version Information</strong></h3>
+<pre class="codehilite"><code class="language-markdown">**Last Updated:** 2024-01-15  
+**Author:** John Doe  
+**Version:** 1.2  
+**Review Date:** 2024-04-15
+</code></pre>
+
+<hr />
+<h2 id="alternative-hybrid-approach">Alternative: Hybrid Approach</h2>
+<h3 id="use-github-for-technical-sops-google-sheets-for-quick-reference">Use GitHub for Technical SOPs + Google Sheets for Quick Reference</h3>
+<p><strong>GitHub Markdown:</strong>
+- Detailed procedures
+- Code examples
+- Step-by-step guides
+- Troubleshooting</p>
+<p><strong>Google Sheets:</strong>
+- Daily checklists
+- Quick reference tables
+- Status tracking
+- Simple procedures</p>
+<p><strong>Example:</strong>
+- GitHub: Detailed "How to create Multicharts model" procedure
+- Google Sheet: Daily checklist with checkboxes</p>
+<hr />
+<h2 id="tools-to-enhance-github-documentation">Tools to Enhance GitHub Documentation</h2>
+<h3 id="1-markdown-editors">1. <strong>Markdown Editors</strong></h3>
+<ul>
+<li><strong>Typora</strong>: WYSIWYG markdown editor</li>
+<li><strong>Mark Text</strong>: Free, open-source</li>
+<li><strong>VS Code</strong>: With markdown extensions</li>
+</ul>
+<h3 id="2-screenshot-tools">2. <strong>Screenshot Tools</strong></h3>
+<ul>
+<li><strong>ShareX</strong>: Free, powerful</li>
+<li><strong>Greenshot</strong>: Lightweight</li>
+<li><strong>Snipping Tool</strong>: Built-in Windows</li>
+</ul>
+<h3 id="3-diagram-tools">3. <strong>Diagram Tools</strong></h3>
+<ul>
+<li><strong>Mermaid</strong>: Diagrams in markdown</li>
+<li><strong>Draw.io</strong>: Free diagram tool</li>
+<li><strong>PlantUML</strong>: Code-based diagrams</li>
+</ul>
+<h3 id="4-documentation-generators">4. <strong>Documentation Generators</strong></h3>
+<ul>
+<li><strong>MkDocs</strong>: Generate static site from markdown</li>
+<li><strong>GitBook</strong>: Enhanced documentation (paid)</li>
+</ul>
+<hr />
+<h2 id="final-recommendation">Final Recommendation</h2>
+<h3 id="primary-github-markdown"><strong>Primary: GitHub + Markdown</strong></h3>
+<p><strong>Why:</strong>
+1. ✅ You already use GitHub
+2. ✅ Version control built-in
+3. ✅ Integrates with your scripts
+4. ✅ Free and reliable
+5. ✅ Searchable
+6. ✅ Professional
+7. ✅ Easy to maintain</p>
+<h3 id="secondary-google-sheets-for-specific-use-cases"><strong>Secondary: Google Sheets (for specific use cases)</strong></h3>
+<p><strong>Use for:</strong>
+- Daily checklists
+- Quick reference tables
+- Status tracking
+- Simple procedures</p>
+<h3 id="structure"><strong>Structure:</strong></h3>
+<pre class="codehilite"><code>GitHub Repository:
+├── Scripts/          # Your code
+├── SOPs/            # Detailed procedures (Markdown)
+└── README.md        # Navigation/index
+
+Google Sheets:
+├── Daily Checklist
+├── Quick Reference
+└── Status Tracker
+</code></pre>
+
+<hr />
+<h2 id="next-steps">Next Steps</h2>
+<ol>
+<li><strong>Create SOP folder structure</strong> in your GitHub repo</li>
+<li><strong>Create index/README.md</strong> with navigation</li>
+<li><strong>Start with one topic</strong> (e.g., Server Administration)</li>
+<li><strong>Create template</strong> for consistency</li>
+<li><strong>Document existing procedures</strong></li>
+<li><strong>Add to regular workflow</strong></li>
+</ol>
+<p>Would you like me to:
+1. Create the folder structure and templates?
+2. Create a sample SOP for one of your topics?
+3. Set up the GitHub Wiki?
+4. Create a Google Sheets template for checklists?</p>
+</body>
+</html>

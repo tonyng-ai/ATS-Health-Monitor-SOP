@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Essential Networking Concepts for ATS VM Troubleshooting</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 { border-bottom: 2px solid #3498db; padding-bottom: 0.3em; }
+        h2 { border-bottom: 1px solid #ecf0f1; padding-bottom: 0.2em; }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1em;
+            overflow-x: auto;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 1em 0;
+            padding-left: 1em;
+            color: #666;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 2em 0;
+            padding: 1em;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .pdf-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 8px 16px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .pdf-link:hover {
+            background-color: #c0392b;
+        }
+    </style>
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <p><a href="Essential Networking Concepts for ATS VM Troubleshooting.pdf" class="pdf-link">📄 Download PDF Version</a></p>
+    <h1 id="essential-networking-concepts-for-ats-vm-troubleshooting">Essential Networking Concepts for ATS VM Troubleshooting</h1>
+<h2 id="metadata">Metadata</h2>
+<p><strong>Category:</strong> Trading System Administration - Training &amp; Education
+<strong>Last Updated:</strong> 2025-12-26
+<strong>Author:</strong> ATS Support Team
+<strong>Version:</strong> 1.0
+<strong>Review Date:</strong> 2026-06-26
+<strong>Status:</strong> Active</p>
+<hr />
+<h2 id="purpose">Purpose</h2>
+<p>This educational procedure provides ATS support staff with essential networking knowledge required to understand, execute, and troubleshoot the ATS Network Fix scripts and related network configurations.</p>
+<p><strong>When to Use:</strong>
+- Training new ATS support staff
+- Understanding network troubleshooting procedures
+- Preparing for ATS VM network configuration tasks
+- Troubleshooting JDBC and FIX VPN connectivity issues
+- Reviewing networking fundamentals before executing network fixes</p>
+<h3 id="procedure-overview">Procedure Overview</h3>
+<pre class="codehilite"><code class="language-mermaid">flowchart TD
+    Start([Learning Networking Concepts]) --&gt; Basics[Core Networking Concepts]
+    Basics --&gt; IP[IP Addresses &amp; Subnets]
+    Basics --&gt; Gateway[Default Gateway]
+    Basics --&gt; Routes[Network Routes]
+    IP --&gt; ATSArch[ATS Network Architecture]
+    Gateway --&gt; ATSArch
+    Routes --&gt; ATSArch
+    ATSArch --&gt; Commands[PowerShell Commands]
+    Commands --&gt; Diagnosis[Diagnostic Procedures]
+    Diagnosis --&gt; Troubleshooting[Troubleshooting Framework]
+    Troubleshooting --&gt; Validation[Knowledge Validation]
+    Validation --&gt; End([Ready for ATS Network Support])
+
+    style Start fill:#90EE90
+    style End fill:#90EE90
+    style Validation fill:#FFD700
+    style Troubleshooting fill:#87CEEB
+</code></pre>
+
+<hr />
+<h2 id="prerequisites">Prerequisites</h2>
+<h3 id="required-access">Required Access</h3>
+<ul>
+<li>[ ] Read access to ATS network documentation</li>
+<li>[ ] Access to ATS VM for hands-on practice (optional but recommended)</li>
+<li>[ ] Basic understanding of Windows Server administration</li>
+</ul>
+<h3 id="required-tools">Required Tools</h3>
+<ul>
+<li>[ ] PowerShell 5.0 or later</li>
+<li>[ ] Access to ATS VM or test environment</li>
+<li>[ ] Windows Server 2019/2022 documentation (optional)</li>
+</ul>
+<h3 id="required-information">Required Information</h3>
+<ul>
+<li>[ ] MSSQL server IP address: <code>192.168.10.1</code></li>
+<li>[ ] Internal adapter IP: <code>192.168.10.100/24</code></li>
+<li>[ ] IBVPN adapter IP: <code>192.168.223.222/24</code></li>
+<li>[ ] FIX VPN gateway: <code>192.168.223.221</code></li>
+<li>[ ] FIX VPN routes: <code>64.190.192.128/28</code> and <code>64.190.192.140/32</code></li>
+</ul>
+<h3 id="pre-conditions">Pre-Conditions</h3>
+<ul>
+<li>[ ] Basic familiarity with Windows Server</li>
+<li>[ ] Understanding of command-line interfaces</li>
+<li>[ ] Willingness to learn networking concepts</li>
+</ul>
+<hr />
+<h2 id="core-networking-concepts">Core Networking Concepts</h2>
+<h3 id="ip-addresses-subnets">IP Addresses &amp; Subnets</h3>
+<p><strong>What is an IP Address?</strong>
+- Unique identifier for devices on a network
+- Format: <code>192.168.10.100</code> (IPv4)
+- Like a "house address" for network devices</p>
+<p><strong>What is a Subnet Mask?</strong>
+- Defines network boundaries
+- <code>255.255.255.0</code> = <code>/24</code> = 256 addresses in network
+- Example: <code>192.168.10.100/24</code> means:
+  - Network: <code>192.168.10.0</code>
+  - Usable IPs: <code>192.168.10.1</code> - <code>192.168.10.254</code>
+  - Broadcast: <code>192.168.10.255</code></p>
+<p><strong>ATS VM Example:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Internal Adapter: On network 192.168.10.0/24
+IP: 192.168.10.100
+Subnet: 255.255.255.0
+Network: 192.168.10.0 - 192.168.10.255
+</code></pre>
+
+<hr />
+<h3 id="default-gateway">Default Gateway</h3>
+<p><strong>What is a Gateway?</strong>
+- The "exit door" to other networks
+- Routes traffic between different networks
+- Usually the router on your network</p>
+<p><strong>Why We Remove Gateways in ATS VM:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># PROBLEMATIC: Multiple gateways cause confusion
+Adapter #6 Gateway: 192.168.10.1
+Adapter #7 Gateway: 192.168.223.221
+
+# SOLUTION: No gateways + specific routes
+Adapter #6 Gateway: NONE
+Adapter #7 Gateway: NONE
+# Traffic routed explicitly via route commands
+</code></pre>
+
+<hr />
+<h3 id="network-routes">Network Routes</h3>
+<p><strong>What is a Route?</strong>
+- A path that network traffic follows
+- Like a "road map" for data packets</p>
+<p><strong>Route Format:</strong></p>
+<pre class="codehilite"><code class="language-text">Network Destination  Netmask      Gateway       Interface  Metric
+0.0.0.0             0.0.0.0      192.168.10.1  192.168.10.100  271
+</code></pre>
+
+<ul>
+<li><strong>Destination:</strong> Where traffic is going (<code>0.0.0.0</code> = everywhere)</li>
+<li><strong>Gateway:</strong> Next hop to reach destination</li>
+<li><strong>Interface:</strong> Which network adapter to use</li>
+<li><strong>Metric:</strong> Priority (lower = preferred)</li>
+</ul>
+<p><strong>Critical ATS Routes:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># BAD: Conflicting default routes
+0.0.0.0 via 192.168.10.1    # Internal network gateway
+0.0.0.0 via 192.168.223.221 # FIX VPN gateway
+
+# GOOD: Specific routes only
+64.190.192.128/28 via 192.168.223.221  # FIX VPN only
+192.168.20.0/24 via 192.168.10.1       # MSSQL network only
+</code></pre>
+
+<hr />
+<h2 id="ats-specific-network-architecture">ATS-Specific Network Architecture</h2>
+<h3 id="why-multiple-network-adapters">Why Multiple Network Adapters?</h3>
+<p><strong>Adapter #6 (Internal): Database Traffic</strong></p>
+<pre class="codehilite"><code class="language-text">Purpose: MSSQL Database Communications
+IP: 192.168.10.100/24
+Target: 192.168.10.1 (MSSQL Server)
+Traffic Type: JDBC database queries
+Characteristics: High stability required, low latency
+</code></pre>
+
+<p><strong>Adapter #7 (IBVPN): FIX VPN Traffic</strong></p>
+<pre class="codehilite"><code class="language-text">Purpose: Interactive Brokers FIX Connection
+IP: 192.168.223.222/24
+Target: 64.190.192.128/28 (IB FIX Servers)
+Traffic Type: Market data, order execution
+Characteristics: External VPN, specific routing needed
+</code></pre>
+
+<hr />
+<h3 id="the-routing-problem-we-fix">The Routing Problem We Fix</h3>
+<p><strong>Before Fix: Traffic Confusion</strong></p>
+<pre class="codehilite"><code class="language-text">JDBC Query → Which gateway? 192.168.10.1 OR 192.168.223.221?
+FIX Data → Which gateway? 192.168.223.221 OR 192.168.10.1?
+Result: Random routing, timeouts, disconnections
+</code></pre>
+
+<p><strong>After Fix: Explicit Routing</strong></p>
+<pre class="codehilite"><code class="language-text">JDBC Query → Route: Direct to 192.168.10.1 (same network)
+FIX Data → Route: 64.190.192.x via 192.168.223.221
+Result: Predictable, stable connections
+</code></pre>
+
+<hr />
+<h2 id="powershell-commands-explained">PowerShell Commands Explained</h2>
+<h3 id="route-command-breakdown">Route Command Breakdown</h3>
+<pre class="codehilite"><code class="language-powershell"># Add a persistent route
+route -p add [NETWORK] mask [MASK] [GATEWAY] metric [PRIORITY]
+
+# Real ATS example:
+route -p add 64.190.192.128 mask 255.255.255.240 192.168.223.221 metric 5
+</code></pre>
+
+<p><strong>Command Components:</strong>
+- <code>-p</code>: Persistent (survives reboot)
+- <code>add</code>: Create new route
+- <code>64.190.192.128</code>: FIX server network
+- <code>255.255.255.240</code>: Subnet mask (<code>/28</code> = 16 IPs)
+- <code>192.168.223.221</code>: Use IBVPN gateway
+- <code>metric 5</code>: High priority route</p>
+<hr />
+<h3 id="network-diagnostic-commands">Network Diagnostic Commands</h3>
+<p><strong>Check Current Routes:</strong></p>
+<pre class="codehilite"><code class="language-powershell">route print
+# Shows complete routing table
+# Look for multiple 0.0.0.0 entries (BAD)
+</code></pre>
+
+<p><strong>Test Connectivity:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Test MSSQL connectivity
+Test-NetConnection 192.168.10.1 -Port 1433 -InformationLevel Detailed
+# Success = database is reachable
+</code></pre>
+
+<p><strong>View Network Adapters:</strong></p>
+<pre class="codehilite"><code class="language-powershell">Get-NetIPConfiguration
+# Shows all network adapters and their settings
+# Verify no gateways on Internal/IBVPN adapters
+</code></pre>
+
+<hr />
+<h3 id="understanding-command-outputs">Understanding Command Outputs</h3>
+<p><strong>Good Routing Table:</strong></p>
+<pre class="codehilite"><code class="language-text">Active Routes:
+Network Destination  Netmask      Gateway       Interface  Metric
+64.190.192.128      255.255.255.240 192.168.223.221 192.168.223.222 5
+192.168.10.0        255.255.255.0   On-link       192.168.10.100   25
+# Note: No 0.0.0.0 routes!
+</code></pre>
+
+<p><strong>Bad Routing Table:</strong></p>
+<pre class="codehilite"><code class="language-text">Active Routes:
+Network Destination  Netmask      Gateway       Interface  Metric
+0.0.0.0             0.0.0.0       192.168.10.1  192.168.10.100   271
+0.0.0.0             0.0.0.0       192.168.223.221 192.168.223.222 281
+# Note: Multiple default routes = CONFLICT!
+</code></pre>
+
+<hr />
+<h2 id="ats-application-networking">ATS Application Networking</h2>
+<h3 id="jdbc-database-connections">JDBC Database Connections</h3>
+<p><strong>What is JDBC?</strong>
+- Java Database Connectivity
+- How ATS application talks to MSSQL database
+- Requires stable network path to database server</p>
+<p><strong>JDBC Connection String:</strong></p>
+<pre class="codehilite"><code class="language-java">jdbc:sqlserver://192.168.10.1:1433;databaseName=Fund2;
+</code></pre>
+
+<ul>
+<li><code>192.168.10.1</code>: MSSQL server IP</li>
+<li><code>1433</code>: Default MSSQL port</li>
+<li><code>ATSDB</code>: Database name</li>
+</ul>
+<p><strong>Network Requirement:</strong>
+- Stable, low-latency connection to <code>192.168.10.1</code>
+- No routing hops (same subnet ideal)
+- No firewall blocks on port 1433</p>
+<hr />
+<h3 id="fix-protocol-connections">FIX Protocol Connections</h3>
+<p><strong>What is FIX?</strong>
+- Financial Information eXchange protocol
+- Used for market data and order execution
+- Connects to Interactive Brokers via VPN</p>
+<p><strong>FIX Network Requirements:</strong>
+- Specific routing to <code>64.190.192.128/28</code>
+- VPN tunnel through IBVPN adapter
+- Stable external connectivity</p>
+<hr />
+<h2 id="common-issues-symptoms">Common Issues &amp; Symptoms</h2>
+<h3 id="routing-conflict-symptoms">Routing Conflict Symptoms</h3>
+<p><strong>JDBC Issues:</strong>
+- Random connection drops
+- Query timeouts
+- "Connection reset" errors
+- Application log shows database errors</p>
+<p><strong>FIX VPN Issues:</strong>
+- Session disconnections
+- Market data gaps
+- Order execution failures
+- VPN connectivity alerts</p>
+<hr />
+<h3 id="quick-diagnosis-flow">Quick Diagnosis Flow</h3>
+<pre class="codehilite"><code class="language-text">Symptom: JDBC drops
+    ↓
+Check: route print | findstr &quot;0.0.0.0&quot;
+    ↓
+If: Multiple default routes found
+    ↓
+Action: Run ATS-Network-Fix.ps1
+    ↓
+Verify: Test-NetConnection 192.168.10.1 -Port 1433 -InformationLevel Detailed
+</code></pre>
+
+<hr />
+<h2 id="script-components-explained">Script Components Explained</h2>
+<h3 id="ats-network-fix-script-logic">ATS Network Fix Script Logic</h3>
+<pre class="codehilite"><code class="language-powershell"># 1. REMOVE conflicting routes
+route delete 0.0.0.0                    # Remove default routes
+route delete 192.168.20.0 mask 255.255.255.0  # Remove incorrect MSSQL route
+
+# 2. CONFIGURE adapters properly
+netsh interface ipv4 set address name=&quot;Internal&quot; gateway=none
+netsh interface ipv4 set address name=&quot;IBVPN&quot; gateway=none
+
+# 3. ADD specific routes only
+route -p add 64.190.192.128 mask 255.255.255.240 192.168.223.221 metric 5
+
+# 4. VERIFY configuration
+Test-NetConnection 192.168.10.1 -Port 1433
+</code></pre>
+
+<hr />
+<h3 id="why-scheduled-task">Why Scheduled Task?</h3>
+<p><strong>Problem:</strong> Windows Network Location Awareness (NLA) sometimes resets network configurations.</p>
+<p><strong>Solution:</strong> Scheduled task runs at startup to re-apply correct settings before ATS application starts.</p>
+<hr />
+<h2 id="troubleshooting-framework">Troubleshooting Framework</h2>
+<h3 id="layered-approach">Layered Approach</h3>
+<pre class="codehilite"><code class="language-text">Layer 1: Physical/Virtual Network
+   ↓ Check Hyper-V switch configurations
+
+Layer 2: IP Connectivity
+   ↓ ping 192.168.10.1
+
+Layer 3: Routing
+   ↓ route print
+
+Layer 4: Application
+   ↓ Test-NetConnection 192.168.10.1 -Port 1433 -InformationLevel Detailed
+
+Layer 5: ATS Application
+   ↓ Check application logs
+</code></pre>
+
+<hr />
+<h3 id="essential-questions-for-diagnosis">Essential Questions for Diagnosis</h3>
+<ol>
+<li>
+<p><strong>Can we ping the database server?</strong>
+   <code>powershell
+   ping 192.168.10.1</code></p>
+</li>
+<li>
+<p><strong>Is port 1433 accessible?</strong>
+   <code>powershell
+   Test-NetConnection 192.168.10.1 -Port 1433 -InformationLevel Detailed</code></p>
+</li>
+<li>
+<p><strong>Are there routing conflicts?</strong>
+   <code>powershell
+   route print | findstr "0.0.0.0"</code></p>
+</li>
+<li>
+<p><strong>Is the scheduled task running?</strong>
+   <code>powershell
+   Get-ScheduledTask -TaskName "ATS Network Configuration Fix"</code></p>
+</li>
+</ol>
+<hr />
+<h2 id="verification">Verification</h2>
+<h3 id="knowledge-validation">Knowledge Validation</h3>
+<p><strong>Self-Check Questions:</strong>
+1. What does <code>0.0.0.0</code> represent in routing table?
+2. Why do we remove default gateways from ATS VM adapters?
+3. What is the purpose of the <code>-p</code> flag in route commands?
+4. How do you verify MSSQL connectivity?
+5. What indicates a routing conflict?</p>
+<p><strong>Practical Exercises:</strong>
+- [ ] Run <code>route print</code> and identify all default routes
+- [ ] Execute <code># Test-NetConnection 192.168.10.1 -Port 1433 -InformationLevel Detailed</code>
+- [ ] Check scheduled task status
+- [ ] Review ATS Network Fix script log file</p>
+<p><strong>Certification Checklist:</strong>
+- [ ] Can explain IP addressing and subnets
+- [ ] Understands routing table concepts
+- [ ] Can execute diagnostic commands
+- [ ] Can interpret route command output
+- [ ] Understands ATS-specific network architecture
+- [ ] Can perform basic troubleshooting steps</p>
+<hr />
+<h2 id="quick-reference-guide">Quick Reference Guide</h2>
+<h3 id="essential-commands">Essential Commands</h3>
+<pre class="codehilite"><code class="language-powershell"># Diagnosis
+route print
+# Test MSSQL connectivity
+Test-NetConnection 192.168.10.1 -Port 1433 -InformationLevel Detailed
+Get-NetIPConfiguration
+
+# Fix Execution
+C:\Scripts\ATS-Network-Fix.ps1
+
+# Verification
+route print | findstr &quot;0.0.0.0&quot;
+Test-NetConnection 192.168.10.1 -Port 1433 -InformationLevel Detailed
+</code></pre>
+
+<hr />
+<h3 id="key-network-values">Key Network Values</h3>
+<pre class="codehilite"><code class="language-text">MSSQL Server: 192.168.10.1
+ATS VM Internal: 192.168.10.100
+ATS VM IBVPN: 192.168.223.222
+FIX VPN Network: 64.190.192.128/28
+FIX VPN Gateway: 192.168.223.221
+</code></pre>
+
+<hr />
+<h3 id="success-indicators">Success Indicators</h3>
+<ul>
+<li>[ ] Single <code>0.0.0.0</code> route or none</li>
+<li>[ ] MSSQL port 1433 accessible</li>
+<li>[ ] FIX routes present with metric 5</li>
+<li>[ ] No gateways on Internal/IBVPN adapters</li>
+<li>[ ] Scheduled task "Running"</li>
+</ul>
+<hr />
+<h2 id="related-procedures">Related Procedures</h2>
+<ul>
+<li><a href="./ATS%20Hyper-V%20VM%20Network%20Configuration%20%26%20Troubleshooting.md">ATS Hyper-V VM Network Configuration &amp; Troubleshooting</a></li>
+<li><a href="./ATS_Administration_SOP.md">ATS Administration SOP</a></li>
+<li><a href="../04-Production-Administration/Hyper-V%20VM%20Network%20Configuration%20Management%20-%20Comprehensive%20Guide.md">Hyper-V VM Network Configuration Management - Comprehensive Guide</a></li>
+</ul>
+<h2 id="related-scripts">Related Scripts</h2>
+<ul>
+<li><a href="../../Scripts/05-Production-ATS-Administration/ATS-Network-Fix.ps1">ATS-Network-Fix.ps1</a> - Automated network configuration fix script</li>
+</ul>
+<h2 id="references">References</h2>
+<p><strong>Recommended Resources:</strong>
+- Windows Server Networking Fundamentals
+- TCP/IP Routing Basics
+- Hyper-V Virtual Networking
+- Financial Trading Systems Architecture</p>
+<p><strong>Internal Documentation:</strong>
+- ATS Application Architecture Guide
+- Database Connectivity Standards
+- FIX Protocol Implementation Guide</p>
+<h2 id="change-log">Change Log</h2>
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Version</th>
+<th>Author</th>
+<th>Changes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2025-12-26</td>
+<td>1.0</td>
+<td>ATS Support Team</td>
+<td>Restructured to standard SOP format with metadata, organized sections, and knowledge validation</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="notes">Notes</h2>
+<p><strong>💡 TIP:</strong></p>
+<ul>
+<li>Practice commands on a test VM before working on production</li>
+<li>Keep this document as a quick reference during troubleshooting</li>
+<li>Review routing concepts regularly to maintain proficiency</li>
+<li>Use the self-check questions to validate understanding</li>
+</ul>
+<p><strong>📝 NOTE:</strong></p>
+<ul>
+<li>This is an educational document - always follow operational SOPs for actual fixes</li>
+<li>Network concepts apply to all ATS VMs but IP addresses may vary</li>
+<li>When in doubt, consult the operational SOP: "ATS Hyper-V VM Network Configuration &amp; Troubleshooting"</li>
+<li>Understanding these concepts is essential before executing network fixes</li>
+</ul>
+<p><strong>⚠️ WARNING:</strong></p>
+<ul>
+<li>Never modify network configurations without understanding the impact</li>
+<li>Always verify changes before applying to production systems</li>
+<li>Test network fixes in non-production environments first</li>
+<li>Document any deviations from standard procedures</li>
+</ul>
+<hr />
+<p><strong>Document Status:</strong> Approved
+<strong>Next Review Date:</strong> 2026-06-26
+<strong>SOP Owner:</strong> ATS Support Team</p>
+</body>
+</html>

@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>TradeShield Remote Failover Procedures</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 { border-bottom: 2px solid #3498db; padding-bottom: 0.3em; }
+        h2 { border-bottom: 1px solid #ecf0f1; padding-bottom: 0.2em; }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1em;
+            overflow-x: auto;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        blockquote {
+            border-left: 4px solid #3498db;
+            margin: 1em 0;
+            padding-left: 1em;
+            color: #666;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 2em 0;
+            padding: 1em;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .pdf-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 8px 16px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .pdf-link:hover {
+            background-color: #c0392b;
+        }
+    </style>
+    <!-- Mermaid.js for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+    <p><a href="TradeShield-Remote-Failover-Procedures.pdf" class="pdf-link">📄 Download PDF Version</a></p>
+    <h1 id="tradeshield-remote-failover-procedures">TradeShield Remote - Failover Procedures</h1>
+<h2 id="metadata">Metadata</h2>
+<p><strong>Category:</strong> Security and Trading Platform Administration
+<strong>Last Updated:</strong> 2024-11-29
+<strong>Author:</strong> System Administrator
+<strong>Version:</strong> 1.0
+<strong>Review Date:</strong> 2025-02-28
+<strong>Status:</strong> Active</p>
+<hr />
+<h2 id="purpose">Purpose</h2>
+<p>This document provides detailed procedures for failover scenarios in the TradeShield Remote system, including CHR VPN gateway failover, RustDesk cluster failover, and complete disaster recovery procedures.</p>
+<p><strong>When to Use:</strong>
+- During planned maintenance
+- When primary components fail
+- Testing high-availability functionality
+- Disaster recovery scenarios</p>
+<hr />
+<h2 id="prerequisites">Prerequisites</h2>
+<h3 id="required-access">Required Access</h3>
+<ul>
+<li>[x] SSH access to CHR instances</li>
+<li>[x] Administrative access to RustDesk nodes</li>
+<li>[x] Load balancer configuration access</li>
+<li>[x] Monitoring dashboard access</li>
+</ul>
+<h3 id="required-tools">Required Tools</h3>
+<ul>
+<li>[x] SSH client with key authentication</li>
+<li>[x] PowerShell 5.1+</li>
+<li>[x] Health check script: <code>Health-Check-TradeShield.ps1</code></li>
+<li>[x] Failover test script: <code>Test-TradeShield-Failover.ps1</code></li>
+</ul>
+<hr />
+<h2 id="chr-vpn-gateway-failover">CHR VPN Gateway Failover</h2>
+<h3 id="automatic-failover">Automatic Failover</h3>
+<p>The CHR instances use VRRP (Virtual Router Redundancy Protocol) for automatic failover. When the primary CHR fails, the secondary automatically takes over the Virtual IP.</p>
+<p><strong>Failover Process:</strong>
+1. Primary CHR stops sending VRRP advertisements
+2. Secondary CHR detects missing advertisements
+3. Secondary CHR increases priority and takes over Virtual IP
+4. Clients automatically reconnect to new primary</p>
+<p><strong>Expected Failover Time:</strong> &lt; 30 seconds</p>
+<h3 id="manual-failover-planned-maintenance">Manual Failover (Planned Maintenance)</h3>
+<p><strong>Step 1: Verify Current Status</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Check VRRP status on primary
+ssh -i C:\TradeShield\keys\ssh\tradeshield-admin-key -p 2222 tradeshield-admin@192.168.100.1 &quot;/interface vrrp print&quot;
+
+# Check VRRP status on secondary
+ssh -i C:\TradeShield\keys\ssh\tradeshield-admin-key -p 2222 tradeshield-admin@192.168.100.2 &quot;/interface vrrp print&quot;
+</code></pre>
+
+<p><strong>Step 2: Initiate Manual Failover</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Lower primary priority to trigger failover
+ssh -i C:\TradeShield\keys\ssh\tradeshield-admin-key -p 2222 tradeshield-admin@192.168.100.1 &quot;/interface vrrp set [find name=vrrp-tradeshield] priority=100&quot;
+
+# Wait for failover (10-15 seconds)
+Start-Sleep -Seconds 15
+
+# Verify Virtual IP moved to secondary
+Test-Connection -ComputerName 192.168.100.254 -Count 3
+</code></pre>
+
+<p><strong>Step 3: Verify Failover</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Check Virtual IP is on secondary
+ssh -i C:\TradeShield\keys\ssh\tradeshield-admin-key -p 2222 tradeshield-admin@192.168.100.2 &quot;/ip address print where interface=vrrp-tradeshield&quot;
+
+# Test WireGuard connectivity
+# Connect from client and verify tunnel is active
+</code></pre>
+
+<p><strong>Step 4: Restore Primary (After Maintenance)</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Restore primary priority
+ssh -i C:\TradeShield\keys\ssh\tradeshield-admin-key -p 2222 tradeshield-admin@192.168.100.1 &quot;/interface vrrp set [find name=vrrp-tradeshield] priority=254&quot;
+
+# Wait for failback
+Start-Sleep -Seconds 15
+
+# Verify Virtual IP is back on primary
+Test-Connection -ComputerName 192.168.100.254 -Count 3
+</code></pre>
+
+<hr />
+<h2 id="rustdesk-cluster-failover">RustDesk Cluster Failover</h2>
+<h3 id="automatic-failover_1">Automatic Failover</h3>
+<p>Windows Network Load Balancer automatically redirects traffic from failed nodes to healthy nodes.</p>
+<p><strong>Failover Process:</strong>
+1. NLB detects node is unresponsive (15 second timeout)
+2. NLB removes node from active pool
+3. Traffic automatically redirected to remaining node
+4. Services continue without interruption</p>
+<p><strong>Expected Failover Time:</strong> &lt; 15 seconds</p>
+<h3 id="manual-failover-planned-maintenance_1">Manual Failover (Planned Maintenance)</h3>
+<p><strong>Step 1: Verify Current Status</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Check NLB cluster status
+Get-NlbCluster
+Get-NlbClusterNode
+
+# Check RustDesk services on both nodes
+ssh -i C:\TradeShield\keys\ssh\tradeshield-admin-key tradeshield-admin@192.168.100.10 &quot;docker ps --filter name=rustdesk&quot;
+ssh -i C:\TradeShield\keys\ssh\tradeshield-admin-key tradeshield-admin@192.168.100.11 &quot;docker ps --filter name=rustdesk&quot;
+</code></pre>
+
+<p><strong>Step 2: Drain Connections from Primary Node</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Stop accepting new connections on primary
+# NLB will automatically redirect to secondary
+</code></pre>
+
+<p><strong>Step 3: Stop Services on Primary Node</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Stop RustDesk services on primary
+ssh -i C:\TradeShield\keys\ssh\tradeshield-admin-key tradeshield-admin@192.168.100.10 &quot;cd /opt/tradeshield/rustdesk &amp;&amp; docker compose stop&quot;
+
+# Wait for NLB to detect failure
+Start-Sleep -Seconds 20
+</code></pre>
+
+<p><strong>Step 4: Verify Failover</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Test RustDesk connectivity via Virtual IP
+Test-NetConnection -ComputerName 192.168.100.20 -Port 21115
+
+# Verify NLB shows only secondary as active
+Get-NlbClusterNode | Format-Table
+</code></pre>
+
+<p><strong>Step 5: Restore Primary (After Maintenance)</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Start services on primary
+ssh -i C:\TradeShield\keys\ssh\tradeshield-admin-key tradeshield-admin@192.168.100.10 &quot;cd /opt/tradeshield/rustdesk &amp;&amp; docker compose start&quot;
+
+# Wait for services to be healthy
+Start-Sleep -Seconds 30
+
+# Verify NLB detects primary as healthy
+Get-NlbClusterNode | Format-Table
+</code></pre>
+
+<hr />
+<h2 id="complete-system-failover">Complete System Failover</h2>
+<h3 id="scenario-primary-site-failure">Scenario: Primary Site Failure</h3>
+<p><strong>Step 1: Assess Situation</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Run comprehensive health check
+.\Health-Check-TradeShield.ps1
+
+# Review health status
+Get-Content C:\TradeShield\logs\health-status.json | ConvertFrom-Json
+</code></pre>
+
+<p><strong>Step 2: Activate Secondary Site</strong></p>
+<p>If secondary site exists:
+1. Start secondary CHR instances
+2. Start secondary RustDesk nodes
+3. Update DNS/load balancer to point to secondary site
+4. Verify all services are operational</p>
+<p><strong>Step 3: Notify Stakeholders</strong></p>
+<ul>
+<li>Send notification to trading operations team</li>
+<li>Update status dashboard</li>
+<li>Document incident</li>
+</ul>
+<p><strong>Step 4: Monitor Secondary Site</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Continuous health monitoring
+while ($true) {
+    .\Health-Check-TradeShield.ps1
+    Start-Sleep -Seconds 300  # Check every 5 minutes
+}
+</code></pre>
+
+<hr />
+<h2 id="failover-testing-procedures">Failover Testing Procedures</h2>
+<h3 id="weekly-automated-testing">Weekly Automated Testing</h3>
+<p><strong>Action:</strong>
+Run automated failover test:</p>
+<pre class="codehilite"><code class="language-powershell">.\Test-TradeShield-Failover.ps1
+</code></pre>
+
+<p><strong>Expected Result:</strong>
+- CHR failover completes successfully
+- RustDesk failover completes successfully
+- All services remain accessible
+- Test results logged</p>
+<p><strong>Verification:</strong></p>
+<pre class="codehilite"><code class="language-powershell"># Review test logs
+Get-Content C:\TradeShield\logs\failover-test-*.log | Select-Object -Last 50
+</code></pre>
+
+<h3 id="monthly-manual-testing">Monthly Manual Testing</h3>
+<p><strong>Step 1: Schedule Maintenance Window</strong></p>
+<ul>
+<li>Notify all stakeholders</li>
+<li>Schedule during low-traffic period</li>
+<li>Prepare rollback plan</li>
+</ul>
+<p><strong>Step 2: Execute Failover Tests</strong></p>
+<ol>
+<li>Test CHR failover (manual)</li>
+<li>Test RustDesk failover (manual)</li>
+<li>Test complete system recovery</li>
+<li>Verify all monitoring alerts</li>
+</ol>
+<p><strong>Step 3: Document Results</strong></p>
+<ul>
+<li>Record failover times</li>
+<li>Note any issues</li>
+<li>Update procedures if needed</li>
+</ul>
+<hr />
+<h2 id="troubleshooting-failover-issues">Troubleshooting Failover Issues</h2>
+<h3 id="issue-chr-failover-not-working">Issue: CHR Failover Not Working</h3>
+<p><strong>Symptoms:</strong>
+- Virtual IP not accessible after primary failure
+- Both CHRs show as master
+- Clients cannot reconnect</p>
+<p><strong>Solution:</strong>
+1. Verify VRRP configuration:
+   <code>powershell
+   ssh -i C:\TradeShield\keys\ssh\tradeshield-admin-key -p 2222 tradeshield-admin@192.168.100.1 "/interface vrrp print detail"</code></p>
+<ol>
+<li>
+<p>Check network connectivity between CHRs:
+   <code>powershell
+   ssh -i C:\TradeShield\keys\ssh\tradeshield-admin-key -p 2222 tradeshield-admin@192.168.100.1 "/ping 192.168.100.2 count=5"</code></p>
+</li>
+<li>
+<p>Verify multicast traffic is allowed on network switches</p>
+</li>
+<li>
+<p>Manually trigger failover:
+   <code>powershell
+   ssh -i C:\TradeShield\keys\ssh\tradeshield-admin-key -p 2222 tradeshield-admin@192.168.100.1 "/interface vrrp set [find name=vrrp-tradeshield] priority=100"</code></p>
+</li>
+</ol>
+<hr />
+<h3 id="issue-rustdesk-failover-not-working">Issue: RustDesk Failover Not Working</h3>
+<p><strong>Symptoms:</strong>
+- Services not accessible after node failure
+- NLB not redirecting traffic
+- Load balancer shows all nodes down</p>
+<p><strong>Solution:</strong>
+1. Check NLB cluster status:
+   <code>powershell
+   Get-NlbCluster
+   Get-NlbClusterNode
+   Get-NlbClusterPortRule</code></p>
+<ol>
+<li>
+<p>Verify node connectivity:
+   <code>powershell
+   Test-Connection -ComputerName 192.168.100.10
+   Test-Connection -ComputerName 192.168.100.11</code></p>
+</li>
+<li>
+<p>Check RustDesk services:
+   <code>powershell
+   ssh -i C:\TradeShield\keys\ssh\tradeshield-admin-key tradeshield-admin@192.168.100.10 "docker ps --filter name=rustdesk"</code></p>
+</li>
+<li>
+<p>Restart NLB service if needed:
+   <code>powershell
+   Restart-Service wlbs</code></p>
+</li>
+</ol>
+<hr />
+<h2 id="related-procedures">Related Procedures</h2>
+<ul>
+<li><a href="TradeShield-Remote-Deployment.md">TradeShield Remote - Deployment Guide</a></li>
+<li><a href="TradeShield-Remote-Architecture-Overview.md">TradeShield Remote - Architecture Overview</a></li>
+</ul>
+<h2 id="related-scripts">Related Scripts</h2>
+<ul>
+<li><a href="../../Scripts/06-Security-and-Trading-Platform-Administration/Test-TradeShield-Failover.ps1">Test-TradeShield-Failover.ps1</a> - Automated failover testing</li>
+<li><a href="../../Scripts/06-Security-and-Trading-Platform-Administration/Health-Check-TradeShield.ps1">Health-Check-TradeShield.ps1</a> - Health monitoring</li>
+</ul>
+<h2 id="change-log">Change Log</h2>
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Version</th>
+<th>Author</th>
+<th>Changes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2024-11-29</td>
+<td>1.0</td>
+<td>System Administrator</td>
+<td>Initial version</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="notes">Notes</h2>
+<p><strong>WARNING:</strong> Always test failover procedures in non-production environments first.</p>
+<p><strong>TIP:</strong> Schedule regular failover testing to ensure high-availability is working correctly.</p>
+<p><strong>NOTE:</strong> Document all failover events and review procedures quarterly.</p>
+</body>
+</html>
